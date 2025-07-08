@@ -1,7 +1,7 @@
 **/output/**
 **/input/**
 **/input/**
-.csv
+*.csv
 .dat
 **/Resultados/**
 .pluvia
