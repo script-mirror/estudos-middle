@@ -328,13 +328,12 @@ def process_decomp(params: Dict[str, Union[str, pd.DataFrame, Dict]], sensitivit
         logger.info(" ")
         
         logger.info("Starting process decomp with params=%s", sensitivity_df)
-        logger.info("Study parameters updated: arquivo=%s", params['arquivo'])
         logger.info("Study parameters updated: dadger_path=%s", params['dadger_path'])
         logger.info("Study parameters updated: output_path=%s", params['output_path'])
         logger.info("Study parameters updated: id_estudo=%s", params['id_estudo'])
         params['load_level_path'] = os.path.abspath(os.path.abspath(os.getcwd() + '/input/patamar/patamar.dat'))    
-        params['load_level_data'] = read_patamar_carga(params['load_level_path'])
-        params['pq_load_level']   = read_patamar_pq(params['load_level_path']) 
+        #params['load_level_data'] = read_patamar_carga(params['load_level_path'])
+        #params['pq_load_level']   = read_patamar_pq(params['load_level_path']) 
 
         df_dadger, comments = leitura_dadger(params['dadger_path'])
         rv = int(params['dadger_path'].split('.')[1][-1:])
@@ -380,9 +379,9 @@ BLOCK_FUNCTIONS = {
 def main(params: Dict[str, Union[str, pd.DataFrame, Dict]]) -> None:
     logger.info("Date=%s", datetime.now())
     logger.info("Starting sensitivity analysis with params=%s", params)
-    params['dadger_path'] = "C:/WX2TB/Documentos/fontes/PMO/gera_sens_prospec/input/deck/dadger.rv0"
-    params['output_path'] = "C:/WX2TB/Documentos/fontes/PMO/gera_sens_prospec/output/decomp/dadger_saida.rv0"
-
+    params['dadger_path'] = "/projetos/raizen-power-trading-estudos-middle/estudos_prospec/roda_sensibilidades/input/deck/decomp/DC202507-sem3/dadger.rv2"
+    params['output_path'] = "/projetos/raizen-power-trading-estudos-middle/estudos_prospec/roda_sensibilidades/output/dadger.rv2"
+    params['id_estudo'] = "111"
 
     # Exemplo de dados de sensibilidade
     params['sensibilidades'] = {
@@ -394,7 +393,7 @@ def main(params: Dict[str, Union[str, pd.DataFrame, Dict]]) -> None:
             }, 
             'ct': {
                 'inflex': {'absoluto': True,  24: {1: 100}, 25: {1: 200}, 27: {1: 50}},
-                'cvu':    {'absoluto': True,  24: {1: 0}, 25: {1: 0}, 27: {1: 0}},
+                'cvu':    { 24: {1: 0}, 25: {1: 0}, 27: {1: 0}},
                 'disp':   {'absoluto': False, 24: {1: -250}, 25: {1: 0}, 27: {1: 0}}
             },             
             "pq": {
@@ -419,13 +418,11 @@ def main(params: Dict[str, Union[str, pd.DataFrame, Dict]]) -> None:
         }
     }
     # Exemplo  {"menmonico": { "nome regex": {"submercado": {"estagio = 1, 2,3 ...": 44936, "2":46479 }, "2": {"1": 1000}},    
-    atualizar_carga = {"dp": {
-                "valor_p1": {"1": {"1": 44936, "2":46479 }, "2": {"1": 1000}},
-                "valor_p2": {"1": {"1": 39527}, "2": {"1": 1000}},
-                "valor_p3": {"1": {"1": 1000}, "2": {"1": 1000}}
-                 }}
+    atualizar_carga = {'ct': {
+                'cvu': {"24": {"1": 341.04, "2": 341.04, "3": 341.04, "4": 341.04} 
+            }}}
     
-    params['case'] = "ATUALIZANDO-CARGA"
+    params['case'] = "ATUALIZANDO-CVU"
     process_decomp(params, atualizar_carga)
 
     #for sensitivity, sensitivity_df in params['sensibilidades'].items():
