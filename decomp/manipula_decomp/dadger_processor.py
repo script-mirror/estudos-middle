@@ -5,7 +5,7 @@ import pandas as pd
 import codecs
 from informacao_blocos import info_blocos
 
-ABS_PATH = '/WX2TB/Documentos/fontes/PMO/gera_sens_prospec'
+ABS_PATH = '/projetos/raizen-power-trading-estudos-middle/decomp/manipula_decomp'
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,

@@ -8,8 +8,8 @@ import random
 from dateutil.relativedelta import relativedelta
 
 # Se mudar origem do código, precisa mudar o caminho base pela nova origem
-sys.path.append('/WX2TB/Documentos/fontes/PMO/API_Prospec/Script/')
-sys.path.append('/WX2TB/Documentos/fontes/PMO/API_Pluvia/')
+sys.path.append("/WX2TB/Documentos/fontes/PMO/raizen-power-trading-estudos-middle/api_prospec/script")
+sys.path.append("/WX2TB/Documentos/fontes/PMO/raizen-power-trading-estudos-middle/api_pluvia")
 sys.path.insert(1,"/WX2TB/Documentos/fontes/")
 from PMO.scripts_unificados.bibliotecas import  wx_dbLib
 #sys.path.append('C:/Dev/API_Prospec/Script/')
@@ -32,15 +32,18 @@ def rodar(parametros):
     print (" ")
 
     # Inicializando paths. Se mudar origem do código, precisa mudar o path_base_files
-    parametros['path_out']          = '/WX2TB/Documentos/fontes/PMO/API_Prospec/GerarDecks/PREVS/Pld1Click/ALL/'
-    parametros['path_prevs_prel']   = '/WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/input/PrevsRaizen/' + parametros['data'].strftime('%Y%m%d') +'/preliminar'
-    parametros['path_prevs_def']    = '/WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/input/PrevsRaizen/' + parametros['data'].strftime('%Y%m%d') +'/teste'
-    parametros['path_prevs_encad']  = '/WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/input/PrevsRaizenEncad/' + parametros['data'].strftime('%Y%m%d')
-    parametros['path_output_encad'] = '/WX2TB/Documentos/fontes/PMO/API_Prospec/GerarDecks/PREVS/EncadRaizen/' 
-    parametros['path_prevs_tok']    = '/WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/input/PrevsTOK/' + parametros['data'].strftime('%Y%m%d')
-    parametros['path_output_tok']   = '/WX2TB/Documentos/fontes/PMO/API_Prospec/GerarDecks/PREVS/TOK/'
-    parametros['path_result']       = '/WX2TB/Documentos/fontes/PMO/API_Prospec/DownloadResults/'
-    parametros['path_config_email'] = '/WX2TB/Documentos/fontes/PMO/rodada_automatica_prospec/input/Config/'
+    PATH_BASE_FILES = '/WX2TB/Documentos/fontes/PMO/raizen-power-trading-estudos-middle/'
+    
+    parametros['path_prevs_prel']   = PATH_BASE_FILES + 'estudos_prospec/rodada_automatica_prospec/input/prevs_raizen/' + parametros['data'].strftime('%Y%m%d') +'/preliminar'
+    parametros['path_prevs_def']    = PATH_BASE_FILES + 'estudos_prospec/rodada_automatica_prospec/input/prevs_raizen/' + parametros['data'].strftime('%Y%m%d') +'/teste'
+    parametros['path_prevs_encad']  = PATH_BASE_FILES + 'estudos_prospec/rodada_automatica_prospec/input/prevs_raizen_encad/' + parametros['data'].strftime('%Y%m%d')
+    parametros['path_prevs_tok']    = PATH_BASE_FILES + 'estudos_prospec/rodada_automatica_prospec/input/prevs_tok/' + parametros['data'].strftime('%Y%m%d')
+    parametros['path_config_email'] =PATH_BASE_FILES +  'estudos_prospec/rodada_automatica_prospec/input/Config/'
+    parametros['path_output_encad'] = PATH_BASE_FILES + 'api_prospec/gerar_decks/prevs/raizen_encad/' 
+    parametros['path_out']          = PATH_BASE_FILES + 'api_prospec/gerar_decks/prevs/all/'
+    parametros['path_output_tok']   = PATH_BASE_FILES + 'api_prospec/gerar_decks/prevs/TOK/'
+    parametros['path_result']       = PATH_BASE_FILES + 'api_prospec/download_resultados/'
+    
 
 
     # Argumentos necessarios para rodar

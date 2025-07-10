@@ -965,7 +965,7 @@ class Config(object):
                  key == 'pathToAllPrevs'   or key =='pathToFileVolume'     or\
                  key == 'pathToFileVazoes' or key == 'pathToFileDadvaz'    or\
                  key == 'pathToPrevs'      or key =='pathToDownloadResults':
-                self.__dict__[key] = '/WX2TB/Documentos/fontes/PMO/API_Prospec/' + str(re.sub(r"\s+", "", argv[i][1], flags=re.UNICODE))  
+                self.__dict__[key] = '/projetos/raizen-power-trading-estudos-middle/api_prospec/' + str(re.sub(r"\s+", "", argv[i][1], flags=re.UNICODE))  
 
             elif key == 'pathToDownloadNWLISTOP':
                 self.__dict__[key] =  str(re.sub(r"\s+", "", argv[i][1], flags=re.UNICODE))  

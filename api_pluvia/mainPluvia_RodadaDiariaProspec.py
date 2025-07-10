@@ -58,7 +58,7 @@ def run(username,password, path, parametros):
     preliminary              = 'Definitiva' 
     years                    = [data.year]
     members                  = parametros['membros']
-    pathResult               = path.joinpath('/WX2TB/Documentos/fontes/PMO/API_Pluvia/Resultados')
+    pathResult               = path.joinpath('/projetos/raizen-power-trading-estudos-middle/api_pluvia/resultados')
     #pathResult               = path.joinpath('')
     pathForecastDay          = pathResult.joinpath(data.strftime('%Y-%m-%d'))    
     nTentarivas              = 10
@@ -260,8 +260,8 @@ def copiaPrevsProspec(path, folders, parametros ):
     data = parametros['data']
     
     listPrevs = [] 
-    pathOutput      = '/WX2TB/Documentos/fontes/PMO/API_Prospec/GerarDecks/PREVS/Pld1Click/ALL/'
-    pathResult      = path.joinpath('/WX/WX2TB/Documentos/fontes/PMO/API_Pluvia/Resultados')
+    pathOutput      = '/projetos/raizen-power-trading-estudos-middle/api_prospec/gerar_decks/prevs/all/'
+    pathResult      = path.joinpath('/projetos/raizen-power-trading-estudos-middle/api_pluvia/resultados')
     #pathOutput      = 'C:/Dev/API_Prospec/GerarDecks/PREVS/Pld1Click/ALL/'
     pathForecastDay = pathResult.joinpath(data.strftime('20%y-%m-%d'))
 

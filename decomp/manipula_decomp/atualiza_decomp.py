@@ -5,6 +5,8 @@ import calendar
 import warnings
 from datetime import datetime, timedelta
 from typing import Dict, List, Union, Tuple
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from dadger_processor import leitura_dadger, escrever_dadger
 from patamar_processor import read_patamar_carga, read_patamar_pq
 
@@ -14,7 +16,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler(os.path.join(os.getcwd(), 'output/log', 'logging.log'), mode='w'),  # Log to file
+        logging.FileHandler(os.path.join('/projetos/raizen-power-trading-estudos-middle/decomp/manipula_decomp/output/log', 'logging.log'), mode='w'),  # Log to file
         logging.StreamHandler()  # Log to console
     ]
 )
