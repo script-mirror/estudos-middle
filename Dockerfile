@@ -3,7 +3,9 @@ FROM python:3.12-alpine
 RUN apk add --no-cache \
     musl-locales \
     musl-locales-lang \
-    git && \
+    git \
+    gcc \
+    musl-dev && \
     echo "pt_BR.UTF-8 UTF-8" > /etc/locale.gen
 
 ENV LANG=pt_BR.UTF-8
