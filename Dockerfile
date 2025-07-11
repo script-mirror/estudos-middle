@@ -5,7 +5,8 @@ RUN apk add --no-cache \
     musl-locales-lang \
     git \
     gcc \
-    musl-dev && \
+    musl-dev \
+    linux-headers && \
     echo "pt_BR.UTF-8 UTF-8" > /etc/locale.gen
 
 ENV LANG=pt_BR.UTF-8
