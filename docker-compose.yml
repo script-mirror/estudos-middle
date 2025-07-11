@@ -1,6 +1,10 @@
 services:
   app:
-    build: .
+    build: 
+      context: .
+      args:
+        - GIT_USERNAME=${git_username}
+        - GIT_TOKEN=${git_token}
     volumes:
       - .:/app
     ports:

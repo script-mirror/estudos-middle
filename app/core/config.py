@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     url_api_ccee: str = (
         "https://dadosabertos.ccee.org.br/api/3/action/datastore_search"
     )
+    git_username: str
+    git_token: str
 
     class Config:
         env_file = ".env"
