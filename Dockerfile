@@ -3,6 +3,7 @@ FROM python:3.12-alpine
 RUN apk add --no-cache \
     gcc \
     musl-dev \
+    git \
     linux-headers \
     && apk del gcc musl-dev linux-headers
 
