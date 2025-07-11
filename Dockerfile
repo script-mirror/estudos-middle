@@ -1,17 +1,22 @@
 FROM python:3.12-alpine
 
 RUN apk add --no-cache \
-    musl-locales \
-    musl-locales-lang \
-    git \
     gcc \
     musl-dev \
-    linux-headers && \
-    echo "pt_BR.UTF-8 UTF-8" > /etc/locale.gen
+    linux-headers \
+    && pip install --no-cache-dir -r /app/requirements.txt \
+    && apk del gcc musl-dev linux-headers
 
-ENV LANG=pt_BR.UTF-8
-ENV LANGUAGE=pt_BR:pt
-ENV LC_ALL=pt_BR.UTF-8
+RUN apk add --no-cache \
+    ffmpeg \
+    tzdata \
+    xvfb-run \
+    && ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
+    && echo "America/Sao_Paulo" > /etc/timezone
+
+ENV LANG=pt_BR.UTF-8 \
+    LC_ALL=pt_BR.UTF-8 \
+    TZ=America/Sao_Paulo
 
 WORKDIR /app
 
