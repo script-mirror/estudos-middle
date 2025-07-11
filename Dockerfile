@@ -4,7 +4,6 @@ RUN apk add --no-cache \
     gcc \
     musl-dev \
     linux-headers \
-    && pip install --no-cache-dir -r /app/requirements.txt \
     && apk del gcc musl-dev linux-headers
 
 RUN apk add --no-cache \
