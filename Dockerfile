@@ -1,11 +1,13 @@
 FROM python:3.12-alpine
 
 RUN apk add --no-cache \
+    musl-locales \
+    musl-locales-lang \
+    git \
     gcc \
     musl-dev \
-    git \
-    linux-headers \
-    && apk del gcc musl-dev linux-headers
+    linux-headers && \
+    echo "pt_BR.UTF-8 UTF-8" > /etc/locale.gen
 
 RUN apk add --no-cache \
     ffmpeg \
@@ -22,7 +24,6 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-# Configure git credentials using build args
 ARG GIT_USERNAME
 ARG GIT_TOKEN
 RUN git config --global credential.helper store && \
@@ -30,7 +31,6 @@ RUN git config --global credential.helper store && \
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Clean up git credentials
 RUN rm -f ~/.git-credentials && \
     git config --global --unset credential.helper
 
