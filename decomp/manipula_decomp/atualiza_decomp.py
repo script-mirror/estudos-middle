@@ -6,7 +6,7 @@ import warnings
 from datetime import datetime, timedelta
 from typing import Dict, List, Union, Tuple
 import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from dadger_processor import leitura_dadger, escrever_dadger
 from patamar_processor import read_patamar_carga, read_patamar_pq
 
@@ -242,18 +242,20 @@ def adjust_re_block(df_dadger: Dict[str, pd.DataFrame], input_df: Dict[str, Dict
 
 def adjust_pq_block(df_dadger: Dict[str, pd.DataFrame], input_df: Dict[str, Dict[str, float]], type_param: str, absolute: bool = False, params: Dict[str, Union[str, pd.DataFrame, Dict]] = None) -> Dict[str, pd.DataFrame]:
     logger.info("Manipulating PQ block")
-    pq_load_level = params['pq_load_level']
-    df_dadger['PQ'] = df_dadger['PQ'].apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+  
+    df_dadger['PQ']['sub'] = df_dadger['PQ']['sub'].astype(str).str.strip()
+    df_dadger['PQ']['id']  = df_dadger['PQ']['id'].astype(str).str.strip()
        
     for source, value_list in input_df.items():
         df_dadger['PQ'] = complete_stages(df_dadger['PQ'], source) 
-        source_load_level = FONTE_MAP[source.split('_')[1]]
+        
         for week, value in value_list.items():
             week = int(week)
             condition_pq = (df_dadger['PQ']['estagio'].astype(int) == int(week)) & (df_dadger['PQ']['id'] == source)
 
             if type_param == 'geracao':
-                
+                source_load_level = FONTE_MAP[source.split('_')[1]]
+                pq_load_level = params['pq_load_level']                
                 load_level_df = retrieve_load_levels(df_dadger, pq_load_level[pq_load_level['tipo'].astype(int) == source_load_level])
                 condition = (load_level_df[week]['sub'].astype(int) == int(df_dadger['PQ'][df_dadger['PQ']['id'] == source]['sub'].values[0])) & (load_level_df[week]['tipo'].astype(int) == source_load_level)
                 df = load_level_df[week].loc[condition]
@@ -396,15 +398,9 @@ def main(params: Dict[str, Union[str, pd.DataFrame, Dict]]) -> None:
                 'cvu':    { 24: {1: 0}, 25: {1: 0}, 27: {1: 0}},
                 'disp':   {'absoluto': False, 24: {1: -250}, 25: {1: 0}, 27: {1: 0}}
             },             
-            "pq": {
-                "valor_p1": {
-                    "NE_EOL": {"1": 6.0, "2": 2000, "3": 3000},
-                    "SUL_EOL": {"1": 1000},
-                "valor_p2": {
-                    "NE_EOL": {"1": 6.0, "2": 2000, "3": 3000},
-                    "SUL_EOL": {"1": 1000}
-                }}
-            },
+            "pq": {"valor_p1": {"NE_EOL": {"1": 6.0, "2": 2000, "3": 3000}, "SUL_EOL": {"1": 1000}},
+                   "valor_p2": {"NE_EOL": {"1": 6.0, "2": 2000, "3": 3000}, "SUL_EOL": {"1": 1000}}
+                },
              "dp": {
                 "valor_p1": {"1": {"1": 44936, "2":46479 }, "2": {"1": 1000}},
                 "valor_p2": {"1": {"1": 39527}, "2": {"1": 1000}},
@@ -418,16 +414,17 @@ def main(params: Dict[str, Union[str, pd.DataFrame, Dict]]) -> None:
         }
     }
     # Exemplo  {"menmonico": { "nome regex": {"submercado": {"estagio = 1, 2,3 ...": 44936, "2":46479 }, "2": {"1": 1000}},    
-    atualizar_carga = {'ct': {
-                'cvu': {"24": {"1": 341.04, "2": 341.04, "3": 341.04, "4": 341.04} 
+    atualizar_carga = {'ct': {'cvu':      {"24": {"1": 341, "2": 341, "3": 341, "4": 341} 
             }}}
-    
+    atualizar_carga = {"pq": {"valor_p1": {"NE_EOL": {"1": 6.0, "2": 2000, "3": 3000}, "SUL_EOL": {"1": 1000}},
+                              "valor_p2": {"NE_EOL": {"1": 6.0, "2": 2000, "3": 3000}, "SUL_EOL": {"1": 1000}}
+                }}
     params['case'] = "ATUALIZANDO-CVU"
     process_decomp(params, atualizar_carga)
 
-    #for sensitivity, sensitivity_df in params['sensibilidades'].items():
-    #    params['case'] = sensitivity
-    #    process_decomp(params, sensitivity_df)
+    for sensitivity, sensitivity_df in params['sensibilidades'].items():
+        params['case'] = sensitivity
+        process_decomp(params, sensitivity_df)
 
 
 if __name__ == '__main__':

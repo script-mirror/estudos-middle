@@ -42,7 +42,7 @@ info_blocos = {
     'PQ': {
         'campos': ['mnemonico', 'id', 'sub', 'estagio', 'valor_p1', 'valor_p2', 'valor_p3'],
         'regex': r'(.{2})  (.{11})(.{1})   (.{2})   (.{5})(.{5})(.{5})(.*)',
-        'formatacao': '{:>2}  {:>11}{:>1}   {:>2}   {:>5}{:>5}{:>5}'
+        'formatacao': '{:>2}  {:<11}{:>1}   {:>2}   {:>5}{:>5}{:>5}'
     },
     'RI': {
         'campos': ['mnemonico', 'id', 'estagio', 'sub', 'min60_p1', 'max60_p1', 'min50_p1', 'max50_p1', 'ande_p1', 'min60_p2', 'max60_p2', 'min50_p2', 'max50_p2', 'ande_p2', 'min60_p3', 'max60_p3', 'min50_p3', 'max50_p3', 'ande_p3'],
@@ -105,7 +105,7 @@ info_blocos = {
         'formatacao': '{:>2}  {:<4} {:>2}   {:>2}'
     },
     'LU': {
-        'campos': ['mnemonico', 'id', 'estagio', 'gmin_p1', 'gmax_p1', 'gmin_p2', 'gmax_p2', 'gmin_p3', 'gmax_p3'],
+        'campos': ['mnemonico', 'id', 'estagio', 'vmin_p1', 'vmax_p1', 'vmin_p2', 'vmax_p2', 'vmin_p3', 'vmax_p3'],
         'regex': r'(.{2})  (.{4}) (.{2})   (.{10})(.{10})(.{10})(.{10})(.{0,10})(.{0,10})(.*)',
         'formatacao': '{:>2}  {:<4} {:>2}   {:>10}{:>10}{:>10}{:>10}{:>10}{:>10}'
     },

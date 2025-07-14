@@ -173,7 +173,7 @@ def escrever_dadger(df_dadger, comentarios, filePath):
                             logger.debug(f"Writing comment for {mnemonico} at index {index}")
                     fileOut.write('{}\n'.format(info_blocos[mnemonico]['formatacao'].format(*row.values).strip()))
                     logger.debug(f"Writing {mnemonico} row at index {index}")
-                    
+
                     if mnemonico in bloco_dependentes:
                         for dep in bloco_dependentes[mnemonico]:
                             mnemon_depend = df_dadger[dep].loc[df_dadger[dep]['id'].astype('int') == int(row['id'])]
