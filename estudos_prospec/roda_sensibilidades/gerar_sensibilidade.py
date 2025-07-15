@@ -8,17 +8,24 @@ import shutil
 import sys
 import zipfile
 import logging  # Already present, kept for clarity
-sys.path.append("/projetos/estudos-middle/")
-sys.path.append("/projetos/estudos-middle/decomp/manipula_decomp")
-sys.path.append("/projetos/estudos-middle/api_prospec")
-sys.path.append("/projetos/estudos-middle/estudos_prospec/rodada_automatica_prospec")
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+
+PATH_ARQUIVOS = os.getenv('PATH_ARQUIVOS', '/projetos/arquivos')
+PATH_PROJETOS = os.getenv('PATH_PROJETOS', '/projetos')
+ABS_PATH      = os.path.join(PATH_PROJETOS, "estudos-middle/estudos_prospec/roda_sensibilidades")
+ABS_PATH_LOG  = os.path.join(PATH_PROJETOS, 'estudos-middle/decomp/manipula_decomp/output/log', 'logging.log')
+sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/"))
+sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
+sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/decomp/manipula_decomp"))
+sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/estudos_prospec/rodada_automatica_prospec"))
+
 from atualiza_decomp import process_decomp
 from functionsProspecAPI import *
 from main_roda_estudos import runWithParams
 from patamar_processor import read_patamar_carga, read_patamar_pq
 
-ABS_PATH = '/projetos/estudos-middle/estudos_prospec/roda_sensibilidades'
-ABS_PATH_LOG = os.path.join('/projetos/estudos-middle/decomp/manipula_decomp/output/log', 'logging.log')
+
 warnings.filterwarnings("ignore")  # Ignora todos os warnings
 # Configure logging
 logging.basicConfig(

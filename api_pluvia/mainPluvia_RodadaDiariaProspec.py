@@ -14,8 +14,8 @@ import pandas as pd
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
-usuario_pluvia = os.getenv('usuario_pluvia')
-senha_pluvia = os.getenv('senha_pluvia')
+usuario_pluvia = os.getenv('USER_PLUVIA')
+senha_pluvia = os.getenv('KEY_PLUVIA')
 
 
 def main(parametros):    
@@ -24,7 +24,7 @@ def main(parametros):
     print(''); print('')
     print ('--------------------------------------------------------------------------------#')
     print('#-API do Pluvia Iniciado: ' + str(datetime.now())[:19])
-    print('Usuário: gilseu.wx')
+    print('Usuário: ', usuario_pluvia)
 
     path = pathlib.Path(os.getcwd())
 

@@ -883,6 +883,36 @@ def volumeAssociation(idStudy, destinationIds, previsouStage, sourceStudyId):
 
     postInAPI(token, '/api/prospectiveStudies/' + str(idStudy)
               + '/Associate', parameter, data)
+'''
+config = {}
+config['id_duplicate'] ={}
+config['id_associate_cuts'] ={}
+config['send_volume'] = False
+config['download_nwlistop'] = False
+config['download_dadger'] = False
+config['start_study'] = True
+config['path_to_file'] = ''
+config['path_to_download_results'] = ''
+config['path_to_download_nwlistop'] = ''
+config['path_to_download_decks'] = ''
+config['path_to_prevs'] = ''
+config['path_to_all_prevs'] = ''
+config['newave_version'] = ''
+config['decomp_version'] = ''
+config['dessem_version'] = ''
+config['server_name'] = ''
+config['username'] = ''
+config['password'] = ''
+config['study_name'] = ''
+config['type_study'] = ''
+config['name_file_dessem'] = ''
+config['name_file_decomp'] = ''
+config['name_file_newave'] = ''
+config['infeasibility_handling_sensibility'] = 2
+config['max_restarts'] = 1 
+config['infeasibility_handling'] = 3
+config['id_associate_volumes'] = ''
+'''
 
 
 # Configurações do estudo 

@@ -7,49 +7,39 @@ import zipfile
 import codecs
 import logging
 import time
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from string import ascii_lowercase
 from copy import deepcopy
 import pandas as pd
 import requests
+from middle.utils import SemanaOperativa
+from middle.decomp import ons_to_ccee
+from middle.utils import get_auth_header
 from ComparaCT import *
-from ComparaDP import *
-from ComparaUH import *
-sys.path.append('/WX2TB/Documentos/fontes/PMO/API_Prospec/Script/') 
-import mainProspecAPI_RodadaAutoDiaria
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+
+PATH_ARQUIVOS = os.getenv('PATH_ARQUIVOS', '/projetos/arquivos')
+PATH_PROJETOS = os.getenv('PATH_PROJETOS', '/projetos')
+BASE_PATH     = os.path.join(PATH_ARQUIVOS, 'decomp', 'backtest_decomp')
+
+sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
+import roda_prospec
 
 # Constants
 CHECKLIST_BLOCKS = ['UH', 'CT', 'PQ', 'DP', 'MP', 'RE', 'HV', 'HQ', 'VE']
-BASE_PATH = '/WX/WX2TB/Documentos/fontes/PMO/backTest_DC/'
+
 PATH_CONFIG = {
-    'output_decks': os.path.join(BASE_PATH, 'output/decks'),
-    'output_dp': os.path.join(BASE_PATH, f'output/saidaDP_{date.today().strftime("%Y_%m_%d")}.csv'),
-    'output_ct': os.path.join(BASE_PATH, f'output/saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
-    'oficial_decomp': os.path.join(BASE_PATH, 'input/oficial/decomp'),
-    'raizen_decomp': os.path.join(BASE_PATH, 'input/raizen/decomp'),
-    'raizen_prospec_decomp': os.path.join(BASE_PATH, 'input/raizenProspec/decomp')
+    'output_decks':          os.path.join(BASE_PATH, 'output/decks'),
+    'output_ct':             os.path.join(BASE_PATH, f'output/saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
+    'oficial_decomp':        os.path.join(BASE_PATH, 'input/oficial/decomp'),
+    'raizen_decomp':         os.path.join(BASE_PATH, 'input/raizen/decomp'),
+    'raizen_prospec_decomp': os.path.join(BASE_PATH, 'input/raizenProspec/decomp'),
+    'oficial_decomp_zip':    os.path.join(PATH_ARQUIVOS, 'decomp', 'ons')
 }
 FILES_TO_COPY = ['caso.dat', 'hidr.dat', 'mlt.dat', 'perdas.dat', 'polinjus.csv', 'indices.csv']
 DADGNL_VAZOES = ['dadgnl.rv{}', 'vazoes.rv{}']
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
-TOKEN_BASE = requests.post(
-    'https://raizen-power-backoffice-prd.auth.us-east-1.amazoncognito.com/oauth2/token',
-    data="grant_type=client_credentials&client_id=5dp7p6c9u1s0u6j9onjsqdu62g&client_secret=103evpg6nf952uk47hl4vprprgg6ngtkofj2lura8h3usjvogs74&scope=default-m2m-resource-server-tlyss8/read",
-    headers={'Content-Type': 'application/x-www-form-urlencoded'} )
-
-URL_COGNITO='https://us-east-1rukqfgd2h.auth.us-east-1.amazoncognito.com/oauth2/token'
-CONFIG_COGNITO='grant_type=client_credentials&client_id=21ee5b0hd7cg6ejl4f57t5nppo&client_secret=1juk3grp5uevth7lepsv43a3uktmlpjsus8mb0pnth7euv23ja9o&scope=default-m2m-resource-server-9ibr3e/read'
- 
-def get_auth():
-    response = requests.post(
-        URL_COGNITO,
-        data=CONFIG_COGNITO,
-        headers={'Content-Type': 'application/x-www-form-urlencoded'}
-    )
-    headers = {
-        'Authorization': f"Bearer {response.json()['access_token']}"
-    }
-    return headers
 
 
 # Configure logging
@@ -62,7 +52,7 @@ def send_whatsapp_message(destinatarioWhats, msgWhats,token, fileWhats):
         "destinatario": destinatarioWhats,
         "mensagem": msgWhats,
      }
-     headers = get_auth()
+     headers = get_auth_header()
      files={}
      if fileWhats:
           files={"arquivo": (fileWhats, open(fileWhats, "rb"))}
@@ -80,15 +70,20 @@ def setup_directories(paths):
         except Exception as e:
             logger.warning(f"Failed to setup directory {path}: {e}")
 
-def convert_deck_ons_to_ccee():
+def convert_deck_ons_to_ccee(input_path, output_path):
     """Execute script to convert ONS deck to CCEE format."""
-    cmd = (
-        ". /WX2TB/Documentos/fontes/PMO/scripts_unificados/env_activate;"
-        "cd /WX/WX2TB/Documentos/fontes/PMO/converte_dc/script;"
-        "python wx_dc_comentadopld.py;"
-    )
+
+    data = date.today()
+    data_rv = SemanaOperativa.get_next_saturday(data)
+    rev = 'RV{}'.format(int(data_rv.current_revision))
+
+    dt_decomp = data_rv.first_day_of_month + timedelta(days=6)
+
+    arqzip = 'PMO_deck_preliminar.zip'
+    arqdec = 'DEC_ONS_' + dt_decomp.strftime('%m%Y') + '_' + rev + '_VE.zip'
+        
     try:
-        os.system(cmd)
+        ons_to_ccee(input_path, output_path, arqzip, arqdec, rev, dt_decomp) 
         logger.info("ONS to CCEE conversion completed")
     except Exception as e:
         logger.error(f"ONS to CCEE conversion failed: {e}")
@@ -143,7 +138,7 @@ def create_deck(path_oficial, path_output, block,path_decomp):
     logger.info(f"Created deck for block {block} at {deck_path}")
     return dc_path
 
-def Leitura_Dadger(pathDadger):
+def read_dadger(pathDadger):
     """Read a dadger file and organize its blocks."""
     dictDadger = {}
     blocoAtual = "TE"
@@ -174,7 +169,7 @@ def Leitura_Dadger(pathDadger):
     dictdadger['blocos'] = listOrdemBlocos
     return dictdadger
 
-def Escreve_Dadger(arquivo, dadger):
+def write_dadger(arquivo, dadger):
     """Write a dadger file from its dictionary representation."""
     with open(arquivo, "w") as fh:
         for bloco in dadger['blocos']:
@@ -190,7 +185,7 @@ def alter_dadger(base_dadger, block, external_block_data, output_path, altered_b
         for line in base_dadger['dadger']['TE']
     ]
     base_dadger['dadger'][block] = external_block_data
-    Escreve_Dadger(output_path, base_dadger)
+    write_dadger(output_path, base_dadger)
     logger.info(f"Altered dadger for block {block} at {output_path}")
     return base_dadger
 
@@ -286,14 +281,13 @@ def rodar(parametros):
 
     # Read dadger files
     path_dc_oficial = os.path.join(PATH_CONFIG['oficial_decomp'], dadger_file)
-    path_dc_raizen = os.path.join(PATH_CONFIG['raizen_decomp'], dadger_file)
-    dadger_oficial = Leitura_Dadger(path_dc_oficial)
-    dadger_base = Leitura_Dadger(path_dc_oficial)
-    dadger_raizen = Leitura_Dadger(path_dc_raizen)
-    path_decomp   = 'DC'+dadger_oficial['dadger']['DT'][0].split()[3]+dadger_oficial['dadger']['DT'][0].split()[2]
+    path_dc_raizen  = os.path.join(PATH_CONFIG['raizen_decomp'], dadger_file)
+    dadger_oficial  = read_dadger(path_dc_oficial)
+    dadger_base     = read_dadger(path_dc_oficial)
+    dadger_raizen   = read_dadger(path_dc_raizen)
+    path_decomp     = 'DC'+dadger_oficial['dadger']['DT'][0].split()[3]+dadger_oficial['dadger']['DT'][0].split()[2]
 
     # Compare UH
-    dict_uh = {'Oficial': dadger_oficial['dadger']['UH'], 'Raizen': dadger_raizen['dadger']['UH']}
     dict_subm = {'Raizen': {'1': 0, '2': 0, '3': 0, '4': 0}, 'CCEE': {'1': 0, '2': 0, '3': 0, '4': 0}}
 
     # Analyze CT
@@ -307,10 +301,14 @@ def rodar(parametros):
 
     # Setup output decks
     for folder in [path_decomp+'__ONS-TO-CCEE', path_decomp+'__RAIZEN', path_decomp+'__ONS-TO-CCEE_VAZOES-RAIZEN']:
+        
         folder_path = os.path.join(PATH_CONFIG['output_decks'], folder)
         os.makedirs(folder_path, exist_ok=True)
-        shutil.copytree(PATH_CONFIG['oficial_decomp'], os.path.join(folder_path, path_decomp))
-        if folder == path_decomp+'__ONS-TO-CCEE_VAZOES-RAIZEN':
+        if folder == path_decomp+'__RAIZEN':
+            shutil.copytree(PATH_CONFIG['raizen_decomp'], os.path.join(folder_path, path_decomp))
+        elif folder == path_decomp+'__ONS-TO-CCEE':
+            shutil.copytree(PATH_CONFIG['oficial_decomp'], os.path.join(folder_path, path_decomp))
+        elif folder == path_decomp+'__ONS-TO-CCEE_VAZOES-RAIZEN':
             shutil.copy(
                 os.path.join(PATH_CONFIG['raizen_decomp'], f'vazoes.rv{rv}'),
                 os.path.join(folder_path, path_decomp)
