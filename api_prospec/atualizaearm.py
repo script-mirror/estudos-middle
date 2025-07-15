@@ -15,7 +15,7 @@ locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 class Paths:
     """Constantes para caminhos de diretórios."""
-    BASE_PATH = Path('/projetos/raizen-power-trading-estudos-middle')
+    BASE_PATH = Path('/projetos/estudos-middle')
     COD = BASE_PATH / 'api_prospec/calculo_volume'
     RDH =  '/WX2TB/Documentos/fontes/PMO/monitora_ONS/plan_acomph_rdh'
     OUTPUT = BASE_PATH / 'api_prospec/gerar_decks/volume'

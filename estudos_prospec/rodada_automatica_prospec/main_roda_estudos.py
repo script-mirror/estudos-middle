@@ -8,12 +8,10 @@ import random
 from dateutil.relativedelta import relativedelta
 
 # Se mudar origem do código, precisa mudar o caminho base pela nova origem
-sys.path.append("/WX2TB/Documentos/fontes/PMO/raizen-power-trading-estudos-middle/api_prospec/script")
-sys.path.append("/WX2TB/Documentos/fontes/PMO/raizen-power-trading-estudos-middle/api_pluvia")
-sys.path.insert(1,"/WX2TB/Documentos/fontes/")
-from PMO.scripts_unificados.bibliotecas import  wx_dbLib
-#sys.path.append('C:/Dev/API_Prospec/Script/')
-#sys.path.append('C:/Dev/API_Pluvia/')
+sys.path.append("/projetos/estudos-middle/api_prospec")
+sys.path.append("/projetos/estudos-middle/api_pluvia")
+#sys.path.insert(1,"/WX2TB/Documentos/fontes/")
+#from PMO.scripts_unificados.bibliotecas import  wx_dbLib
 
 # Importando .py do Pluvia e do Prospec
 import mainPluvia_RodadaDiariaProspec
@@ -32,16 +30,16 @@ def rodar(parametros):
     print (" ")
 
     # Inicializando paths. Se mudar origem do código, precisa mudar o path_base_files
-    PATH_BASE_FILES = '/WX2TB/Documentos/fontes/PMO/raizen-power-trading-estudos-middle/'
+    PATH_BASE_FILES = '/projetos/estudos-middle/'
     
     parametros['path_prevs_prel']   = PATH_BASE_FILES + 'estudos_prospec/rodada_automatica_prospec/input/prevs_raizen/' + parametros['data'].strftime('%Y%m%d') +'/preliminar'
     parametros['path_prevs_def']    = PATH_BASE_FILES + 'estudos_prospec/rodada_automatica_prospec/input/prevs_raizen/' + parametros['data'].strftime('%Y%m%d') +'/teste'
     parametros['path_prevs_encad']  = PATH_BASE_FILES + 'estudos_prospec/rodada_automatica_prospec/input/prevs_raizen_encad/' + parametros['data'].strftime('%Y%m%d')
     parametros['path_prevs_tok']    = PATH_BASE_FILES + 'estudos_prospec/rodada_automatica_prospec/input/prevs_tok/' + parametros['data'].strftime('%Y%m%d')
-    parametros['path_config_email'] =PATH_BASE_FILES +  'estudos_prospec/rodada_automatica_prospec/input/Config/'
-    parametros['path_output_encad'] = PATH_BASE_FILES + 'api_prospec/gerar_decks/prevs/raizen_encad/' 
-    parametros['path_out']          = PATH_BASE_FILES + 'api_prospec/gerar_decks/prevs/all/'
-    parametros['path_output_tok']   = PATH_BASE_FILES + 'api_prospec/gerar_decks/prevs/TOK/'
+    parametros['path_config_email'] = PATH_BASE_FILES +  'estudos_prospec/rodada_automatica_prospec/input/Config/'
+    parametros['path_output_encad'] = PATH_BASE_FILES + 'api_prospec/gerar_decks/prevs/raizen_encad' 
+    parametros['path_out']          = PATH_BASE_FILES + 'api_prospec/gerar_decks/prevs/all'
+    parametros['path_output_tok']   = PATH_BASE_FILES + 'api_prospec/gerar_decks/prevs/TOK'
     parametros['path_result']       = PATH_BASE_FILES + 'api_prospec/download_resultados/'
     
 
@@ -359,8 +357,8 @@ def getPesosGrupos(grupo, parametros):
 
     dtRef = (parametros['data'] - relativedelta(days=1))
     dtRef = datetime(dtRef.year,dtRef.month,dtRef.day)    
-    dict_pesos = wx_dbLib.get_pesos_agrupados_ec(dtRef)
-
+    #dict_pesos = wx_dbLib.get_pesos_agrupados_ec(dtRef)
+    dict_pesos = {}
     return round(dict_pesos['grupo_'+str(int(grupo[-2:]))]*100)
 
 def rodaGrupos(parametros):

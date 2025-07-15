@@ -8,17 +8,17 @@ import shutil
 import sys
 import zipfile
 import logging  # Already present, kept for clarity
-sys.path.append("/projetos/raizen-power-trading-estudos-middle/")
-sys.path.append("/projetos/raizen-power-trading-estudos-middle/decomp/manipula_decomp")
-sys.path.append("/projetos/raizen-power-trading-estudos-middle/api_prospec")
-sys.path.append("/projetos/raizen-power-trading-estudos-middle/estudos_prospec/rodada_automatica_prospec")
+sys.path.append("/projetos/estudos-middle/")
+sys.path.append("/projetos/estudos-middle/decomp/manipula_decomp")
+sys.path.append("/projetos/estudos-middle/api_prospec")
+sys.path.append("/projetos/estudos-middle/estudos_prospec/rodada_automatica_prospec")
 from atualiza_decomp import process_decomp
 from functionsProspecAPI import *
 from main_roda_estudos import runWithParams
+from patamar_processor import read_patamar_carga, read_patamar_pq
 
-
-ABS_PATH = '/projetos/raizen-power-trading-estudos-middle/estudos_prospec/roda_sensibilidades'
-ABS_PATH_LOG = os.path.join('/projetos/raizen-power-trading-estudos-middle/decomp/manipula_decomp/output/log', 'logging.log')
+ABS_PATH = '/projetos/estudos-middle/estudos_prospec/roda_sensibilidades'
+ABS_PATH_LOG = os.path.join('/projetos/estudos-middle/decomp/manipula_decomp/output/log', 'logging.log')
 warnings.filterwarnings("ignore")  # Ignora todos os warnings
 # Configure logging
 logging.basicConfig(
@@ -82,7 +82,7 @@ def send_email_notification(id_list, email_list, subject):
     logger.info("Sending email notification for id_list=%s, subject=%s", id_list, subject)
     cmd = (
         ". /WX2TB/Documentos/fontes/PMO/scripts_unificados/env_activate;"
-        "cd /projetos/raizen-power-trading-estudos-middle/estudos_prospec/rodada_automatica_prospec;"
+        "cd /projetos/estudos-middle/estudos_prospec/rodada_automatica_prospec;"
         f"python mainRodadaAutoProspec.py apenas_email 1 id_estudo '{id_list}' "
         f"list_email '{email_list}' assunto_email '{subject}';"
     )
@@ -151,8 +151,8 @@ def gerar_estudo_prospec(params):
     params['dadger_path'] = caminhos[0]
     params['output_path'] = os.path.abspath(os.path.join(output_dir, arquivos[0]))
     params['id_estudo'] = id_estudo
-    params['pq_load_level'] =   ABS_PATH +  '/input/patamar.dat'
-    params['load_level_data'] = ABS_PATH +  '/input/patamar.dat'
+    params['pq_load_level'] =  read_patamar_pq( ABS_PATH +  '/input/patamar/patamar.dat')
+    params['load_level_data'] =  read_patamar_carga( ABS_PATH +  '/input/patamar/patamar.dat')
 
     return params
 
@@ -172,6 +172,7 @@ def run_with_parms():
   
     # Set default values for parameters  
     params['mapa'] = 'ONS_Pluvia'
+    
     # If 'mapa' is provided in sensitivities, use it
     if 'mapa'in params['sensibilidades']:
         params['mapa'] = params['sensibilidades']['mapa']
@@ -193,7 +194,7 @@ def run_with_parms():
     time.sleep(600)
     send_email_notification( id_prospec_list,'["gilseu.muhlen@raizen.com"]', "Sensibilidades")
 
-
+   # "{'BASE': {'dp': {'carga': {'1': {'1': 0}, 'absoluto': 0}}}, 'CARGA-SE(-100)': {'dp': {'carga': {'1': {'1': -100}, 'absoluto': 0}}}, 'mapa': 'ONS'}"
 if __name__ == '__main__':
     logger.info("Script execution started")
     run_with_parms()

@@ -6,7 +6,7 @@ import warnings
 from datetime import datetime, timedelta
 from typing import Dict, List, Union, Tuple
 import sys
-#sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from dadger_processor import leitura_dadger, escrever_dadger
 from patamar_processor import read_patamar_carga, read_patamar_pq
 
@@ -16,7 +16,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler(os.path.join('/projetos/raizen-power-trading-estudos-middle/decomp/manipula_decomp/output/log', 'logging.log'), mode='w'),  # Log to file
+        logging.FileHandler(os.path.join('/projetos/estudos-middle/decomp/manipula_decomp/output/log', 'logging.log'), mode='w'),  # Log to file
         logging.StreamHandler()  # Log to console
     ]
 )
@@ -381,8 +381,8 @@ BLOCK_FUNCTIONS = {
 def main(params: Dict[str, Union[str, pd.DataFrame, Dict]]) -> None:
     logger.info("Date=%s", datetime.now())
     logger.info("Starting sensitivity analysis with params=%s", params)
-    params['dadger_path'] = "/projetos/raizen-power-trading-estudos-middle/estudos_prospec/roda_sensibilidades/input/deck/decomp/DC202507-sem3/dadger.rv2"
-    params['output_path'] = "/projetos/raizen-power-trading-estudos-middle/estudos_prospec/roda_sensibilidades/output/dadger.rv2"
+    params['dadger_path'] = "/projetos/estudos-middle/estudos_prospec/roda_sensibilidades/input/deck/decomp/DC202507-sem3/dadger.rv2"
+    params['output_path'] = "/projetos/estudos-middle/estudos_prospec/roda_sensibilidades/output/dadger.rv2"
     params['id_estudo'] = "111"
 
     # Exemplo de dados de sensibilidade

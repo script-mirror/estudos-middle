@@ -36,11 +36,12 @@ def run_VE(config):
                                         config.studyName + '_'+ str(date.day)+ '/'+ str(date.month) + '-'+ str(date.hour) + ':'+ str(date.minute) + 'h',                                        
                                         'Rodada Automatica',  tags, 2,1,1)
     # Send prevs files to each deck | Enviar arquivo prevs para cada deck
+    print(config.pathToAllPrevs)
     if config.sendAllPREVStoStudy:
-        sendAllPrevsToStudy(prospecStudyId, config.pathToAllPrevs + '/')
+        sendAllPrevsToStudy(prospecStudyId, config.pathToAllPrevs)
 
     elif config.sendAllPREVStoDeck:
-        sendAllPrevsToEachDeck(prospecStudyId, config.pathToPrevs  + '/')
+        sendAllPrevsToEachDeck(prospecStudyId, config.pathToPrevs)
 
     elif config.sendPREVS:
         sendPrevsToStudy(prospecStudyId, config.pathToPrevs)

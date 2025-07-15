@@ -576,16 +576,17 @@ def sendAllPrevsToEachDeck(idStudy, pathToPrevs):
             listOfFiles = {}
             mes = deck['Month']
             revision = ".rv" + str(deck['Revision'])
-
+            print(idStudy, revision)
             pathToFile = pathToPrevs +'/' + str(mes) + '/'
 
             print('Arquivos em ' + pathToFile)
+            print(os.listdir(pathToFile))
             for file in os.listdir(pathToFile):
                 if file.lower().startswith('prevs'):
                     if file.lower().endswith(revision):
                         listOfFiles[file] = [file, open((pathToFile + file), 'rb'),
                                              'multipart/form-data', {'Expires': '0'}]
-
+            print(listOfFiles)
             sendFiles(token, '/api/prospectiveStudies/' + str(idStudy)
                       + '/UploadFiles?deckId=' + str(deck['Id']), listOfFiles)
 
@@ -965,7 +966,7 @@ class Config(object):
                  key == 'pathToAllPrevs'   or key =='pathToFileVolume'     or\
                  key == 'pathToFileVazoes' or key == 'pathToFileDadvaz'    or\
                  key == 'pathToPrevs'      or key =='pathToDownloadResults':
-                self.__dict__[key] = '/projetos/raizen-power-trading-estudos-middle/api_prospec/' + str(re.sub(r"\s+", "", argv[i][1], flags=re.UNICODE))  
+                self.__dict__[key] = '/projetos/estudos-middle/api_prospec/' + str(re.sub(r"\s+", "", argv[i][1], flags=re.UNICODE))  
 
             elif key == 'pathToDownloadNWLISTOP':
                 self.__dict__[key] =  str(re.sub(r"\s+", "", argv[i][1], flags=re.UNICODE))  

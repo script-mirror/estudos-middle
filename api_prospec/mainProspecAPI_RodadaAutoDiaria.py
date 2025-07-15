@@ -4,7 +4,7 @@ from datetime import datetime
 import atualizaearm
 
 def main(parametros):
-    config = readConfig('/projetos/raizen-power-trading-estudos-middle/api_prospec/config_api/config.csv') 
+    config = readConfig('/projetos/estudos-middle/api_prospec/config_api/config.csv') 
     data = datetime.today()
 
     print(''); print('')
@@ -81,7 +81,7 @@ def main(parametros):
             config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts1Rv
             config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate1Rv
 
-        config.pathToDownloadCompilado  = '/projetos/raizen-power-trading-estudos-middle/backtest_decomp/input/raizen_prospec/' 
+        config.pathToDownloadCompilado  = '/projetos/estudos-middle/backtest_decomp/input/raizen_prospec/' 
 
         # Gera o arquivo de EA inicial
         status =  True

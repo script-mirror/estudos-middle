@@ -5,7 +5,7 @@ import pandas as pd
 import codecs
 from informacao_blocos import info_blocos
 
-ABS_PATH = '/projetos/raizen-power-trading-estudos-middle/decomp/manipula_decomp'
+ABS_PATH = '/projetos/estudos-middle/decomp/manipula_decomp'
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
