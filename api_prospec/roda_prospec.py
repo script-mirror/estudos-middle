@@ -2,9 +2,14 @@ from functionsProspecAPI import readConfig
 from createStudyProspecAPI import run_VE, downloadResultados, runBackTeste
 from datetime import datetime
 import atualizaearm
+import os
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
+PATH_ARQUIVOS = os.getenv('PATH_ARQUIVOS', '/projetos/arquivos')
+PATH_PROJETOS = os.getenv('PATH_PROJETOS', '/projetos')
 def main(parametros):
-    config = readConfig('/projetos/estudos-middle/api_prospec/config_api/config.csv') 
+    config = readConfig(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec/config_api/config.csv")) 
     data = datetime.today()
 
     print(''); print('')
