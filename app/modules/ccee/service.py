@@ -48,6 +48,7 @@ class CceeService():
         df['tipo_cvu'] = tipo_cvu.value.replace(
             '_revisado', ''
         )
+        df['fonte'] = "CCEE_" + tipo_cvu.value
         return df
 
     async def get_cvu_from_csv(
