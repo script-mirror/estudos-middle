@@ -14,7 +14,7 @@ def getNextFriday(data):
         dataReturn = data + timedelta(days= 12 - data.isoweekday())
     return dataReturn
 
-def copiaPrevsWxProspec(parametros, limparPasta):
+def copy_prevs_to_prospec(parametros, limparPasta):
     print('Copiando prevs Raizen para o a pasta do prospec')
     pathOutput    = parametros['path_out']
     pathPrevsPrel = parametros['path_prevs_prel']
@@ -86,7 +86,7 @@ def copiaPrevsWxProspec(parametros, limparPasta):
             sys.exit()    
     return listPrevs
  
-def copiaPrevsMultiRvsRaizenProspec(parametros, limparPasta ):
+def copy_all_internal_prevs(parametros, limparPasta ):
     print('Copiando prevs Raizen para o a pasta do prospec')
     pathOutput = parametros['path_output_encad']
     pathPrevsEncad = parametros['path_prevs_encad']

@@ -14,8 +14,8 @@ import pandas as pd
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
-usuario_pluvia = os.getenv('USER_PLUVIA')
-senha_pluvia = os.getenv('KEY_PLUVIA')
+API_PLUVIA_USERNAME = os.getenv('API_PLUVIA_USERNAME')
+API_PLUVIA_PASSWORD = os.getenv('API_PLUVIA_PASSWORD')
 
 
 def main(parametros):    
@@ -24,11 +24,11 @@ def main(parametros):
     print(''); print('')
     print ('--------------------------------------------------------------------------------#')
     print('#-API do Pluvia Iniciado: ' + str(datetime.now())[:19])
-    print('Usuário: ', usuario_pluvia)
+    print('Usuário: ', API_PLUVIA_USERNAME)
 
     path = pathlib.Path(os.getcwd())
 
-    folders = run(usuario_pluvia, senha_pluvia, path, parametros)
+    folders = run(API_PLUVIA_USERNAME, API_PLUVIA_PASSWORD, path, parametros)
     time.sleep(20)
     listPrevs = copiaPrevsProspec(path, folders, parametros)
     
