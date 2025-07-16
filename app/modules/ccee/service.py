@@ -49,6 +49,7 @@ class CceeService():
             '_revisado', ''
         )
         df['fonte'] = "CCEE_" + tipo_cvu.value
+        df['ano_horizonte'] = df['mes_referencia'][:4].astype(int)
         return df
 
     async def get_cvu_from_csv(
