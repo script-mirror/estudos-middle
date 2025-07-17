@@ -14,7 +14,7 @@ def getNextFriday(data):
         dataReturn = data + timedelta(days= 12 - data.isoweekday())
     return dataReturn
 
-def copiaPrevsWxProspec(parametros, limparPasta):
+def copy_prevs_to_prospec(parametros, limparPasta):
     print('Copiando prevs Raizen para o a pasta do prospec')
     pathOutput    = parametros['path_out']
     pathPrevsPrel = parametros['path_prevs_prel']
@@ -31,7 +31,7 @@ def copiaPrevsWxProspec(parametros, limparPasta):
                     print('Favor deletar manualmente o diretório: '+ pathOutput + '/' + pasta)
 
     for mes in range(int(data.month),int(data.month + 3)):
-        if os.path.exists (pathOutput + str(mes)) == False: os.mkdir (pathOutput + str(mes))
+        os.makedirs(os.path.join(pathOutput,str(mes)), exist_ok=True)
 
     listaPrevPreliminar = []
     listaPrevDefinitivo = []
@@ -51,7 +51,8 @@ def copiaPrevsWxProspec(parametros, limparPasta):
         print('Não foi encontrado nenhum prevs definitivo')
     if len (listaPrevDefinitivo) > 0:
         for prevs in listaPrevDefinitivo:
-            if os.path.exists (pathOutput + str(getNextFriday(data).month) +'/prevs.rv' + prevs[len(prevs)-1:len(prevs)]) == False:
+            path_output_mes = pathOutput + '/' + str(getNextFriday(data).month)
+            if os.path.exists (path_output_mes+'/prevs.rv' + prevs[len(prevs)-1:len(prevs)]) == False:
                 os.rename(pathPrevsDef + '/' + prevs, pathOutput + str(getNextFriday(data).month) + '/prevs.rv'+ prevs[len(prevs)-1:len(prevs)])
                 listPrevs.append(prevs[0:len(prevs)-4] +'_raizen')
                 print(prevs + ' impresso em ' + pathOutput + str(getNextFriday(data).month) + '/prevs.rv'+ prevs[len(prevs)-1:len(prevs)])
@@ -86,7 +87,7 @@ def copiaPrevsWxProspec(parametros, limparPasta):
             sys.exit()    
     return listPrevs
  
-def copiaPrevsMultiRvsRaizenProspec(parametros, limparPasta ):
+def copy_all_internal_prevs(parametros, limparPasta ):
     print('Copiando prevs Raizen para o a pasta do prospec')
     pathOutput = parametros['path_output_encad']
     pathPrevsEncad = parametros['path_prevs_encad']
@@ -104,7 +105,7 @@ def copiaPrevsMultiRvsRaizenProspec(parametros, limparPasta ):
     for mes in range(int(data.month),int(data.month + 5)):
         mesAux = mes
         if mes > 12:  mesAux = mes-12
-        if os.path.exists (pathOutput + str(mesAux)) == False: os.mkdir (pathOutput + str(mesAux))
+        os.makedirs(os.path.join(pathOutput,str(mesAux)), exist_ok=True)
 
     def copiaPrevs(pathPrevs):
   
