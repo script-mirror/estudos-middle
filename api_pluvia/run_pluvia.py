@@ -3,20 +3,25 @@ from functionsPluviaAPI import *
 from requestsPluviaAPI import authenticatePluvia
 from datetime import datetime, timedelta
 import pathlib
+import shutil
 import zipfile
 import copy
-import re
 import sys
 import time
 import os
-import pdb
+from os import path
 import pandas as pd
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 API_PLUVIA_USERNAME = os.getenv('API_PLUVIA_USERNAME')
 API_PLUVIA_PASSWORD = os.getenv('API_PLUVIA_PASSWORD')
+PATH_PREVS_PLUVIA   = pathlib.Path(os.path.join(os.getenv('PATH_ARQUIVOS'),'pluvia'))
+PATH_PREVS_PROSPEC  = pathlib.Path(os.getenv('PATH_PREVS_PROSPEC'))
 
+# Cria diretórios se não existirem
+os.makedirs(PATH_PREVS_PLUVIA, exist_ok=True)
+os.makedirs(PATH_PREVS_PROSPEC, exist_ok=True)
 
 def main(parametros):    
 
@@ -58,9 +63,9 @@ def run(username,password, path, parametros):
     preliminary              = 'Definitiva' 
     years                    = [data.year]
     members                  = parametros['membros']
-    pathResult               = path.joinpath('/projetos/estudos-middle/api_pluvia/resultados')
-    #pathResult               = path.joinpath('')
-    pathForecastDay          = pathResult.joinpath(data.strftime('%Y-%m-%d'))    
+    #PATH_PREVS_PLUVIA               = path.joinpath('')
+    global PATH_FORECAST_DAY
+    PATH_FORECAST_DAY        =  pathlib.Path(os.path.join(PATH_PREVS_PLUVIA, data.strftime('%Y-%m-%d'))) 
     nTentarivas              = 10
     pathFolders              = []
     cenario                  = parametros['cenario']
@@ -145,27 +150,27 @@ def run(username,password, path, parametros):
     print('Parametros: ',parametros) 
     print('')
 
-    if not pathResult.exists():
+    if not PATH_PREVS_PLUVIA.exists():
         try:
-            pathlib.Path.mkdir(pathResult)
+            pathlib.Path.mkdir(PATH_PREVS_PLUVIA)
         except:
-            print(pathResult)
+            print(PATH_PREVS_PLUVIA)
             print('Falha em criar pasta de resultados')
             time.sleep(5)
             try:
-                pathlib.Path.mkdir(pathResult)
+                pathlib.Path.mkdir(PATH_PREVS_PLUVIA)
             except:
                 print('Nova falha em criar pasta de resultados')
                 return(5)
 
-    if not pathForecastDay.exists():
+    if not PATH_FORECAST_DAY.exists():
             try:
-                pathlib.Path.mkdir(pathForecastDay)
+                pathlib.Path.mkdir(PATH_FORECAST_DAY)
             except:
                 print('Falha em criar a pasta para salvar as previsões do dia')
                 time.sleep(1)
                 try:
-                    pathlib.Path.mkdir(pathForecastDay)
+                    pathlib.Path.mkdir(PATH_FORECAST_DAY)
                 except:
                     print('Falha em criar a pasta para salvar as previsões do dia')
                     return(1)
@@ -225,7 +230,7 @@ def run(username,password, path, parametros):
 
                 for dado in forecasts_in[0]['resultados']:
                     if dado['nome'] == 'Prevs':
-                        downloadForecast(dado['id'], pathForecastDay, forecast[0]['nome'] + '-' + forecast[0]['membro'] + '-Prevs.zip')
+                        downloadForecast(dado['id'], PATH_FORECAST_DAY, forecast[0]['nome'] + '-' + forecast[0]['membro'] + '-Prevs.zip')
                         pathFolders.append(forecast[0]['nome'] + '-' + forecast[0]['membro'] + '-Prevs.zip')
                     
                         if preliminary == 'Preliminar':
@@ -260,10 +265,9 @@ def copiaPrevsProspec(path, folders, parametros ):
     data = parametros['data']
     
     listPrevs = [] 
-    pathOutput      = '/projetos/estudos-middle/api_prospec/gerar_decks/prevs/all/'
-    pathResult      = path.joinpath('/projetos/estudos-middle/api_pluvia/resultados')
-    #pathOutput      = 'C:/Dev/API_Prospec/GerarDecks/PREVS/Pld1Click/ALL/'
-    pathForecastDay = pathResult.joinpath(data.strftime('20%y-%m-%d'))
+    pathOutput      = os.path.join(PATH_PREVS_PROSPEC ,'all')
+    os.makedirs(pathOutput, exist_ok=True)
+    PATH_FORECAST_DAY = PATH_PREVS_PLUVIA.joinpath(data.strftime('20%y-%m-%d'))
 
 
     for pasta in os.listdir(pathOutput):
@@ -287,9 +291,9 @@ def copiaPrevsProspec(path, folders, parametros ):
 
     for folder in folders:
         try:
-            ExtractFolder(pathForecastDay, pathForecastDay, folder)
+            ExtractFolder(PATH_FORECAST_DAY, PATH_FORECAST_DAY, folder)
             
-            pathInput = os.path.join(pathForecastDay ,folder[0:len(folder)-4])
+            pathInput = os.path.join(PATH_FORECAST_DAY ,folder[0:len(folder)-4])
             listaPrevs = os.listdir(pathInput)
             #print(listaPrevs)
             #del listaPrevs[0]
@@ -338,8 +342,7 @@ def copiaPrevsProspec(path, folders, parametros ):
         except:
             pass
 
-
-
+    shutil.rmtree(PATH_FORECAST_DAY, ignore_errors=True)       
     if len(listPrevs) == 0:
         print('Pluvia não encontrou nenhum mapa, por favor conferir processo!')
         if parametros['prevs'] != 'PREVS_PLUVIA_RAIZEN' and parametros['prevs'] != 'PREVS_PLUVIA_2_RV':

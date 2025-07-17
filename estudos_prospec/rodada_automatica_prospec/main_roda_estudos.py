@@ -2,6 +2,7 @@ import os
 import sys
 import pandas as pd
 from datetime import datetime, timedelta
+from pathlib import Path
 import time
 import pdb
 import random
@@ -41,17 +42,16 @@ def rodar(parametros):
     print (" ")
     print (" ")
 
-    # Inicializando paths. Se mudar origem do código, precisa mudar o path_base_files
-    
-    parametros['path_config_email'] = PATH_PROJETOS      / 'estudos-middle/estudos_prospec/rodada_automatica_prospec/input/Config/'
-    parametros['path_prevs_prel']   = PATH_PREVS_INTERNO / parametros['data'].strftime('%Y%m%d') +'/preliminar'
-    parametros['path_prevs_def']    = PATH_PREVS_INTERNO / parametros['data'].strftime('%Y%m%d') +'/teste'
-    parametros['path_prevs_encad']  = PATH_PREVS_INTERNO /  parametros['data'].strftime('%Y%m%d')    
-    parametros['path_output_encad'] = PATH_PREVS_PROSPEC / 'raizen_encad' 
-    parametros['path_out']          = PATH_PREVS_PROSPEC / 'all'
-    parametros['path_output_tok']   = PATH_PREVS_PROSPEC / 'TOK'
-    parametros['path_result']       = PATH_RESULTS_PROSPEC  
-    
+    # Criando os diretórios e armazenando os caminhos como Path no dicionário parametros
+    # Configurações de caminhos
+    parametros['path_config_email'] = create_directory(PATH_PROJETOS, 'estudos-middle/estudos_prospec/rodada_automatica_prospec/input/Config')
+    parametros['path_prevs_prel']   = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/preliminar")
+    parametros['path_prevs_def']    = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/teste")
+    parametros['path_prevs_encad']  = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}")
+    parametros['path_output_encad'] = create_directory(PATH_PREVS_PROSPEC, 'raizen_encad')
+    parametros['path_out']          = create_directory(PATH_PREVS_PROSPEC, 'all')
+    parametros['path_output_tok']   = create_directory(PATH_PREVS_PROSPEC, 'TOK')
+    parametros['path_result']       = create_directory(PATH_RESULTS_PROSPEC, '')
 
 
     # Argumentos necessarios para rodar
@@ -208,6 +208,12 @@ def rodar(parametros):
         send_email(parametros)
     return ['sucesso']
 
+    # Função para criar diretórios e retornar o caminho como Path
+def create_directory(base_path: str, sub_path: str) -> Path:
+        full_path = Path(base_path) / sub_path
+        full_path.mkdir(parents=True, exist_ok=True)
+        return full_path
+    
 def send_email(parametros):
     print ("#-Iniciando processo de envio de e-mail------------------------------------#")  
       

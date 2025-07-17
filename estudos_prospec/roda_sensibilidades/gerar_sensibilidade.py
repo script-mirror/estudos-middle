@@ -10,7 +10,6 @@ import sys
 import zipfile
 import logging  # Already present, kept for clarity
 from dotenv import load_dotenv
-
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 API_PROSPEC_USERNAME:   str = os.getenv('API_PROSPEC_USERNAME')
@@ -18,23 +17,13 @@ API_PROSPEC_PASSWORD:   str = os.getenv('API_PROSPEC_PASSWORD')
 SERVER_DEFLATE_PROSPEC: str = os.getenv('SERVER_DEFLATE_PROSPEC')
 SEND_MAIL:              str = os.getenv('RUN_STUDY_PROSPEC')
 EMAIL_GILSEU:           str = os.getenv('USER_EMAIL_GILSEU')
-PATH_ARQUIVOS:          str = os.getenv('PATH_ARQUIVOS', '/projetos/arquivos')
-PATH_PROJETOS:          str = os.getenv('PATH_PROJETOS', '/projetos')
-ABS_PATH:               str = os.path.join(PATH_PROJETOS, "estudos-middle/estudos_prospec/roda_sensibilidades")
-ABS_PATH_LOG:           str = os.path.join(PATH_PROJETOS, 'estudos-middle/decomp/manipula_decomp/output/log/logging.log')
+PATH_ARQUIVOS:          str = os.getenv('PATH_ARQUIVOS')
+PATH_PROJETOS:          str = os.getenv('PATH_PROJETOS')
+ABS_PATH:               str = os.path.join(PATH_ARQUIVOS, "prospec/roda_sensibilidades")
+ABS_PATH_LOG:           str = os.path.join(ABS_PATH, 'log_sens.log')
 
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/"))
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/decomp/manipula_decomp"))
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/estudos_prospec/rodada_automatica_prospec"))
-
-from atualiza_decomp import process_decomp
-from functionsProspecAPI import *
-from main_roda_estudos import runWithParams
-from patamar_processor import read_patamar_carga, read_patamar_pq
-
-
-warnings.filterwarnings("ignore")  # Ignora todos os warnings
+global logger
+warnings.filterwarnings("ignore")  # Ignore all warnings
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -44,9 +33,28 @@ logging.basicConfig(
         logging.StreamHandler()  # Log to console
     ]
 )
-logger: logging.Logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
+from middle.decomp.atualiza_decomp import process_decomp 
+from middle.decomp import DecompParams
+from middle.decomp.patamar_processor import read_patamar_carga, read_patamar_pq
+
+# Cria diretórios se não existirem
+os.makedirs(ABS_PATH, exist_ok=True)
+
+sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/"))
+sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
+sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/estudos_prospec/rodada_automatica_prospec"))
+
+from functionsProspecAPI import *
+from main_roda_estudos import run_with_params
+
+
+def clear_log_file(log_file_path):
+    with open(log_file_path, 'w') as f:
+        f.truncate(0)
+        
 def criar_estudo(params: Dict[str, Any]) -> Any:
     logger.info("Creating study with params=%s", params)
     sys.argv = [
@@ -58,7 +66,7 @@ def criar_estudo(params: Dict[str, Any]) -> Any:
         'executar_estudo', '0',
         'nome_estudo', str(params['case'])
     ]
-    result = runWithParams()
+    result = run_with_params()
     logger.info("Study created with id=%s", result)
     return result
 
@@ -118,11 +126,12 @@ def start_study(params: Dict[str, Any]) -> None:
     idServer: Any = getIdOfServer(SERVER_DEFLATE_PROSPEC)
     idQueue: Any = getIdOfFirstQueueOfServer(SERVER_DEFLATE_PROSPEC)
     logger.debug("Server ID=%s, Queue ID=%s", idServer, idQueue)
-
-    prospecStudy: Any = sendFileToDeck(params['id_estudo'], str(info['Decks'][0]['Id']), params['output_path'], params['arquivo'])
-    logger.info("Sent file to deck: study_id=%s, deck_id=%s, file=%s", params['id_estudo'], info['Decks'][0]['Id'], params['output_path'])
+    pat_dadger = os.path.join(params['output_path'], params['arquivo'])
+    
+    prospecStudy: Any = sendFileToDeck(params['id_estudo'], str(info['Decks'][0]['Id']), pat_dadger, params['arquivo'])
+    logger.info("Sent file to deck: study_id=%s, deck_id=%s, file=%s", params['id_estudo'], info['Decks'][0]['Id'], pat_dadger)
     time.sleep(5)  # Wait for the file to be processed
-    sendFileToDeck(params['id_estudo'], str(info['Decks'][0]['Id']), ABS_PATH_LOG, 'logging.log')
+    sendFileToDeck(params['id_estudo'], str(info['Decks'][0]['Id']), ABS_PATH_LOG, 'log_sens.log')
 
     runExecution(params['id_estudo'], idServer, idQueue, idNEWAVEJson, idDECOMPJson, idDESSEMJson, SERVER_DEFLATE_PROSPEC, 0, 3, 3, 2)
     logger.info("Study execution started")
@@ -158,47 +167,56 @@ def gerar_estudo_prospec(params: Dict[str, Any]) -> Dict[str, Any]:
     caminhos, arquivos = get_path_dadger(input_dir + '/decomp.zip')
     logger.debug("Dadger files: %s", arquivos)
     
-    params['arquivo'] = arquivos[0]
-    params['dadger_path'] = caminhos[0]
-    params['output_path'] = os.path.abspath(os.path.join(output_dir, arquivos[0]))
-    params['id_estudo'] = id_estudo
-    params['pq_load_level'] =  read_patamar_pq( ABS_PATH +  '/input/patamar/patamar.dat')
+    params['arquivo']         = arquivos[0]
+    params['dadger_path']     = caminhos[0]
+    params['output_path']     = os.path.abspath(output_dir)
+    params['id_estudo']       = id_estudo
+    params['pq_load_level']   =  read_patamar_pq( ABS_PATH +  '/input/patamar/patamar.dat')
     params['load_level_data'] =  read_patamar_carga( ABS_PATH +  '/input/patamar/patamar.dat')
 
     return params
 
 
 def run_with_parms() -> None:
-    logger.info("Date=%s", datetime.now())
+    
     params: Dict[str, Any] = {}
-    argumentos: str = sys.argv[1]
+    #argumentos: str = sys.argv[1]
+    argumentos = "{'BASE': {'dp': {'carga': {'1': {'1': 0}, 'absoluto': 0}}}, 'CARGA-SE(-100)': {'dp': {'carga': {'1': {'1': -100}, 'absoluto': 0}}}, 'mapa': 'ONS'}"
+    params['sensibilidades']: Dict[str, Any] = eval(argumentos)
     print (argumentos)
     print(eval(argumentos))
-    params['sensibilidades']: Dict[str, Any] = eval(argumentos)
-    logger.debug("Parsed parameters: %s", params['sensibilidades'])
-    print(" ")
-    print(" ")
-    print(" ")
-    print(params['sensibilidades'])
-  
-    # Set default values for parameters  
+
+      # Set default values for parameters  
     params['mapa']: str = 'ONS_Pluvia'
     
     # If 'mapa' is provided in sensitivities, use it
     if 'mapa'in params['sensibilidades']:
         params['mapa'] = params['sensibilidades']['mapa']
         del params['sensibilidades']['mapa']
+        
+    sensibilidades = params['sensibilidades']
+    del params['sensibilidades']
     
     id_prospec_list: List[Any] = [] 
     # Loop through each sensitivity case 
-    for sensitivity, sensitivity_df in params['sensibilidades'].items():
+    for sensitivity, sensitivity_df in sensibilidades.items():
+        
+        clear_log_file(ABS_PATH_LOG)
+        
+        params['logger']  = logger   
+        logger.debug("Parsed parameters: %s", sensitivity_df)
+        print(" ")
+        print(" ")
+        print(" ")
+        print(sensibilidades)
+        logger.info("Date=%s", datetime.now())        
         logger.info("Starting sensitivity analysis with params=%s", params)
         params['case']: str = sensitivity
         params = gerar_estudo_prospec(params)
 
         id_prospec_list.append(params['id_estudo'])
 
-        process_decomp(copy.deepcopy( params), sensitivity_df)    
+        process_decomp(copy.deepcopy( DecompParams(**params)), sensitivity_df)    
         start_study(params)
 
     logger.info("Waiting 10 minutes before sending email")

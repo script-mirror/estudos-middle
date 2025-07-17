@@ -19,11 +19,11 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), '.env'))
 
-PATH_ARQUIVOS: str = os.getenv('PATH_ARQUIVOS', '/projetos/arquivos')
-PATH_PROJETOS: str = os.getenv('PATH_PROJETOS', '/projetos')
+PATH_ARQUIVOS: str = os.makedirs(os.getenv('PATH_ARQUIVOS', '/projetos/arquivos'),exist_ok=True)
+PATH_PROJETOS: str = os.makedirs(os.getenv('PATH_PROJETOS', '/projetos'),exist_ok=True)
+PATH_BASE:     str = os.makedirs(os.path.join(PATH_ARQUIVOS, 'decomp', 'backtest_decomp'),exist_ok=True)
 NUN_GILSEU:    str = os.getenv('NUN_GILSEU')
 EMAIL_GILSEU:  str = os.getenv('USER_EMAIL_GILSEU')
-BASE_PATH:     str = os.path.join(PATH_ARQUIVOS, 'decomp', 'backtest_decomp')
 SEND_MAIL:     str = os.getenv('RUN_STUDY_PROSPEC')
 
 sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
@@ -31,12 +31,12 @@ import roda_prospec
 
 # Constants
 PATH_CONFIG: Dict[str, str] = {
-    'output_decks': os.path.join(BASE_PATH, 'output/decks'),
-    'output_ct': os.path.join(BASE_PATH, f'output/saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
-    'oficial_decomp': os.path.join(BASE_PATH, 'input/oficial/decomp'),
-    'raizen_decomp': os.path.join(BASE_PATH, 'input/raizen/decomp'),
-    'raizen_prospec_decomp': os.path.join(BASE_PATH, 'input/raizenProspec/decomp'),
-    'oficial_decomp_zip': os.path.join(PATH_ARQUIVOS, 'decomp', 'ons')
+    'output_decks':          os.makedirs(os.path.join(PATH_BASE, 'output/decks'),exist_ok=True),
+    'output_ct':             os.path.join(os.makedirs(PATH_BASE/'output',exist_ok=True), f'saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
+    'oficial_decomp':        os.makedirs(os.path.join(PATH_BASE, 'input/oficial/decomp'),exist_ok=True),
+    'raizen_decomp':         os.makedirs(os.path.join(PATH_BASE, 'input/raizen/decomp'),exist_ok=True),
+    'raizen_prospec_decomp': os.makedirs(os.path.join(PATH_BASE, 'input/raizenProspec/decomp'),exist_ok=True),
+    'oficial_decomp_zip':    os.makedirs(os.path.join(PATH_ARQUIVOS, 'decomp', 'ons'), exist_ok=True)
 }
 
 FILES_TO_COPY: List[str] = ['caso.dat', 'hidr.dat', 'mlt.dat', 'perdas.dat', 'polinjus.csv', 'indices.csv']

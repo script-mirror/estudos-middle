@@ -1,7 +1,7 @@
 from functionsProspecAPI import readConfig
 from createStudyProspecAPI import run_VE, downloadResultados, runBackTeste
 from datetime import datetime
-import atualizaearm
+import atualiza_ear
 import os
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))

@@ -31,7 +31,7 @@ def copy_prevs_to_prospec(parametros, limparPasta):
                     print('Favor deletar manualmente o diretório: '+ pathOutput + '/' + pasta)
 
     for mes in range(int(data.month),int(data.month + 3)):
-        if os.path.exists (pathOutput + str(mes)) == False: os.mkdir (pathOutput + str(mes))
+        os.makedirs(os.path.join(pathOutput,str(mes)), exist_ok=True)
 
     listaPrevPreliminar = []
     listaPrevDefinitivo = []
@@ -51,7 +51,8 @@ def copy_prevs_to_prospec(parametros, limparPasta):
         print('Não foi encontrado nenhum prevs definitivo')
     if len (listaPrevDefinitivo) > 0:
         for prevs in listaPrevDefinitivo:
-            if os.path.exists (pathOutput + str(getNextFriday(data).month) +'/prevs.rv' + prevs[len(prevs)-1:len(prevs)]) == False:
+            path_output_mes = pathOutput + '/' + str(getNextFriday(data).month)
+            if os.path.exists (path_output_mes+'/prevs.rv' + prevs[len(prevs)-1:len(prevs)]) == False:
                 os.rename(pathPrevsDef + '/' + prevs, pathOutput + str(getNextFriday(data).month) + '/prevs.rv'+ prevs[len(prevs)-1:len(prevs)])
                 listPrevs.append(prevs[0:len(prevs)-4] +'_raizen')
                 print(prevs + ' impresso em ' + pathOutput + str(getNextFriday(data).month) + '/prevs.rv'+ prevs[len(prevs)-1:len(prevs)])
@@ -104,7 +105,7 @@ def copy_all_internal_prevs(parametros, limparPasta ):
     for mes in range(int(data.month),int(data.month + 5)):
         mesAux = mes
         if mes > 12:  mesAux = mes-12
-        if os.path.exists (pathOutput + str(mesAux)) == False: os.mkdir (pathOutput + str(mesAux))
+        os.makedirs(os.path.join(pathOutput,str(mesAux)), exist_ok=True)
 
     def copiaPrevs(pathPrevs):
   
