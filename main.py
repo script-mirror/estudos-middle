@@ -23,7 +23,7 @@ app.include_router(
     ccee_router,
     prefix=settings.app_prefix,
     dependencies=[
-        Depends(auth_scheme),
-        Depends(cognito.auth_required),
+        # Depends(auth_scheme),
+        # Depends(cognito.auth_required),
     ]
 )

@@ -35,7 +35,7 @@ class CceeService():
             "cvu_cf": "vl_cvu_cf",
             "cvu_scf": "vl_cvu_scf",
             "cvu_conjuntural": "vl_cvu",
-            "cvu_estruturaç": "vl_cvu",
+            "cvu_estrutural": "vl_cvu",
             "codigo_modelo_preco": "cd_usina"
         }
         df.rename(
@@ -50,6 +50,7 @@ class CceeService():
         )
         df['fonte'] = "CCEE_" + tipo_cvu.value
         df['ano_horizonte'] = df['mes_referencia'].astype(str).str[:4]
+
         return df
 
     async def get_cvu_from_csv(
