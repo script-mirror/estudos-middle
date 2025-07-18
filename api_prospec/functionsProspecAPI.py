@@ -76,6 +76,9 @@ def getIdOfNEWAVE(version):
 # Get list of DECOMPs | Obter lista de DECOMPs
 # -----------------------------------------------------------------------------
 
+def getStudiesByTag(tags):
+    return getInfoFromAPI(token, '/api/v2/prospectiveStudies/',  tags)
+
 
 def getListOfDECOMPs():
     return getInfoFromAPI(token, '/api/CepelModels/Decomps')
@@ -922,15 +925,15 @@ class Config(object):
         
     def setup(self):
         self.sendPREVS              = False
-        self.sendAllPREVStoDeck     = False
+        self.sendAllPREVStoDeck     = True
         self.sendAllPREVStoStudy    = False
-        self.waitToFinish           = False
+        self.waitToFinish           = True
         self.dowloadDecks           = False
         self.createWithGeneration   = False
         self.abortStudy             = False
-        self.downloadCompilation    = False
+        self.downloadCompilation    = True
         self.downloadResultFile     = False
-        self.associateDecks         = False
+        self.associateDecks         = True
         self.sendFileToStudy        = False
         self.sendVolume             = False
         self.sendDadvaz             = False
@@ -963,8 +966,8 @@ class Config(object):
         self.nameFileDessem         = ''
         self.nameFileDecomp         = ''
         self.nameFileNewave         = ''
-        self.infeasibilityHandlingSensibility = 2
-        self.maxRestarts                      = 1
+        self.infeasibilityHandlingSensibility = 3
+        self.maxRestarts                      = 3
         self.infeasibilityHandling            = 3
         self.prospecStudyIdToDuplicate        = ''
         self.prospecStudyIdToDuplicate2Rv     = ''

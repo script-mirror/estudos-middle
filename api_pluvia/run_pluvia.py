@@ -265,13 +265,13 @@ def copiaPrevsProspec(path, folders, parametros ):
     data = parametros['data']
     
     listPrevs = [] 
-    pathOutput      = os.path.join(PATH_PREVS_PROSPEC ,'all')
+    pathOutput      = os.path.join(PATH_PREVS_PROSPEC ,'all/')
     os.makedirs(pathOutput, exist_ok=True)
     PATH_FORECAST_DAY = PATH_PREVS_PLUVIA.joinpath(data.strftime('20%y-%m-%d'))
 
 
     for pasta in os.listdir(pathOutput):
-        pathOutput2 = pathOutput + '/' + pasta
+        pathOutput2 = pathOutput  + pasta
         for arquivos in os.listdir(pathOutput2): 
             try: os.remove(pathOutput2 + '/' + arquivos) 
             except: (print('Não foi possivel excluir o aqruivo: ' + pathOutput2 + '/' + arquivos))
@@ -280,9 +280,9 @@ def copiaPrevsProspec(path, folders, parametros ):
 
     for mes in range(int(data.month),int(data.month + 3)):
         if mes < 13:
-            pathOutput2 = pathOutput + str(mes)
+            pathOutput2 = pathOutput  + str(mes)
         else:
-            pathOutput2 = pathOutput + str(mes-12)
+            pathOutput2 = pathOutput  + str(mes-12)
 
         if os.path.exists (pathOutput2) == False: os.mkdir (pathOutput2)
         for arquivos in os.listdir(pathOutput2): 
