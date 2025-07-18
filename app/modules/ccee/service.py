@@ -49,6 +49,10 @@ class CceeService():
             '_revisado', ''
         )
         df['fonte'] = "CCEE_" + tipo_cvu.value
+        
+        if 'ano_horizonte' not in df.columns or df['ano_horizonte'].isnull().all():
+            df['ano_horizonte'] = df['mes_referencia'].astype(str).str[:4]
+        
 
         return df
 
