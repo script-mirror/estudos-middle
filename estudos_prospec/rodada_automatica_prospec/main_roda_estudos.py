@@ -21,6 +21,7 @@ USER_EMAIL_GILSEU:    str = os.getenv('USER_EMAIL_GILSEU')
 USER_EMAIL_CELSO:     str = os.getenv('USER_EMAIL_CELSO')
 RUN_GERAR_PRODUTO:    str = os.getenv('RUN_GERAR_PRODUTO')
 
+
 sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
 sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_pluvia"))
 

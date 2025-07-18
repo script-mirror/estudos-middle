@@ -3,52 +3,71 @@ from datetime import datetime
 import calendar
 import sys
 from functionsProspecAPI import *
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+
+API_PROSPEC_USERNAME:   str = os.getenv('API_PROSPEC_USERNAME')
+API_PROSPEC_PASSWORD:   str = os.getenv('API_PROSPEC_PASSWORD')
+SERVER_DEFLATE_PROSPEC: str = os.getenv('SERVER_DEFLATE_PROSPEC')
+SEND_MAIL:              str = os.getenv('RUN_STUDY_PROSPEC')
+EMAIL_GILSEU:           str = os.getenv('USER_EMAIL_GILSEU')
+PATH_ARQUIVOS:          str = os.getenv('PATH_ARQUIVOS')
+PATH_PROJETOS:          str = os.getenv('PATH_PROJETOS')
+PATH_PREVS_PROSPEC:     str = os.getenv('PATH_PREVS_PROSPEC')
+PATH_RESULTS_PROSPEC:   str = os.getenv('PATH_RESULTS_PROSPEC')
+PATH_PREVS_INTERNO:     str = os.getenv('PATH_PREVS_INTERNO')
+PATH_ALL_PREVS = PATH_PREVS_PROSPEC + '/all/'
+PATH_VOLUME = PATH_PROJETOS + '/estudos-middle/api_prospec/calculo_volume'
 
 def run_VE(config):
  
     date  = datetime.today()
     time_sleep = 600
     # First step is to authenticate | Primeiro passo é autenticar
-    print('Nome do usuário: ', config.username) 
+    print('Nome do usuário: ', API_PROSPEC_USERNAME) 
 
-    #print('Senha do usuário: ', config.password)
-    authenticateProspec(config.username, config.password)
+    #print('Senha do usuário: ', API_PROSPEC_PASSWORD)
+    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
 
     # Get number of total requests | Buscar quantidade de requests já usados
 
 
     # Get Ids of interest | Buscar Ids de interesse
 
-    idNEWAVE = {2024: getIdOfNEWAVE(config.newaveVersion2023), 2025: getIdOfNEWAVE('30.0.4')}
-    idDECOMP = {2024: getIdOfDECOMP(config.decompVersion2023), 2025: getIdOfDECOMP('32.0.1')}
-    idDESSEM = {2024: getIdOfDESSEM(config.dessemVersion), 2025: getIdOfDESSEM(config.dessemVersion)}
-    idServer = getIdOfServer(config.serverName)
-    idQueue  = getIdOfFirstQueueOfServer(config.serverName)
+    idNEWAVE = {2024: getIdOfNEWAVE('30.0.4'), 2025: getIdOfNEWAVE('30.0.4')}
+    idDECOMP = {2024: getIdOfDECOMP('32.0.1'), 2025: getIdOfDECOMP('32.0.1')}
+    idDESSEM = {2024: getIdOfDESSEM(''), 2025: getIdOfDESSEM('')}
+    idServer = getIdOfServer(SERVER_DEFLATE_PROSPEC)
+    idQueue  = getIdOfFirstQueueOfServer(SERVER_DEFLATE_PROSPEC)
 
     if config.prospecStudyIdToDuplicate != '':
 
         # Duplicate Study | Duplicar um estudo
         tags = []  
-        tags.append(['Duplicate of Study Id ' + config.prospecStudyIdToDuplicate, 'red', 'white'])
-        tags.append([str(date.year)+str(date.month).zfill(2)+'_API', 'white', 'black'])
+        tags.append(['DUP-FROM: ' + config.prospecStudyIdToDuplicate, 'black', 'white'])
+        tags.append(['FCF-FROM: ' + str(config.prospecStudyIdToAssociateCuts), 'black', 'white'])
+        tags.append(['EAR-FROM: ' + str(config.prospecStudyIdToAssociateVolumes), 'black', 'white'])
+        tags.append(['EAR', 'white', 'white'])
 
         prospecStudyId = duplicateStudy(config.prospecStudyIdToDuplicate,
                                         config.studyName + '_'+ str(date.day)+ '/'+ str(date.month) + '-'+ str(date.hour) + ':'+ str(date.minute) + 'h',                                        
                                         'Rodada Automatica',  tags, 2,1,1)
+        
+    prospecStudy = getInfoFromStudy(prospecStudyId)
+    listOfDecks  = prospecStudy['Decks']
+    
     # Send prevs files to each deck | Enviar arquivo prevs para cada deck
-    print(config.pathToAllPrevs)
+
     if config.sendAllPREVStoStudy:
-        sendAllPrevsToStudy(prospecStudyId, config.pathToAllPrevs)
+        sendAllPrevsToStudy(prospecStudyId, PATH_ALL_PREVS)
 
     elif config.sendAllPREVStoDeck:
-        sendAllPrevsToEachDeck(prospecStudyId, config.pathToPrevs)
+        sendAllPrevsToEachDeck(prospecStudyId, PATH_ALL_PREVS)
 
     elif config.sendPREVS:
-        sendPrevsToStudy(prospecStudyId, config.pathToPrevs)
+        sendPrevsToStudy(prospecStudyId, PATH_ALL_PREVS)
 
     if config.sendVolume:
-        prospecStudy        = getInfoFromStudy(prospecStudyId)
-        listOfDecks         = prospecStudy['Decks']
         previousStage       = []
         destinationVolumeId = []
 
@@ -56,28 +75,14 @@ def run_VE(config):
            if deck['Model'] == 'DECOMP':
                 destinationVolumeId.append(deck['Id'])
 
-        sendFileToDeck(prospecStudyId, destinationVolumeId[0], config.pathToFileVolume + '/volume_uhe.csv', 'volume_uhe.csv')
+        sendFileToDeck(prospecStudyId, destinationVolumeId[0], PATH_VOLUME + '/volume_uhe.csv', 'volume_uhe.csv')
     
-    if config.sendFileVazoes:
-        prospecStudy        = getInfoFromStudy(prospecStudyId)
-        listOfDecks         = prospecStudy['Decks']
-        previousStage       = []
-        destinationVazoesId = []
-
-        for deck in listOfDecks:
-           if deck['Model'] == 'DECOMP':
-                destinationVazoesId.append(deck['Id'])
-
-        sendVazoesToDeck(prospecStudyId, destinationVazoesId, config.pathToFileVazoes)  
-
     # Download decks | Download decks
     if config.dowloadDecks:
-        downloadDecksOfStudy(prospecStudyId, config.pathToDownloadDecks  + '/', 'CompleteStudy.zip')
+        downloadDecksOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC + '/', 'CompleteStudy.zip')
 
     # Associate Cuts and Volumes/GNL | Reaproveitar Cortes e Volumes/GNL
     if config.associateDecks:
-        prospecStudy          = getInfoFromStudy(prospecStudyId)
-        listOfDecks           = prospecStudy['Decks']
         destinationCortesId   = []
         previousStage         = []
         destinationVolumeId   = []
@@ -117,13 +122,13 @@ def run_VE(config):
     if config.startStudy:
         initialStatus = studyStatus
         if studyStatus != 'Executing':
-            if config.serverName == '':
+            if SERVER_DEFLATE_PROSPEC == '':
                 runExecution(prospecStudyId, idServer,
                          idQueue,idNEWAVE, idDECOMP, idDESSEM, '', 0, config.infeasibilityHandling,
                          config.infeasibilityHandlingSensibility, config.maxRestarts)
             else:
                 runExecution(prospecStudyId, idServer,
-                         idQueue,idNEWAVE, idDECOMP, idDESSEM, config.serverName, 0, config.infeasibilityHandling,
+                         idQueue,idNEWAVE, idDECOMP, idDESSEM, SERVER_DEFLATE_PROSPEC, 0, config.infeasibilityHandling,
                          config.infeasibilityHandlingSensibility, config.maxRestarts)
 
     # Wait Execution to Finish | Aguardar execução terminar
@@ -178,22 +183,18 @@ def run_VE(config):
             # Dowload Compilation | Download da compilação de resultados
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, config.pathToDownloadResults,
+            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC,
                                'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
             print('Compilado baixado com sucesso')
         
         if config.downloadDadger:
             print('Iniciando download do Dadger')
-            try:
-                prospecStudy = getInfoFromStudy(prospecStudyId)
-                listOfDecks = prospecStudy['Decks']
-            
+            try:         
                 for deck in listOfDecks:
                     if deck['Model'] == 'DECOMP':
-                        fileNameDownload = deck['FileName']
                         arrayOfFiles = ['dadger.rv'+str(deck['Revision']), 'dadgnl.rv'+str(deck['Revision']), 'vazoes.rv'+str(deck['Revision'])]
                         try:
-                            downloadFileFromDeckV2(deck['Id'],config.pathToDownloadCompilado + 'decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
+                            downloadFileFromDeckV2(deck['Id'],PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
                             break
                         except:
                             pass
@@ -203,8 +204,6 @@ def run_VE(config):
                 print('Não foi possivel baixar o dadger')
 
             try:
-                prospecStudy = getInfoFromStudy(prospecStudyId)
-                listOfDecks = prospecStudy['Decks']
                 fileName = ''
                 idDeck  = 0
                 for deck in listOfDecks:
@@ -212,7 +211,7 @@ def run_VE(config):
                         print(deck)
                         fileName = deck['FileName']
                         idDeck   = deck['Id']
-                        downloadDeckOfStudy(prospecStudyId,idDeck, config.pathToDownloadCompilado + 'newave/', fileName)
+                        downloadDeckOfStudy(prospecStudyId,idDeck, PATH_RESULTS_PROSPEC + '/newave/', fileName)
                         break 
 
             except Exception as e:
@@ -220,7 +219,6 @@ def run_VE(config):
                 print('Não foi possivel baixar o NEWAVE')
         
               
-        prospecStudy = getInfoFromStudy(prospecStudyId)
         n_decks = 0
         for deck in prospecStudy['Decks']:
             if ((deck['Model'] == 'DECOMP') and (deck['SensibilityInfo'] == 'Original')):
@@ -235,15 +233,15 @@ def runBackTeste(config):
  
     date  = datetime.today()
 
-    print('Nome do usuário: ', config.username) 
+    print('Nome do usuário: ', API_PROSPEC_USERNAME) 
 
-    authenticateProspec(config.username, config.password)
+    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
 
     idNEWAVE = {2024: getIdOfNEWAVE(config.newaveVersion2023), 2025: getIdOfNEWAVE('30.0.4')}
     idDECOMP = {2024: getIdOfDECOMP(config.decompVersion2023), 2025: getIdOfDECOMP('32.0.1')}
     idDESSEM = {2024: getIdOfDESSEM(config.dessemVersion), 2025: getIdOfDESSEM(config.dessemVersion)}
-    idServer = getIdOfServer(config.serverName)
-    idQueue  = getIdOfFirstQueueOfServer(config.serverName)
+    idServer = getIdOfServer(SERVER_DEFLATE_PROSPEC)
+    idQueue  = getIdOfFirstQueueOfServer(SERVER_DEFLATE_PROSPEC)
 
     prospecStudyId = createStudy(config.studyName,
                                     'Back Test',
@@ -298,7 +296,7 @@ def runBackTeste(config):
     if config.startStudy:
         initialStatus = studyStatus
         if studyStatus != 'Executing':
-            if config.serverName == '':
+            if SERVER_DEFLATE_PROSPEC == '':
                 runExecution(prospecStudyId, idServer,
                          idQueue,idNEWAVE, idDECOMP, idDESSEM, '', 0, 1,
                          2, 2)
@@ -348,7 +346,7 @@ def runBackTeste(config):
             # Dowload Compilation | Download da compilação de resultados
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, config.pathToDownloadResults,
+            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC + '/',
                                'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
             time.sleep(10)
             print('Finalizado o  Download do compilado')
@@ -364,7 +362,7 @@ def downloadResultados(config, parametros):
 
     prospecStudyId = int(parametros['id_estudo'])
     # First step is to authenticate | Primeiro passo é autenticar
-    authenticateProspec(config.username, config.password)
+    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
     #time.sleep(60)
     studyStatus = getStatusFromStudy(prospecStudyId)
     #print(parametros['aguardar_fim'])
@@ -398,7 +396,7 @@ def downloadResultados(config, parametros):
         # Dowload Compilation | Download da compilação de resultados
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, config.pathToDownloadResults,
+            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC,
                                 'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
 
         if studyStatus == 'Failed' or studyStatus == 'Aborted':        
@@ -409,7 +407,7 @@ def downloadResultados(config, parametros):
     else:
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, config.pathToDownloadResults,
+            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC,
                                 'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
             print('Finalizado o  Download do compilado do estudo: ',prospecStudyId)
     prospecStudy = getInfoFromStudy(prospecStudyId)

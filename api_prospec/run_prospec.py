@@ -1,15 +1,20 @@
-from functionsProspecAPI import readConfig
-from createStudyProspecAPI import run_VE, downloadResultados, runBackTeste
+from functionsProspecAPI import  *
+from createStudyProspecAPI import *
+
 from datetime import datetime
 import atualiza_ear
 import os
+from datetime import datetime, date, timedelta
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 PATH_ARQUIVOS = os.getenv('PATH_ARQUIVOS', '/projetos/arquivos')
 PATH_PROJETOS = os.getenv('PATH_PROJETOS', '/projetos')
+API_PROSPEC_USERNAME:   str = os.getenv('API_PROSPEC_USERNAME')
+API_PROSPEC_PASSWORD:   str = os.getenv('API_PROSPEC_PASSWORD')
+
 def main(parametros):
-    config = readConfig(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec/config_api/config.csv")) 
+    config = Config()
     data = datetime.today()
 
     print(''); print('')
@@ -24,56 +29,19 @@ def main(parametros):
     
     elif parametros['back_teste'] == False:
 
-        config.serverName = 'm6i.24xlarge'
-        config.studyName  = (config.studyName + '__' + parametros['sensibilidade']).upper()  +'_Dia'
+
+        authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
+        config.prospecStudyIdToDuplicate        =  str(getStudiesByTag({'page':1, 'pageSize':1, 'tags':f"BASE-{parametros['rvs']}-RV"})['ProspectiveStudies'][0]['Id'])
+        config.prospecStudyIdToAssociateCuts    = [str(getStudiesByTag({'page':1, 'pageSize':1, 'tags':'FCF'})['ProspectiveStudies'][0]['Id'])]
+        config.prospecStudyIdToAssociateVolumes =  get_id_volumes()
+        
+        config.studyName  = get_study_name(config.prospecStudyIdToDuplicate )
+        config.studyName  = (config.studyName + '__' + parametros['sensibilidade']).upper()  +'_DIA'
         config.startStudy = parametros['executar_estudo']
         config.waitToFinish = parametros['aguardar_fim'] 
         
-        if parametros['rvs'] == 1:
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts1Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate1Rv
-
-        elif parametros['rvs'] == 2:
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts2Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate2Rv
-                
-        elif parametros['rvs'] == 3:
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts3Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate3Rv
-
-        elif parametros['rvs'] == 4:
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts4Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate4Rv
-
-        elif parametros['rvs'] == 5:
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts5Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate5Rv
-        
-        elif parametros['rvs'] == 6:
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts6Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate6Rv
-
-        
-        elif parametros['rvs'] == 7:
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts7Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate7Rv
-
-
-        elif parametros['rvs'] == 8:
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts8Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate8Rv
-
-        if parametros['prevs'] == 'PREVS_RAIZEN_ENCAD':
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts7Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate7Rv
-            config.pathToAllPrevs      = '/WX2TB/Documentos/fontes/PMO/API_Prospec/GerarDecks/PREVS/EncadRaizen'
-            config.pathToPrevs         = '/WX2TB/Documentos/fontes/PMO/API_Prospec/GerarDecks/PREVS/EncadRaizen'
-            config.studyName           = parametros['nomeEstudo']
-            config.waitToFinish        = parametros['waitToFinish']
-
         if parametros['prevs'] == 'PREVS_ONS_GRUPOS':
             config.studyName           =  'NW-DC_Agrupados__ONS-' + parametros['nomeEstudo'] 
-            config.serverName          = 'm5.24xlarge'
             config.waitToFinish        = parametros['waitToFinish']
         
         if parametros['prevs'] == 'PREVS_PLUVIA_2_RV':
@@ -83,15 +51,14 @@ def main(parametros):
             config.waitToFinish        = parametros['waitToFinish']
 
         if parametros['prevs'] == 'PREVS_PLUVIA_RAIZEN':
-            config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts1Rv
-            config.prospecStudyIdToDuplicate     = config.prospecStudyIdToDuplicate1Rv
+            config.prospecStudyIdToDuplicate  =  str(getStudiesByTag({'page':1, 'pageSize':1, 'tags':'BASE-1-RV'})['ProspectiveStudies'][0]['Id'])
 
         config.pathToDownloadCompilado  = '/projetos/estudos-middle/backtest_decomp/input/raizen_prospec/' 
 
         # Gera o arquivo de EA inicial
         status =  True
         if config.sendVolume: 
-            status = atualizaearm.main() 
+            status = atualiza_ear.main() 
         #   
         #print (vars(config))
         if status:
@@ -113,6 +80,21 @@ def main(parametros):
         config.nameFileDecomp                = parametros['deck']
         config.waitToFinish                  = parametros['waitToFinish']
         return runBackTeste(config)
+
+def get_id_volumes():
+    
+    estudos = getStudiesByTag({'page':1, 'pageSize':30, 'tags':'EAR'})
+        
+    for estudo in estudos['ProspectiveStudies']:
+        if estudo['Status'] == 'Concluído'and len(estudo['Decks']) > 2:
+            return str(estudo['Id'])
+
+def get_study_name(id):
+    prospecStudy = getInfoFromStudy(id)
+        
+    for deck in prospecStudy['Decks']:
+        if deck['Model']== 'DECOMP':
+            return 'DC' + str(deck['Year'])+str(deck['Month']).zfill(2)+'-RV'+str(deck['Revision'])
 
 if __name__ == '__main__':    
     main()
