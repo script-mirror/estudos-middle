@@ -181,7 +181,7 @@ def run_VE(config):
             # Dowload Compilation | Download da compilação de resultados
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC,
+            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC +'/',
                                'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
             print('Compilado baixado com sucesso')
         
@@ -394,7 +394,7 @@ def downloadResultados(config, parametros):
         # Dowload Compilation | Download da compilação de resultados
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC,
+            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC +'/',
                                 'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
 
         if studyStatus == 'Failed' or studyStatus == 'Aborted':        
@@ -405,7 +405,7 @@ def downloadResultados(config, parametros):
     else:
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC,
+            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC +'/',
                                 'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
             print('Finalizado o  Download do compilado do estudo: ',prospecStudyId)
     prospecStudy = getInfoFromStudy(prospecStudyId)
