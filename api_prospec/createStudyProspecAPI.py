@@ -9,9 +9,6 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 API_PROSPEC_USERNAME:   str = os.getenv('API_PROSPEC_USERNAME')
 API_PROSPEC_PASSWORD:   str = os.getenv('API_PROSPEC_PASSWORD')
 SERVER_DEFLATE_PROSPEC: str = os.getenv('SERVER_DEFLATE_PROSPEC')
-SEND_MAIL:              str = os.getenv('RUN_STUDY_PROSPEC')
-EMAIL_GILSEU:           str = os.getenv('USER_EMAIL_GILSEU')
-PATH_ARQUIVOS:          str = os.getenv('PATH_ARQUIVOS')
 PATH_PROJETOS:          str = os.getenv('PATH_PROJETOS')
 PATH_PREVS_PROSPEC:     str = os.getenv('PATH_PREVS_PROSPEC')
 PATH_RESULTS_PROSPEC:   str = os.getenv('PATH_RESULTS_PROSPEC')
@@ -237,9 +234,9 @@ def runBackTeste(config):
 
     authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
 
-    idNEWAVE = {2024: getIdOfNEWAVE(config.newaveVersion2023), 2025: getIdOfNEWAVE('30.0.4')}
-    idDECOMP = {2024: getIdOfDECOMP(config.decompVersion2023), 2025: getIdOfDECOMP('32.0.1')}
-    idDESSEM = {2024: getIdOfDESSEM(config.dessemVersion), 2025: getIdOfDESSEM(config.dessemVersion)}
+    idNEWAVE = {2024: getIdOfNEWAVE('30.0.4'), 2025: getIdOfNEWAVE('30.0.4')}
+    idDECOMP = {2024: getIdOfDECOMP('32.0.1'), 2025: getIdOfDECOMP('32.0.1')}
+    idDESSEM = {2024: getIdOfDESSEM(''), 2025: getIdOfDESSEM('')}
     idServer = getIdOfServer(SERVER_DEFLATE_PROSPEC)
     idQueue  = getIdOfFirstQueueOfServer(SERVER_DEFLATE_PROSPEC)
 

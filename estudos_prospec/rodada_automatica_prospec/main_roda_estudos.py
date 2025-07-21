@@ -235,7 +235,7 @@ def send_email(parametros):
             try:
                 parametros['id_estudo'] = int(id)  
                 parametros['prospec_out'] = run_prospec.main(parametros)
-                pathName.append(parametros['path_result']  + parametros['prospec_out'][0])
+                pathName.append(str(parametros['path_result']) +'/'+ parametros['prospec_out'][0])
                 nomesEstudos.append(parametros['prospec_out'][2])
                 n_rvs.append(parametros['prospec_out'][3])
                 id_estudos.append(id)
@@ -246,7 +246,7 @@ def send_email(parametros):
         parametros['n_rvs'] = str(max(n_rvs))
     else:
         for nome in parametros['path_name']:
-            pathName.append(parametros['path_result']  +  nome)
+            pathName.append(str(parametros['path_result']) +'/'+  +  nome)
     parametros['path_name'] = pathName
     if parametros['prevs_name'] == '':
         parametros['prevs_name'] = [nome.split('__')[len(nome.split('__'))-1].split('_Dia')[0] for nome in nomesEstudos]

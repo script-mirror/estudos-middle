@@ -935,7 +935,7 @@ class Config(object):
         self.downloadResultFile     = False
         self.associateDecks         = True
         self.sendFileToStudy        = False
-        self.sendVolume             = False
+        self.sendVolume             = True
         self.sendDadvaz             = False
         self.sendFileVazoes         = False
         self.downloadNWLISTOP       = False

@@ -15,7 +15,6 @@ API_PROSPEC_PASSWORD:   str = os.getenv('API_PROSPEC_PASSWORD')
 
 def main(parametros):
     config = Config()
-    data = datetime.today()
 
     print(''); print('')
     print ('--------------------------------------------------------------------------------#')
@@ -28,7 +27,6 @@ def main(parametros):
         return downloadResultados(config, parametros)
     
     elif parametros['back_teste'] == False:
-
 
         authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
         config.prospecStudyIdToDuplicate        =  str(getStudiesByTag({'page':1, 'pageSize':1, 'tags':f"BASE-{parametros['rvs']}-RV"})['ProspectiveStudies'][0]['Id'])
@@ -74,7 +72,8 @@ def main(parametros):
             return ['0', 'Failed']
 
     elif parametros['back_teste']:
-        config.prospecStudyIdToAssociateCuts = config.prospecStudyIdToAssociateCuts1Rv
+        authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
+        config.prospecStudyIdToAssociateCuts    = [str(getStudiesByTag({'page':1, 'pageSize':1, 'tags':'FCF'})['ProspectiveStudies'][0]['Id'])]
         config.studyName                     = parametros['deck'][:-4]
         config.pathToFile                    = parametros['path_deck']
         config.nameFileDecomp                = parametros['deck']

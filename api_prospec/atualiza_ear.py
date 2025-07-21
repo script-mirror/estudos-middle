@@ -20,7 +20,7 @@ class Paths:
     """Constantes para caminhos de diretórios."""
     BASE_PATH = Path(PATH_PROJETOS + '/estudos-middle')
     COD = BASE_PATH / 'api_prospec/calculo_volume'
-    RDH =  '/WX2TB/Documentos/fontes/PMO/monitora_ONS/plan_acomph_rdh'
+    RDH =  Path('/WX2TB/Documentos/fontes/PMO') / 'monitora_ONS/plan_acomph_rdh'
     OUTPUT = COD
 
 class VolumeUHEProcessor:
@@ -35,7 +35,7 @@ class VolumeUHEProcessor:
         date_str = (self.today - timedelta(days=days_back)).strftime('%d%b%Y')
         upper_filename = f'RDH_{date_str.upper()}.xlsx'
         lower_filename = f'rdh_{date_str.lower()}.xlsx'
-        #print(self.paths.RDH +'/'+ upper_filename)
+        print(self.paths.RDH +'/'+ upper_filename)
         if (self.paths.RDH +'/'+ upper_filename).exists():
             return self.paths.RDH +'/'+ upper_filename
         elif (self.paths.RDH +'/'+ lower_filename).exists():
