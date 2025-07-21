@@ -2,6 +2,7 @@ import time
 from datetime import datetime
 import calendar
 import sys
+import os
 from functionsProspecAPI import *
 from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))

@@ -270,7 +270,7 @@ def send_email(parametros):
     
     parametros['assunto_email'] = parametros['assunto_email'] + ' ' +parametros['n_rvs']+'_Rvs'
     parametros['corpo_email'] = parametros['corpo_email'] +  "<br/>"
-    #parametros['enviar_whats '] = 1
+    parametros['enviar_whats '] = "1"
     
     print("#Enviando os resultados por email-------------------------------------------#")
     cmd = (RUN_GERAR_PRODUTO + f" produto RESULTADOS_PROSPEC enviar_whats {parametros['enviar_whats']} "
