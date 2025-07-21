@@ -2,7 +2,7 @@ from functionsProspecAPI import  *
 from createStudyProspecAPI import *
 
 from datetime import datetime
-import atualiza_ear
+from atualiza_ear import gera_ear
 import os
 from datetime import datetime, date, timedelta
 from dotenv import load_dotenv
@@ -56,7 +56,7 @@ def main(parametros):
         # Gera o arquivo de EA inicial
         status =  True
         if config.sendVolume: 
-            status = atualiza_ear.main() 
+            status = gera_ear() 
         #   
         #print (vars(config))
         if status:

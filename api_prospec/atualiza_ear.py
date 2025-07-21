@@ -20,7 +20,7 @@ class Paths:
     """Constantes para caminhos de diretórios."""
     BASE_PATH = Path(PATH_PROJETOS + '/estudos-middle')
     COD = BASE_PATH / 'api_prospec/calculo_volume'
-    RDH =  Path('/WX2TB/Documentos/fontes/PMO') / 'monitora_ONS/plan_acomph_rdh'
+    RDH =  '/WX2TB/Documentos/fontes/PMO/monitora_ONS/plan_acomph_rdh'
     OUTPUT = COD
 
 class VolumeUHEProcessor:
@@ -252,7 +252,7 @@ class VolumeUHEProcessor:
                 n += 1
                 continue
             except Exception:
-                time.sleep(20)
+                time.sleep(5)
                 n += 1
         
         if n >= 10:
@@ -263,11 +263,12 @@ class VolumeUHEProcessor:
         rdh = self.process_rdh_data(n)
         return self.generate_volume_uhe(rdh, cadastro, n)
 
-def main():
+def gera_ear():
     """Função principal."""
+    print( 'aqui')
     processor = VolumeUHEProcessor()
     return processor.run()
 
 if __name__ == '__main__':
-    main()
+    gera_ear()
     
