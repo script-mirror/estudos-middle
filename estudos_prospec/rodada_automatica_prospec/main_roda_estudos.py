@@ -155,7 +155,6 @@ def rodar(parametros):
             parametros['path_config_email'] = parametros['path_config_email'] +'configEmail_1rv.csv'
             parametros['corpo_email']       = "Rodadas proxima revisão"
             parametros['path_name'], parametros['prevs_name'] = get_rodadas_email(parametros,(datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')) 
-            parametros['enviar_whats '] = 1
 
         elif parametros['prevs'] == 'PREVS_PLUVIA_2_RV':            
             parametros['path_config_email'] = parametros['path_config_email'] +'configEmail_Pconj.csv'
@@ -163,8 +162,6 @@ def rodar(parametros):
             parametros['corpo_email']       = "Ultimas rodadas utilizando o Prevs P. Conjunto"
             parametros['subir_banco']       = False
             parametros['path_name'], parametros['prevs_name'] = get_rodadas_email(parametros, (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d'))
-            if parametros["preliminar"] == 1 and parametros['prevs'] == 'PREVS_PLUVIA_2_RV':
-                parametros['enviar_whats '] = 1
         
         elif parametros['prevs'] == 'PREVS_PLUVIA_APR':                     
             parametros['path_name']     = [parametros['prospec_out'][0]]
@@ -173,7 +170,6 @@ def rodar(parametros):
             parametros['corpo_email']   = "Rodada utilizando o prevs com a precipitação agrupada"
             parametros['subir_banco']   = False
             parametros['list_email']     = f'["{USER_EMAIL_GILSEU}", "{USER_EMAIL_GILSEU}"]' 
-            parametros['enviar_whats '] = 1
         
         elif parametros['prevs']  == 'PREVS_NAO_CONSISTIDO':  
             parametros['path_name']     = [parametros['prospec_out'][0]]
@@ -270,7 +266,7 @@ def send_email(parametros):
     
     parametros['assunto_email'] = parametros['assunto_email'] + ' ' +parametros['n_rvs']+'_Rvs'
     parametros['corpo_email'] = parametros['corpo_email'] +  "<br/>"
-    #parametros['enviar_whats '] = 1
+    parametros['enviar_whats'] = 1
     
     print("#Enviando os resultados por email-------------------------------------------#")
     cmd = (RUN_GERAR_PRODUTO + f" produto RESULTADOS_PROSPEC enviar_whats {parametros['enviar_whats']} "
@@ -458,12 +454,12 @@ def help():
 def run_with_params():
     parametros = {}
     # DEFINIÇÃO DOS PARAMETROS PADRÃO
-    parametros['enviar_whats ']  = 1
+    parametros['enviar_whats']  = 1
     parametros["preliminar"]     = 1
     parametros["data"]           = datetime.now()
     #parametros["data"]           = datetime.strptime('01/06/2025', '%d/%m/%Y')
     parametros['path_prevs']     = ''
-    parametros['apenas_email']   = False
+    parametros['apenas_email']   = True
     parametros['assunto_email']  = ''
     parametros['corpo_email']    = ''
     parametros['list_email']     = f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]'
@@ -533,6 +529,40 @@ def run_with_params():
         
 
 if __name__ == '__main__':
-    #parametros = {'prevs': 'PREVS_RAIZEN_ENCAD', 'rvs': 5, 'data': datetime.now() }
+    parametros = {}
+    # DEFINIÇÃO DOS PARAMETROS PADRÃO
+    parametros['enviar_whats']  = 1
+    parametros["preliminar"]     = 1
+    parametros["data"]           = datetime.now()
+    #parametros["data"]           = datetime.strptime('01/06/2025', '%d/%m/%Y')
+    parametros['path_prevs']     = ''
+    parametros['apenas_email']   = True
+    parametros['assunto_email']  = ''
+    parametros['corpo_email']    = ''
+    parametros['list_email']     = f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]'
+    parametros['list_email']     = f'["{USER_EMAIL_GILSEU}"]'
+    parametros['prevs_name']     = ''
+    parametros['considerar_rv']  = 'sem'
+    parametros['gerar_matriz']   = 0
+    parametros['path_name']      = ''
+    parametros['subir_banco']    = False
+    parametros['back_teste']     = False
+    parametros['aguardar_fim']   = True
+    parametros['executar_estudo']= True
+    parametros['mapas']          = ['GEFS','ONS_Pluvia', 'ONS_ETAd_1_Pluvia','ECMWF_ENS','ECMWF_ENS','GEFS' ]
+    #parametros['mapas']          = ['ONS_Pluvia']
+    parametros['membros']        = ['ENSEMBLE','NULO','NULO','ENSEMBLE','00','00'] 
+    parametros['cenario']        = 1 
+    parametros['media_rvs']      = 0 
+    parametros['n_Membros']      = 0
+    #parametros['n_Membros']      = 50
+    parametros['percentis_ec']   = []
+    #parametros['percentis_ec']   = ['24','77','71','37','05','02','43','78','72','93']
+    parametros['agrupados']      = ['Grupo01','Grupo02','Grupo03','Grupo04','Grupo05','Grupo06','Grupo07','Grupo08','Grupo09','Grupo10']
+    parametros['nome_estudo']    = ''
+    parametros['rvs']            = 1
+    parametros['sensibilidade']  = 'NAO-INFORMADA'
+    parametros ["id_estudo"]     = "['26562','26569']"
+ 
     #rodar(parametros)
-    run_with_params()
+    #run_with_params()
