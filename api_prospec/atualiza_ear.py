@@ -35,13 +35,9 @@ class VolumeUHEProcessor:
         date_str = (self.today - timedelta(days=days_back)).strftime('%d%b%Y')
         upper_filename = f'RDH_{date_str.upper()}.xlsx'
         lower_filename = f'rdh_{date_str.lower()}.xlsx'
-        print(self.paths.RDH / upper_filename)
-        print((self.paths.RDH / upper_filename).exists())
         if (self.paths.RDH / upper_filename).exists():
-            print('path encontrado: ',self.paths.RDH / upper_filename)
             return self.paths.RDH / upper_filename
         elif (self.paths.RDH / lower_filename).exists():
-            print('path encontrado: ',self.paths.RDH / lower_filename)
             return self.paths.RDH / lower_filename
         raise FileNotFoundError(f"RDH file not found for {date_str}")
 

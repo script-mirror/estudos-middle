@@ -171,7 +171,9 @@ def get_id_email(parametros):
 
 def send_email(parametros):
     print ("#-Iniciando processo de envio de e-mail------------------------------------#")  
-      
+    
+    parametros['apenas_email'] = True  
+    
     pathName = []
     nomesEstudos = []
     idEstudos = []
@@ -331,64 +333,7 @@ def run_grupos(parametros):
     time.sleep(1200)
     send_email(parametros)       
 
-
-    
-def help():
-    print('')
-    print('    Os seguintes parametros podem ser enviados:')
-    #print('')
-    print ("    --------------------------------------------------------------------------------------------------------------")
-    print('    Parametros para realizar a rodada e enviar o e-mail')
-    print('')
-
-    print('    prevs:')
-    print('    PREVS_PLUVIA_EC_EXT -> roda os prevs do ec estendido do pluvia 5rvs')
-    print('    PREVS_PLUVIA_2_RV   -> roda os prevs do P Conjunto do Pluvia')
-    print('    PREVS_PLUVIA        -> roda os prevs do pluvia definidos no "run_pluvia"')
-    print('    PREVS_RAIZEN        -> roda os prevs da raizen que estiverem na pasta input') 
-    print('    PREVS_PLUVIA_RAIZEN -> roda os prevs da raizen e do pluvia')
-    print('    PREVS_RAIZEN_ENCAD  -> roda os prevs da raizen que estiverem na pasta input/PrevsRaizenEncad')
-    print('    PREVS_TOK           -> roda os prevs da TOK que estiverem na pasta input/TOK/"Data"')
-    print('')
-    print('    rvs:')
-    print('    1 -> estudo 1 rv')
-    print('    2 -> estudo 2 rv')
-    print('    4 -> estudo 4 rv')
-    print('    5 -> estudo 5 rv')
-    print('')
-    print('    data:')
-    print('    Data dos prevs que deseja rodar, utiliza o formato dd/mm/yyyy. Exemplo:', datetime.now().strftime('%d/%m/%Y'))
-    print('    Definido como padrão a data de hoje!')
-    print('')
-    print('    preliminar:')
-    print('    0 -> roda apenas prevs DEFINITIVO')
-    print('    1 -> roda os prevs definitivos disponiveis e o restante preliminar')
-    print('    Definido por padrão como 1')
-    print('')
-    print('    Exemplo: python .../mainRodadaAutoProspec.py prevs PREVS_PLUVIA_2_RV rvs 2')
-    print('');print('')
-    print ("    --------------------------------------------------------------------------------------------------------------")
-    print('    Parametros para apenas enviar o e-mail')
-    print('')
-    print('    apenas_email:')
-    print('    1 -> baixa os decks e envia o e-mail (se necessario aguarda o estudo finalizar)')
-    print('')
-    print('    id_estudo:')
-    print('    id dos estudos do prospec o qual quer enviar o email, formato de lista')
-    print('    Exemplo: \'["xxxx","yyyy","zzzz"]\'')
-    print('')
-    print('    list_email:')
-    print('    lista de e-mail a ser enviado ()')
-    print('    Exemplo: \'["email1@raizen.com","email2@raizen.com","email3@raizen.com"]\'')
-    print('')
-    print('    considerar_rv:')
-    print('    caso queria filtrar apenas uma rv em especifico')
-    print('    Exemplo todas as rv0 de um estudo: considerar_rv sem1_s1')
-    print('')
-    print('    Exemplo: python .../mainRodadaAutoProspec.py apenas_email 1  id_estudo \'["9080","9079"]\' list_email \'["middle@wxe.com.br"]\'')
-    print('')
-    sys.exit() 
-
+  
 
 def run_with_params():
     parametros = {}
@@ -465,12 +410,10 @@ def run_with_params():
         print('    ')
         print('    ')
         print("    Não foram encontrados os argumentos necessarios!")  
-        print("    Visualize o help e defina os parametros!")  
-        help()
-        
+
 
 if __name__ == '__main__':
-    """"parametros = {}
+    """ parametros = {}
     # DEFINIÇÃO DOS PARAMETROS PADRÃO
     parametros['enviar_whats']  = 1
     parametros["preliminar"]     = 1
@@ -504,7 +447,7 @@ if __name__ == '__main__':
     parametros['rvs']            = 1
     parametros['sensibilidade']  = 'NAO-INFORMADA'
     parametros ["id_estudo"]     = "['26562','26569']"
-    parametros ["tag"]     = 'P.CONJ'"""
- 
+    parametros ["tag"]     = 'P.CONJ"""
+    
     #rodar(parametros)
     run_with_params()

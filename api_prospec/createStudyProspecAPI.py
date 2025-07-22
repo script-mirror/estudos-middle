@@ -49,7 +49,7 @@ def run_VE(config):
         tags.append([config.tag, 'black', 'white'])
 
         prospecStudyId = duplicateStudy(config.prospecStudyIdToDuplicate,
-                                        config.studyName + '_'+ str(date.day)+ '/'+ str(date.month) + '-hr-'+ str(date.hour) + ':'+ str(date.minute),                                        
+                                        config.studyName + '_'+ str(date.day)+ '/'+ str(date.month).zfill(2) + '-hr-'+ str(date.hour) + ':'+ str(date.minute),                                        
                                         'Rodada Automatica',  tags, 2,1,1)
         
     prospecStudy = getInfoFromStudy(prospecStudyId)
