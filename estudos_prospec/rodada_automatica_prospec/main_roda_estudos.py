@@ -82,7 +82,6 @@ def rodar(parametros):
 
     # Criando os diretórios e armazenando os caminhos como Path no dicionário parametros
     # Configurações de caminhos
-    parametros['path_config_email'] = str(create_directory(PATH_PROJETOS, 'estudos-middle/estudos_prospec/rodada_automatica_prospec/input/Config/'))
     parametros['path_prevs_prel']   = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/preliminar")
     parametros['path_prevs_def']    = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/teste")
     parametros['path_prevs_encad']  = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}")
@@ -158,7 +157,7 @@ def rodar(parametros):
 def create_directory(base_path: str, sub_path: str) -> Path:
         full_path = Path(base_path) / sub_path
         full_path.mkdir(parents=True, exist_ok=True)
-        return full_path
+        return full_path.as_posix()
 
 def get_id_email(parametros):
     authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
@@ -471,14 +470,14 @@ def run_with_params():
         
 
 if __name__ == '__main__':
-    """parametros = {}
+    """"parametros = {}
     # DEFINIÇÃO DOS PARAMETROS PADRÃO
     parametros['enviar_whats']  = 1
     parametros["preliminar"]     = 1
     parametros["data"]           = datetime.now()
     #parametros["data"]           = datetime.strptime('01/06/2025', '%d/%m/%Y')
     parametros['path_prevs']     = ''
-    parametros['apenas_email']   = True
+    parametros['apenas_email']   = False
     parametros['assunto_email']  = ''
     parametros['corpo_email']    = ''
     parametros['list_email']     = f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]'
@@ -492,12 +491,12 @@ if __name__ == '__main__':
     parametros['aguardar_fim']   = True
     parametros['executar_estudo']= True
     parametros['mapas']          = ['GEFS','ONS_Pluvia', 'ONS_ETAd_1_Pluvia','ECMWF_ENS','ECMWF_ENS','GEFS' ]
-    #parametros['mapas']          = ['ONS_Pluvia']
+    parametros['mapas']          = ['ONS']
     parametros['membros']        = ['ENSEMBLE','NULO','NULO','ENSEMBLE','00','00'] 
     parametros['cenario']        = 1 
     parametros['media_rvs']      = 0 
     parametros['n_Membros']      = 0
-    #parametros['n_Membros']      = 50
+    parametros['prevs']          = 'PREVS_PLUVIA'
     parametros['percentis_ec']   = []
     #parametros['percentis_ec']   = ['24','77','71','37','05','02','43','78','72','93']
     parametros['agrupados']      = ['Grupo01','Grupo02','Grupo03','Grupo04','Grupo05','Grupo06','Grupo07','Grupo08','Grupo09','Grupo10']
