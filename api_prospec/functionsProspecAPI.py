@@ -969,7 +969,7 @@ class Config(object):
         self.tag                    = None
         self.infeasibilityHandlingSensibility = 3
         self.maxRestarts                      = 3
-        self.infeasibilityHandling            = 2
+        self.infeasibilityHandling            = 3
         self.prospecStudyIdToDuplicate        = ''
         self.prospecStudyIdToDuplicate2Rv     = ''
         self.prospecStudyIdToDuplicat42Rv     = ''
