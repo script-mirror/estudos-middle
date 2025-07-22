@@ -45,7 +45,7 @@ def rodar(parametros):
 
     # Criando os diretórios e armazenando os caminhos como Path no dicionário parametros
     # Configurações de caminhos
-    parametros['path_config_email'] = create_directory(PATH_PROJETOS, 'estudos-middle/estudos_prospec/rodada_automatica_prospec/input/Config')
+    parametros['path_config_email'] = str(create_directory(PATH_PROJETOS, 'estudos-middle/estudos_prospec/rodada_automatica_prospec/input/Config'))
     parametros['path_prevs_prel']   = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/preliminar")
     parametros['path_prevs_def']    = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/teste")
     parametros['path_prevs_encad']  = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}")

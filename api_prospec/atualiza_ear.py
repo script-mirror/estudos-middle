@@ -20,7 +20,7 @@ class Paths:
     """Constantes para caminhos de diretórios."""
     BASE_PATH = Path(PATH_PROJETOS + '/estudos-middle')
     COD = BASE_PATH / 'api_prospec/calculo_volume'
-    RDH =  '/WX2TB/Documentos/fontes/PMO/monitora_ONS/plan_acomph_rdh'
+    RDH =  Path('/WX/WX2TB/Documentos/fontes/PMO/monitora_ONS/plan_acomph_rdh')
     OUTPUT = COD
 
 class VolumeUHEProcessor:
@@ -35,11 +35,16 @@ class VolumeUHEProcessor:
         date_str = (self.today - timedelta(days=days_back)).strftime('%d%b%Y')
         upper_filename = f'RDH_{date_str.upper()}.xlsx'
         lower_filename = f'rdh_{date_str.lower()}.xlsx'
-        print(self.paths.RDH +'/'+ upper_filename)
-        if (self.paths.RDH +'/'+ upper_filename).exists():
-            return self.paths.RDH +'/'+ upper_filename
-        elif (self.paths.RDH +'/'+ lower_filename).exists():
-            return self.paths.RDH +'/'+ lower_filename
+        print(self.paths.RDH / upper_filename)
+        print((self.paths.RDH / upper_filename).exists())
+        if (self.paths.RDH / upper_filename).exists():
+            print('path encontrado: ')
+            print('path encontrado: ',self.paths.RDH / upper_filename)
+            return self.paths.RDH / upper_filename
+        elif (self.paths.RDH / lower_filename).exists():
+            print('path encontrado: ')
+            print('path encontrado: ',self.paths.RDH / lower_filename)
+            return self.paths.RDH / lower_filename
         raise FileNotFoundError(f"RDH file not found for {date_str}")
 
     def find_header_row(self, file_path: Path, sheet_name: str, 
@@ -253,7 +258,7 @@ class VolumeUHEProcessor:
                 continue
             except Exception:
                 time.sleep(5)
-                n += 1
+                n += 1        
         
         if n >= 10:
             raise FileNotFoundError("No RDH file found within 10 days")
