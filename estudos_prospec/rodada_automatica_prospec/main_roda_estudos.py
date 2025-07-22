@@ -20,7 +20,7 @@ USER_EMAIL_FRONT:     str = os.getenv('USER_EMAIL_FRONT')
 USER_EMAIL_GILSEU:    str = os.getenv('USER_EMAIL_GILSEU')
 USER_EMAIL_CELSO:     str = os.getenv('USER_EMAIL_CELSO')
 RUN_GERAR_PRODUTO:    str = os.getenv('RUN_GERAR_PRODUTO')
-
+RUN_GERAR_PRODUTO = ". /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/gerarProdutos; python gerarProdutos.py"
 
 sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
 sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_pluvia"))
@@ -45,7 +45,7 @@ def rodar(parametros):
 
     # Criando os diretórios e armazenando os caminhos como Path no dicionário parametros
     # Configurações de caminhos
-    parametros['path_config_email'] = create_directory(PATH_PROJETOS, 'estudos-middle/estudos_prospec/rodada_automatica_prospec/input/Config')
+    parametros['path_config_email'] = str(create_directory(PATH_PROJETOS, 'estudos-middle/estudos_prospec/rodada_automatica_prospec/input/Config'))
     parametros['path_prevs_prel']   = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/preliminar")
     parametros['path_prevs_def']    = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/teste")
     parametros['path_prevs_encad']  = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}")
@@ -272,7 +272,7 @@ def send_email(parametros):
     cmd = (RUN_GERAR_PRODUTO + f" produto RESULTADOS_PROSPEC enviar_whats {parametros['enviar_whats']} "
         f"gerarmatriz {parametros['gerar_matriz']} considerarrv {parametros['considerar_rv']} "
         f"fazer_media {parametros['media_rvs']} nomeRodadaOriginal \"{parametros['prevs_name']}\" "
-        f"destinatarioEmail \"{parametros['list_email']}\" assuntoEmail \"{parametros['assunto_email']}\" "
+        f"destinatarioEmail \'{parametros['list_email']}\' assuntoEmail \'{parametros['assunto_email']}\' "
         f"corpoEmail \"{parametros['corpo_email']}\" path \"{parametros['path_name']}\";")
     
     print(cmd)  
@@ -459,7 +459,7 @@ def run_with_params():
     parametros["data"]           = datetime.now()
     #parametros["data"]           = datetime.strptime('01/06/2025', '%d/%m/%Y')
     parametros['path_prevs']     = ''
-    parametros['apenas_email']   = True
+    parametros['apenas_email']   = False
     parametros['assunto_email']  = ''
     parametros['corpo_email']    = ''
     parametros['list_email']     = f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]'
@@ -529,7 +529,7 @@ def run_with_params():
         
 
 if __name__ == '__main__':
-    parametros = {}
+    """"parametros = {}
     # DEFINIÇÃO DOS PARAMETROS PADRÃO
     parametros['enviar_whats']  = 1
     parametros["preliminar"]     = 1
@@ -562,7 +562,7 @@ if __name__ == '__main__':
     parametros['nome_estudo']    = ''
     parametros['rvs']            = 1
     parametros['sensibilidade']  = 'NAO-INFORMADA'
-    parametros ["id_estudo"]     = "['26562','26569']"
+    parametros ["id_estudo"]     = "['26562','26569']"""""
  
     #rodar(parametros)
-    #run_with_params()
+    run_with_params()
