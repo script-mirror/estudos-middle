@@ -299,7 +299,7 @@ def run_python_update_with_dynamic_params(**kwargs):
     params = kwargs.get('params', {})
     print(params)
     # Iniciando a construção do comando para o script
-    command= CMD_BASE + "prevs PREVS_PLUVIA_RAIZEN rvs 1 mapas ONS_Pluvia tag NEXT-RV",
+    command= CMD_BASE + "prevs PREVS_PLUVIA_RAIZEN rvs 1 mapas ONS_Pluvia tag NEXT-RV"
     
     # Adicionando parâmetros ao comando dinamicamente, se existirem
     for key, value in params.items():
