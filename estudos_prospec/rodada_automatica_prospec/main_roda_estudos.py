@@ -471,7 +471,7 @@ def run_with_params():
         
 
 if __name__ == '__main__':
-    parametros = {}
+    """parametros = {}
     # DEFINIÇÃO DOS PARAMETROS PADRÃO
     parametros['enviar_whats']  = 1
     parametros["preliminar"]     = 1
@@ -505,7 +505,7 @@ if __name__ == '__main__':
     parametros['rvs']            = 1
     parametros['sensibilidade']  = 'NAO-INFORMADA'
     parametros ["id_estudo"]     = "['26562','26569']"
-    parametros ["tag"]     = 'P.CONJ'
+    parametros ["tag"]     = 'P.CONJ'"""
  
-    rodar(parametros)
+    #rodar(parametros)
     run_with_params()
