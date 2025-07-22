@@ -38,11 +38,9 @@ class VolumeUHEProcessor:
         print(self.paths.RDH / upper_filename)
         print((self.paths.RDH / upper_filename).exists())
         if (self.paths.RDH / upper_filename).exists():
-            print('path encontrado: ')
             print('path encontrado: ',self.paths.RDH / upper_filename)
             return self.paths.RDH / upper_filename
         elif (self.paths.RDH / lower_filename).exists():
-            print('path encontrado: ')
             print('path encontrado: ',self.paths.RDH / lower_filename)
             return self.paths.RDH / lower_filename
         raise FileNotFoundError(f"RDH file not found for {date_str}")
