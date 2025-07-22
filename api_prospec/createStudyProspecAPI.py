@@ -46,6 +46,7 @@ def run_VE(config):
         tags.append(['FCF-FROM: ' + str(config.prospecStudyIdToAssociateCuts), 'black', 'white'])
         tags.append(['EAR-FROM: ' + str(config.prospecStudyIdToAssociateVolumes), 'black', 'white'])
         tags.append(['EAR', 'white', 'white'])
+        tags.append([config.tag, 'black' 'white'])
 
         prospecStudyId = duplicateStudy(config.prospecStudyIdToDuplicate,
                                         config.studyName + '_'+ str(date.day)+ '/'+ str(date.month) + '-'+ str(date.hour) + ':'+ str(date.minute) + 'h',                                        
@@ -222,9 +223,9 @@ def run_VE(config):
             if ((deck['Model'] == 'DECOMP') and (deck['SensibilityInfo'] == 'Original')):
                 n_decks +=1
 
-        return ['Estudo_'+ str(prospecStudyId) + '_compilation.zip', studyStatus, n_decks] 
+        return [prospecStudyId, 'Estudo_'+ str(prospecStudyId) + '_compilation.zip', studyStatus, n_decks] 
     else: 
-        return prospecStudyId
+        return [prospecStudyId]
 
 
 def runBackTeste(config):

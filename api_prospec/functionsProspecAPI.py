@@ -966,6 +966,7 @@ class Config(object):
         self.nameFileDessem         = ''
         self.nameFileDecomp         = ''
         self.nameFileNewave         = ''
+        self.tag                    = None
         self.infeasibilityHandlingSensibility = 3
         self.maxRestarts                      = 3
         self.infeasibilityHandling            = 3

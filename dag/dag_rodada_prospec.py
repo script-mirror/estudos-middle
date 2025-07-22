@@ -106,7 +106,7 @@ with DAG(
     run_prospec_on_host = SSHOperator(
         task_id='run_prospec_on_host',
         ssh_conn_id='ssh_master',
-        command= CMD_BASE +"prevs PREVS_PLUVIA_2_RV rvs 2 preliminar 0 ",
+        command= CMD_BASE +"prevs PREVS_PLUVIA_2_RV rvs 2 preliminar 0 tag P.CONJ",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -131,7 +131,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_pconj_prel',
         ssh_conn_id='ssh_master',  
-        command= CMD_BASE +"prevs PREVS_PLUVIA_2_RV rvs 2 preliminar 1 ",
+        command= CMD_BASE +"prevs PREVS_PLUVIA_2_RV rvs 2 preliminar 1 tag P.CONJ",
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -194,7 +194,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_cenario_10',
         ssh_conn_id='ssh_master',
-        command= CMD_BASE +"prevs PREVS_PLUVIA_USUARIO preliminar 1 rvs 7 cenario 10",  
+        command= CMD_BASE +"prevs PREVS_PLUVIA_USUARIO preliminar 1 rvs 7 cenario 10, tag CENARIOS",  
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -215,7 +215,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_cenario_11',
         ssh_conn_id='ssh_master',  
-        command= CMD_BASE +"prevs PREVS_PLUVIA_USUARIO preliminar 1 rvs 7 cenario 11",
+        command= CMD_BASE +"prevs PREVS_PLUVIA_USUARIO preliminar 1 rvs 7 cenario 11 tag CENARIOS",
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -236,7 +236,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_chuva0',
         ssh_conn_id='ssh_master', 
-        command= CMD_BASE +"prevs PREVS_PLUVIA_PREC_ZERO rvs 7", 
+        command= CMD_BASE +"prevs PREVS_PLUVIA_PREC_ZERO rvs 7 tag P.ZERO", 
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -299,7 +299,7 @@ def run_python_update_with_dynamic_params(**kwargs):
     params = kwargs.get('params', {})
     print(params)
     # Iniciando a construção do comando para o script
-    command= CMD_BASE + "prevs PREVS_PLUVIA_RAIZEN rvs 1 mapas ONS_Pluvia",
+    command= CMD_BASE + "prevs PREVS_PLUVIA_RAIZEN rvs 1 mapas ONS_Pluvia tag NEXT-RV",
     
     # Adicionando parâmetros ao comando dinamicamente, se existirem
     for key, value in params.items():

@@ -36,7 +36,8 @@ def main(parametros):
         config.studyName  = get_study_name(config.prospecStudyIdToDuplicate )
         config.studyName  = (config.studyName + '__' + parametros['sensibilidade']).upper()  +'_DIA'
         config.startStudy = parametros['executar_estudo']
-        config.waitToFinish = parametros['aguardar_fim'] 
+        config.waitToFinish = parametros['aguardar_fim']
+        config.tag = parametros['tag']
         
         if parametros['prevs'] == 'PREVS_ONS_GRUPOS':
             config.studyName           =  'NW-DC_Agrupados__ONS-' + parametros['nomeEstudo'] 
