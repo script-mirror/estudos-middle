@@ -13,6 +13,7 @@ PATH_PROJETOS = os.getenv('PATH_PROJETOS', '/projetos')
 API_PROSPEC_USERNAME:   str = os.getenv('API_PROSPEC_USERNAME')
 API_PROSPEC_PASSWORD:   str = os.getenv('API_PROSPEC_PASSWORD')
 
+     
 def main(parametros):
     config = Config()
 
@@ -95,6 +96,13 @@ def get_study_name(id):
     for deck in prospecStudy['Decks']:
         if deck['Model']== 'DECOMP':
             return 'DC' + str(deck['Year'])+str(deck['Month']).zfill(2)+'-RV'+str(deck['Revision'])
+def get_id_estudos_base():
+    list_id = []
+    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
+    for i in range(1, 9):
+        list_id.append(getStudiesByTag({'page':1, 'pageSize':1, 'tags':f"BASE-{i}-RV"})['ProspectiveStudies'][0]['Id'])
+    return list_id       
 
+        
 if __name__ == '__main__':    
     main()
