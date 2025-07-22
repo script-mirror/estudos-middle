@@ -35,7 +35,7 @@ def main(parametros):
         config.prospecStudyIdToAssociateVolumes =  get_id_volumes()
         
         config.studyName  = get_study_name(config.prospecStudyIdToDuplicate )
-        config.studyName  = (config.studyName + '__' + parametros['sensibilidade']).upper()  +'_DIA'
+        config.studyName  = (config.studyName + '__' + parametros['sensibilidade']).upper() 
         config.startStudy = parametros['executar_estudo']
         config.waitToFinish = parametros['aguardar_fim']
         config.tag = parametros['tag']
