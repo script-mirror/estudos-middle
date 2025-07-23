@@ -22,6 +22,7 @@ def main(parametros):
     print('#-API do Prospec Iniciado: ' + str(datetime.now())[:19])
 
     config.downloadDadger = False
+    config.maxRestarts    = 2      
     #config.sendVolume = False
     if parametros['apenas_email']:
         print('Iniciando download dos resultados do estudo com id:',int(parametros['id_estudo']))

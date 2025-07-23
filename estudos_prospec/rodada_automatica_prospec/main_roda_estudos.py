@@ -70,6 +70,11 @@ EMAIL_CONFIG = {
         'description': 'Rodadas EC EXT',
         'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
         'n_estudos': 5
+    },
+    'ONS-GRUPOS': {
+        'description': 'Rodadas ONS Agrupados',
+        'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
+        'n_estudos': 1
     }
 }
 
@@ -283,19 +288,16 @@ def run_ec_ext(parametros):
     for membro in listMembers:
         try: 
             parametros['member']  =  str(membro).zfill(2)
-            parametros['sensibilidade'] = 'EC_EXT-membro_'+str(membro)
-            if membro =='ENSEMBLE':  parametros['sensibilidade'] = 'EC_EXT-ENSEMBLE' 
+            parametros['sensibilidade'] = 'EC_EXT-M:_'+str(membro)
+            if membro =='ENSEMBLE':  parametros['sensibilidade'] = 'EC_EXT-ENS' 
             a, parametros['rvs']  = run_pluvia.main(parametros)
-            parametros['nomeEstudo'] = 'EC_ext__' + parametros['sensibilidade'] 
             idEstudos.append(run_prospec.main(parametros))
         except:
             pass
 
     parametros['id_estudo']     = idEstudos
     parametros['apenas_email']  = True    
-    parametros['subir_banco']   = True
-    parametros['assunto_email'] = 'Rodada EC_EXT Pluvia'
-    parametros['corpo_email']   = "Ultimas rodadas utilizando o Prevs do EC EXT do Pluvia"
+
     time.sleep(1200)
     send_email(parametros) 
 
@@ -319,22 +321,15 @@ def run_grupos(parametros):
        # getPesosGrupos(membro, parametros)
         try: 
             parametros['member']  =  str(membro)
-            parametros['sensibilidade'] = str(membro)
+            parametros['sensibilidade'] = str(membro).zfill(2)
             a, parametros['rvs']  = run_pluvia.main(parametros)
-            try:
-                parametros['nomeEstudo'] = str(membro) +'_Peso('+ str(getPesosGrupos(membro, parametros))+'%)'
-            except:
-                print('Não foi possivel encontrar os pesos no banco de dados')
-                parametros['nomeEstudo'] = str(membro) + ''
             idEstudos.append(run_prospec.main(parametros))
         except:
             pass
 
     parametros['id_estudo']     = idEstudos
     parametros['apenas_email']  = True    
-    parametros['subir_banco']   = True
-    parametros['assunto_email'] = 'Rodada Agrupados ONS'
-    parametros['corpo_email']   = "Ultimas rodadas utilizando o Prevs do EC EXT Agrupado"
+
     time.sleep(1200)
     send_email(parametros)       
 
