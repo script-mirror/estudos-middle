@@ -75,6 +75,11 @@ EMAIL_CONFIG = {
         'description': 'Rodadas ONS Agrupados',
         'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
         'n_estudos': 1
+    },
+    'SENS': {
+        'description': 'Rodadas sensibilidades',
+        'emails': f'["{USER_EMAIL_GILSEU}"]',
+        'n_estudos': 1
     }
 }
 
@@ -188,7 +193,7 @@ def send_email(parametros):
     nomesEstudos = []
     idEstudos = []
     
-    if parametros['tag'] is not None:
+    if parametros['tag'] is not None and parametros['id_estudo'] is None:
         if EMAIL_CONFIG[parametros['tag']]['n_estudos'] == 1:
              parametros['id_estudo'] = [parametros['prospec_out'][0]]
         else:
@@ -369,7 +374,9 @@ def run_with_params():
     parametros['nome_estudo']    = ''
     parametros['rvs']            = 1
     parametros['sensibilidade']  = 'NAO-INFORMADA'
-    parametros ["tag"]     = None
+    parametros ["tag"]           = None
+    parametros ["id_estudo"]     = None
+    
     if len(sys.argv) > 3:
 	
         for i in range(1, len(sys.argv)):
