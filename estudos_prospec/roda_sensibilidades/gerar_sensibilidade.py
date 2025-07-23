@@ -22,6 +22,8 @@ PATH_PROJETOS:          str = os.getenv('PATH_PROJETOS')
 ABS_PATH:               str = os.path.join(PATH_ARQUIVOS, "prospec/roda_sensibilidades")
 ABS_PATH_LOG:           str = os.path.join(ABS_PATH, 'log_sens.log')
 
+os.makedirs(ABS_PATH, exist_ok=True)
+
 global logger
 warnings.filterwarnings("ignore")  # Ignore all warnings
 # Configure logging
