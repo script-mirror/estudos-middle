@@ -151,6 +151,7 @@ def run(username,password, path, parametros):
     print('')
 
     if not PATH_PREVS_PLUVIA.exists():
+        print('Path não existe, criando: ', PATH_PREVS_PLUVIA )
         try:
             pathlib.Path.mkdir(PATH_PREVS_PLUVIA)
         except:
@@ -164,16 +165,17 @@ def run(username,password, path, parametros):
                 return(5)
 
     if not PATH_FORECAST_DAY.exists():
+        print('Path não existe, criando: ', PATH_FORECAST_DAY )
+        try:
+            pathlib.Path.mkdir(PATH_FORECAST_DAY)
+        except:
+            print('Falha em criar a pasta para salvar as previsões do dia')
+            time.sleep(1)
             try:
                 pathlib.Path.mkdir(PATH_FORECAST_DAY)
             except:
                 print('Falha em criar a pasta para salvar as previsões do dia')
-                time.sleep(1)
-                try:
-                    pathlib.Path.mkdir(PATH_FORECAST_DAY)
-                except:
-                    print('Falha em criar a pasta para salvar as previsões do dia')
-                    return(1)
+                return(1)
 
     countIterations = 0
 

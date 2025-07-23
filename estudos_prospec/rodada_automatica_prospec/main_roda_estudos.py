@@ -65,6 +65,11 @@ EMAIL_CONFIG = {
         'description': 'Rodadas Não Consistidas',
         'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
         'n_estudos': 1
+    },
+    'EC-EXT': {
+        'description': 'Rodadas EC EXT',
+        'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
+        'n_estudos': 5
     }
 }
 
