@@ -64,6 +64,7 @@ def criar_estudo(params: Dict[str, Any]) -> Any:
         'mapas', str(params['mapa']),
         'aguardar_fim', '0',
         'executar_estudo', '0',
+        'tag', 'SENS',
         'nome_estudo', str(params['case'])
     ]
     result = run_with_params()

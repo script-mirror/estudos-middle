@@ -160,7 +160,6 @@ def rodar(parametros):
         # --------------------------------------------------------------------------------------------# 
         print("Iniciando a execução do prospec!")  
         parametros['prospec_out'] = run_prospec.main(parametros)  
-        parametros['n_rvs'] = str(parametros['prospec_out'][2])  
         if not parametros['aguardar_fim']:
             return  parametros['prospec_out']
         # --------------------------------------------------------------------------------------------#

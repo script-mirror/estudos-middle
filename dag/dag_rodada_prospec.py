@@ -14,6 +14,7 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 PATH_PROJETOS: str = os.getenv('PATH_PROJETOS')
 ATIVAR_ENV: str = os.getenv('ATIVAR_ENV')
 CMD_BASE = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/rodada_automatica_prospec/main_roda_estudos.py "
+CMD_BASE_SENS = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/roda_sensibilidades/gerar_sensibilidade.py "
 
 default_args = {
     'execution_timeout': timedelta(hours=8)
@@ -498,9 +499,8 @@ def run_sensibilidades_params(**kwargs):
     #print("parametros recebidos: ", type(params))
     
     # Iniciando a construção do comando para o script
-    command = ". /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; python  /WX2TB/Documentos/fontes/PMO/gera_sens_prospec/gerar_sens.py"
     
-    command +=' "'  + str(params) + '"'
+    command = CMD_BASE_SENS + ' "'  + str(params) + '"'
     #command += f" str(kwargs.get('params'))'"
     print(command)
     kwargs['ti'].xcom_push(key='command', value=command)
