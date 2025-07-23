@@ -12,8 +12,8 @@ load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
 
 API_PROSPEC_USERNAME:  str = os.getenv('API_PROSPEC_USERNAME')
 API_PROSPEC_PASSWORD:  str = os.getenv('API_PROSPEC_PASSWORD')
-PATH_ARQUIVOS:        str = os.getenv('PATH_ARQUIVOS', '/projetos/arquivos')
-PATH_PROJETOS:        str = os.getenv('PATH_PROJETOS', '/projetos')
+PATH_ARQUIVOS:        str = os.getenv('PATH_ARQUIVOS')
+PATH_PROJETOS:        str = os.getenv('PATH_PROJETOS')
 PATH_PREVS_PROSPEC:   str = os.getenv('PATH_PREVS_PROSPEC')
 PATH_RESULTS_PROSPEC: str = os.getenv('PATH_RESULTS_PROSPEC')
 PATH_PREVS_INTERNO:   str = os.getenv('PATH_PREVS_INTERNO')
@@ -80,7 +80,13 @@ EMAIL_CONFIG = {
         'description': 'Rodadas sensibilidades',
         'emails': f'["{USER_EMAIL_GILSEU}"]',
         'n_estudos': 1
+    },
+    'DECOMP': {
+        'description': 'Rodadas decomp convertido',
+        'emails': f'["{USER_EMAIL_GILSEU}"]',
+        'n_estudos': 1
     }
+    
 }
 
 

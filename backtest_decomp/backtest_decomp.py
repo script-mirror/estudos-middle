@@ -6,6 +6,7 @@ import zipfile
 import codecs
 import logging
 import time
+from pathlib import Path
 from datetime import datetime, date, timedelta
 from string import ascii_lowercase
 from copy import deepcopy
@@ -19,24 +20,35 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), '.env'))
 
-PATH_ARQUIVOS: str = os.makedirs(os.getenv('PATH_ARQUIVOS', '/projetos/arquivos'),exist_ok=True)
-PATH_PROJETOS: str = os.makedirs(os.getenv('PATH_PROJETOS', '/projetos'),exist_ok=True)
-PATH_BASE:     str = os.makedirs(os.path.join(PATH_ARQUIVOS, 'decomp', 'backtest_decomp'),exist_ok=True)
+PATH_ARQUIVOS: str = os.getenv('PATH_ARQUIVOS')
+PATH_PROJETOS: str = os.getenv('PATH_PROJETOS')
+PATH_BASE:     str = os.path.join(PATH_ARQUIVOS, 'decomp', 'backtest_decomp')
 NUN_GILSEU:    str = os.getenv('NUN_GILSEU')
 EMAIL_GILSEU:  str = os.getenv('USER_EMAIL_GILSEU')
+ATIVAR_ENV:    str = os.getenv('ATIVAR_ENV')
 SEND_MAIL:     str = os.getenv('RUN_STUDY_PROSPEC')
+os.makedirs(PATH_ARQUIVOS,exist_ok=True)
+os.makedirs(PATH_PROJETOS,exist_ok=True)
+os.makedirs(PATH_BASE    ,exist_ok=True)
+
 
 sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
-import roda_prospec
+import run_prospec
+
+
+def create_directory(base_path: str, sub_path: str) -> Path:
+        full_path = Path(base_path) / sub_path
+        full_path.mkdir(parents=True, exist_ok=True)
+        return full_path.as_posix()
 
 # Constants
 PATH_CONFIG: Dict[str, str] = {
-    'output_decks':          os.makedirs(os.path.join(PATH_BASE, 'output/decks'),exist_ok=True),
-    'output_ct':             os.path.join(os.makedirs(PATH_BASE/'output',exist_ok=True), f'saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
-    'oficial_decomp':        os.makedirs(os.path.join(PATH_BASE, 'input/oficial/decomp'),exist_ok=True),
-    'raizen_decomp':         os.makedirs(os.path.join(PATH_BASE, 'input/raizen/decomp'),exist_ok=True),
-    'raizen_prospec_decomp': os.makedirs(os.path.join(PATH_BASE, 'input/raizenProspec/decomp'),exist_ok=True),
-    'oficial_decomp_zip':    os.makedirs(os.path.join(PATH_ARQUIVOS, 'decomp', 'ons'), exist_ok=True)
+    'output_decks':          create_directory(PATH_BASE, 'output/decks'),
+    'output_ct':             os.path.join(create_directory(PATH_BASE, 'output'), f'saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
+    'oficial_decomp':        create_directory(PATH_BASE, 'input/oficial/decomp'),
+    'raizen_decomp':         create_directory(PATH_BASE, 'input/raizen/decomp'),
+    'raizen_prospec_decomp': create_directory(PATH_BASE, 'input/raizenProspec/decomp'),
+    'oficial_decomp_zip':    create_directory(os.path.join(PATH_ARQUIVOS, 'decomp'), 'ons')
 }
 
 FILES_TO_COPY: List[str] = ['caso.dat', 'hidr.dat', 'mlt.dat', 'perdas.dat', 'polinjus.csv', 'indices.csv']
@@ -47,6 +59,8 @@ CHECKLIST_BLOCKS: List[str] = ['UH', 'CT', 'PQ', 'DP', 'MP', 'RE', 'HV', 'HQ', '
 # Configure logging
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 logger: logging.Logger = logging.getLogger(__name__)
+
+
 
 def setup_directories(paths: List[str]) -> None:
     """Create or clear directories as needed."""
@@ -62,7 +76,7 @@ def setup_directories(paths: List[str]) -> None:
 def convert_deck_ons_to_ccee(input_path: str = PATH_CONFIG['oficial_decomp'], output_path: str = PATH_CONFIG['raizen_decomp']) -> None:
     """Execute script to convert ONS deck to CCEE format."""
     data: date = date.today()
-    data_rv: SemanaOperativa = SemanaOperativa.get_next_saturday(data)
+    data_rv: SemanaOperativa = SemanaOperativa(data)
     rev: str = 'RV{}'.format(int(data_rv.current_revision))
 
     dt_decomp: date = data_rv.first_day_of_month + timedelta(days=6)
@@ -197,6 +211,8 @@ def execute_prospec(params: Dict[str, Any], deck_path: str, deck_name: str) -> A
     """Execute Prospec for the given deck."""
     params['deck'] = f"{deck_name}.zip"
     params['path_deck'] = deck_path + '/'
+    params['tag'] = 'DECOMP'
+    
     try:
         prospec_out: Any = roda_prospec.main(params)
         logger.info(f"Prospec executed for deck {deck_name}: {prospec_out}")
