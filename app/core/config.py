@@ -19,10 +19,23 @@ class Settings(BaseSettings):
     )
     git_username: str
     git_token: str
+    
+    # Prospec API Configuration
+    api_prospec_base_url: str = "https://api.prospec.app"
+    api_prospec_username: str
+    api_prospec_password: str
+    path_arquivos: str = "/projetos/arquivos"
+    path_projetos: str = "/projetos"
+    
+    # Prospec Server Configuration
+    server_deflate_prospec: str = ""
+    path_prevs_prospec: str = ""
+    path_results_prospec: str = ""
+    path_prevs_interno: str = ""
 
     class Config:
         env_file = ".env"
-        case_sensitive = True
+        case_sensitive = False
 
 
 settings = Settings()
