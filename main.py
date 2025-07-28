@@ -5,6 +5,7 @@ from fastapi.security import HTTPBearer
 from app.core.dependencies import cognito
 from app.modules.ccee.controller import router as ccee_router
 from app.modules.prospec.controller import router as prospec_router
+from app.modules.email.controller import router as email_router
 
 
 locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
@@ -24,6 +25,7 @@ app = FastAPI(
 routers = [
     ccee_router,
     prospec_router,
+    email_router,
 ]
 
 # Include routers dynamically

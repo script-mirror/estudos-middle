@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     path_results_prospec: str = ""
     path_prevs_interno: str = ""
 
+    # Email Configuration
+    email_host: str
+    email_port: int = 587
+    email_user: str
+    email_pass: str
+
     class Config:
         env_file = ".env"
         case_sensitive = False
