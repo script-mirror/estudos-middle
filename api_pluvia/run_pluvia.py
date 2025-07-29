@@ -11,17 +11,16 @@ import time
 import os
 from os import path
 import pandas as pd
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-
-API_PLUVIA_USERNAME = os.getenv('API_PLUVIA_USERNAME')
-API_PLUVIA_PASSWORD = os.getenv('API_PLUVIA_PASSWORD')
-PATH_PREVS_PLUVIA   = pathlib.Path(os.path.join(os.getenv('PATH_ARQUIVOS'),'pluvia'))
-PATH_PREVS_PROSPEC  = pathlib.Path(os.getenv('PATH_PREVS_PROSPEC'))
+from middle.utils.constants import Constants 
+consts = Constants()
+ 
+PATH_PREVS_PLUVIA   = pathlib.Path(os.path.join(consts.PATH_ARQUIVOS,'pluvia'))
+PATH_PREVS_PROSPEC  = pathlib.Path(consts.PATH_PREVS_PROSPEC)
 
 # Cria diretórios se não existirem
 os.makedirs(PATH_PREVS_PLUVIA, exist_ok=True)
 os.makedirs(PATH_PREVS_PROSPEC, exist_ok=True)
+
 
 def main(parametros):    
 
@@ -29,11 +28,10 @@ def main(parametros):
     print(''); print('')
     print ('--------------------------------------------------------------------------------#')
     print('#-API do Pluvia Iniciado: ' + str(datetime.now())[:19])
-    print('Usuário: ', API_PLUVIA_USERNAME)
+    print('Usuário: ', consts.API_PLUVIA_USERNAME)
 
-    path = pathlib.Path(os.getcwd())
 
-    folders = run(API_PLUVIA_USERNAME, API_PLUVIA_PASSWORD, path, parametros)
+    folders = run(consts.API_PLUVIA_USERNAME, consts.API_PLUVIA_PASSWORD,  parametros)
     time.sleep(20)
     listPrevs = copiaPrevsProspec(path, folders, parametros)
     
@@ -47,135 +45,31 @@ def main(parametros):
 # -----------------------------------------------------------------------------
 # Casos a serem executados
 # -----------------------------------------------------------------------------
-def run(username,password, path, parametros):
-
+def run(username,password,  parametros):
+    global PATH_FORECAST_DAY
     # -----------------------------------------------------------------------------
     # Criação                
     # -----------------------------------------------------------------------------
     authenticatePluvia(username, password)
-    data_atual = datetime.now()
     data                     = parametros['data']
-    #data                     = datetime.strptime('26/08/2024', '%d/%m/%Y')
     forecastDate             = data.strftime('%d/%m/%Y')
     precipitationDataSources = parametros['mapas']
     forecastModels           = ['SMAP']
     bias                     = '' 
-    preliminary              = 'Definitiva' 
+    preliminary              = parametros["rodada"] 
     years                    = [data.year]
-    members                  = parametros['membros']
-    #PATH_PREVS_PLUVIA               = path.joinpath('')
-    global PATH_FORECAST_DAY
-    PATH_FORECAST_DAY        =  pathlib.Path(os.path.join(PATH_PREVS_PLUVIA, data.strftime('%Y-%m-%d'))) 
-    nTentarivas              = 10
+    members                  = parametros['membro']
+    PATH_FORECAST_DAY        =  pathlib.Path(os.path.join(PATH_PREVS_PLUVIA, parametros['prevs'],data.strftime('%Y-%m-%d'))) 
+    nTentarivas              = parametros['n_tentativas']
     pathFolders              = []
     cenario                  = parametros['cenario']
     modes                    = []
-    # pdb.set_trace()
-
-    if parametros["preliminar"] == 1:
-        parametros["preliminar"] = 'Preliminar'
-        preliminary = 'Preliminar'
-
-    if parametros["preliminar"] == 0:
-        parametros["preliminar"] = 'Definitiva'
-        preliminary = 'Definitiva'
-
-
-    if parametros['prevs'] == 'PREVS_PLUVIA_PREC_ZERO':
-        precipitationDataSources = ['Prec. Zero']
-        members                  = ['NULO']
-
-    if parametros['prevs'] == 'PREVS_PLUVIA_USUARIO':
-        precipitationDataSources = ['Usuário']
-        members                  = ['NULO']
-        preliminary = 'Preliminar'
-        
-    if parametros['prevs'] == 'PREVS_PLUVIA_EC_EXT':
-        nTentarivas = 12
-        precipitationDataSources = ['ECMWF_ENS_EXT', 'ONS']
-        members = ['ENSEMBLE', 'NULO']
-        for valor in range(100):
-            precipitationDataSources.append('ECMWF_ENS_EXT')
-            members.append(str(valor).zfill(2))        
-
-    if parametros['prevs'] == 'PREVS_PLUVIA_EC_EXT':
-        nTentarivas = 12
-        precipitationDataSources = ['ECMWF_ENS_EXT']
-        if parametros['member'] != 'ENSEMBLE':
-            members = [parametros['member']]
-
-    
-    if parametros['prevs'] == 'PREVS_PLUVIA_GEFS_EXT':
-        nTentarivas = 12
-        precipitationDataSources = ['GEFS_EXT']
-        if parametros['member'] != 'ENSEMBLE':
-            members = [parametros['member']]
-
-
-    if parametros['prevs'] == 'PREVS_ONS_GRUPOS':
-        nTentarivas = 25
-        countIterations = 0
-        precipitationDataSources = ['ONS_Pluvia'] 
-        members = [parametros['member']]
-
- 
-    if parametros['prevs'] == 'PREVS_PLUVIA_2_RV':
-        nTentarivas = 15
-        if parametros['preliminar'] == 'Preliminar':
-            #precipitationDataSources = ['ONS_ETAd_1_Pluvia']
-            precipitationDataSources = ['ONS_Pluvia']   
-        else:
-            precipitationDataSources = ['ONS']
-            
-        if data.weekday() == 6 or data.weekday() == 5:
-            parametros['preliminar'] = 'Preliminar'
-            precipitationDataSources = ['ONS_Pluvia'] 
-
-
-        members = ['NULO']
-        nTentarivas = 15
-
-
-    if parametros['prevs'] == 'PREVS_PLUVIA_APR':
-        nTentarivas = 25
-        precipitationDataSources = ['ONS_Pluvia']  
-        members = ['AgrupadoPrecipitacao']
-        parametros["preliminar"] = 'Preliminar'
-        preliminary = 'Preliminar'
-
-    print('')
-    parametros["preliminar"] = 'Preliminar'
-    
+  
     print('')
     print('Parametros: ',parametros) 
     print('')
-
-    if not PATH_PREVS_PLUVIA.exists():
-        print('Path não existe, criando: ', PATH_PREVS_PLUVIA )
-        try:
-            pathlib.Path.mkdir(PATH_PREVS_PLUVIA)
-        except:
-            print(PATH_PREVS_PLUVIA)
-            print('Falha em criar pasta de resultados')
-            time.sleep(5)
-            try:
-                pathlib.Path.mkdir(PATH_PREVS_PLUVIA)
-            except:
-                print('Nova falha em criar pasta de resultados')
-                return(5)
-
-    if not PATH_FORECAST_DAY.exists():
-        print('Path não existe, criando: ', PATH_FORECAST_DAY )
-        try:
-            pathlib.Path.mkdir(PATH_FORECAST_DAY)
-        except:
-            print('Falha em criar a pasta para salvar as previsões do dia')
-            time.sleep(1)
-            try:
-                pathlib.Path.mkdir(PATH_FORECAST_DAY)
-            except:
-                print('Falha em criar a pasta para salvar as previsões do dia')
-                return(1)
+    
+    os.makedirs(PATH_FORECAST_DAY, exist_ok=True)
 
     countIterations = 0
 
@@ -202,7 +96,7 @@ def run(username,password, path, parametros):
             forecasts_in = getForecasts(forecastDate, idPrecipitationDataSource, idForecast, bias, preliminary, idModo, years, member)
             forecast = []
 
-            if parametros['prevs'] == 'PREVS_PLUVIA_USUARIO':
+            if parametros['prevs'] == 'CENARIOS':
                 for forecast_aux in forecasts_in:
                     #try:
                     if int(forecast_aux['nome'].split('__')[1])==cenario:
@@ -222,7 +116,8 @@ def run(username,password, path, parametros):
                     idModo.append(getIdOfModes(mode))
 
                 forecast = getForecasts(forecastDate, idPrecipitationDataSource, idForecast, bias, preliminary, idModo, years, member)
-
+                forecast = forecasts_in 
+                
             if len(forecast) > 0:
                 if 'Prevs' not in str(forecast[0]['resultados']):
                     forecast = []
@@ -267,10 +162,8 @@ def copiaPrevsProspec(path, folders, parametros ):
     data = parametros['data']
     
     listPrevs = [] 
-    pathOutput      = os.path.join(PATH_PREVS_PROSPEC ,'all/')
+    pathOutput      = parametros['path_out_prevs']+'/'
     os.makedirs(pathOutput, exist_ok=True)
-    PATH_FORECAST_DAY = PATH_PREVS_PLUVIA.joinpath(data.strftime('20%y-%m-%d'))
-
 
     for pasta in os.listdir(pathOutput):
         pathOutput2 = pathOutput  + pasta

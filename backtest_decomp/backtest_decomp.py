@@ -30,11 +30,8 @@ SEND_MAIL:     str = os.getenv('RUN_STUDY_PROSPEC')
 os.makedirs(PATH_ARQUIVOS,exist_ok=True)
 os.makedirs(PATH_PROJETOS,exist_ok=True)
 os.makedirs(PATH_BASE    ,exist_ok=True)
-
-
 sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
 import run_prospec
-
 
 def create_directory(base_path: str, sub_path: str) -> Path:
         full_path = Path(base_path) / sub_path
@@ -59,7 +56,6 @@ CHECKLIST_BLOCKS: List[str] = ['UH', 'CT', 'PQ', 'DP', 'MP', 'RE', 'HV', 'HQ', '
 # Configure logging
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 logger: logging.Logger = logging.getLogger(__name__)
-
 
 
 def setup_directories(paths: List[str]) -> None:

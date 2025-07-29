@@ -8,9 +8,9 @@ import warnings
 import numpy as np
 from typing import Union, List
 import openpyxl
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-PATH_PROJETOS: str = os.getenv('PATH_PROJETOS')
+from middle.utils.constants import Constants 
+consts = Constants()
+
 
 # Configurações iniciais
 warnings.filterwarnings("ignore")
@@ -18,7 +18,7 @@ locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 class Paths:
     """Constantes para caminhos de diretórios."""
-    BASE_PATH = Path(PATH_PROJETOS + '/estudos-middle')
+    BASE_PATH = Path(consts.PATH_PROJETOS + '/estudos-middle')
     COD = BASE_PATH / 'api_prospec/calculo_volume'
     RDH =  Path('/WX/WX2TB/Documentos/fontes/PMO/monitora_ONS/plan_acomph_rdh')
     OUTPUT = COD

@@ -9,12 +9,11 @@ from airflow.models import DagRun
 from airflow.exceptions import AirflowSkipException
 from airflow.utils.db import create_session
 import subprocess
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
-PATH_PROJETOS: str = os.getenv('PATH_PROJETOS')
-ATIVAR_ENV: str = os.getenv('ATIVAR_ENV')
-CMD_BASE = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/rodada_automatica_prospec/main_roda_estudos.py "
-CMD_BASE_SENS = str(ATIVAR_ENV) + " python " + str(PATH_PROJETOS) + "/estudos-middle/estudos_prospec/roda_sensibilidades/gerar_sensibilidade.py "
+from middle.utils.constants import Constants 
+consts = Constants()
+
+CMD_BASE = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/rodada_automatica_prospec/main_roda_estudos.py "
+CMD_BASE_SENS = str(consts.ATIVAR_ENV) + " python " + str(consts.PATH_PROJETOS) + "/estudos-middle/estudos_prospec/roda_sensibilidades/gerar_sensibilidade.py "
 
 default_args = {
     'execution_timeout': timedelta(hours=8)
@@ -107,7 +106,7 @@ with DAG(
     run_prospec_on_host = SSHOperator(
         task_id='run_prospec_on_host',
         ssh_conn_id='ssh_master',
-        command= CMD_BASE +"prevs PREVS_PLUVIA_2_RV rvs 2 preliminar 0 tag P.CONJ",
+        command= CMD_BASE +"prevs P.CONJ rodada Definitiva ",
         conn_timeout=36000,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -132,7 +131,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_pconj_prel',
         ssh_conn_id='ssh_master',  
-        command= CMD_BASE +"prevs PREVS_PLUVIA_2_RV rvs 2 preliminar 1 tag P.CONJ",
+        command= CMD_BASE +"prevs P.CONJ rodada Preliminar ",
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -153,7 +152,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_1rv',
         ssh_conn_id='ssh_master',  
-        command= CMD_BASE +"prevs PREVS_PLUVIA_RAIZEN rvs 1",
+        command= CMD_BASE +"prevs NEXT-RV rodada Preliminar",
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -174,7 +173,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_ec_ext',
         ssh_conn_id='ssh_master',
-        command= CMD_BASE +"prevs PREVS_PLUVIA_EC_EXT rvs 5 preliminar 0", 
+        command= CMD_BASE +"prevs EC-EXT rodada Definitiva", 
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -195,7 +194,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_cenario_10',
         ssh_conn_id='ssh_master',
-        command= CMD_BASE +"prevs PREVS_PLUVIA_USUARIO preliminar 1 rvs 7 cenario 10, tag CENARIOS",  
+        command= CMD_BASE +"prevs CENARIOS rodada Preliminar, cenario 10",  
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -216,7 +215,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_cenario_11',
         ssh_conn_id='ssh_master',  
-        command= CMD_BASE +"prevs PREVS_PLUVIA_USUARIO preliminar 1 rvs 7 cenario 11 tag CENARIOS",
+        command= CMD_BASE +"prevs CENARIOS rodada Preliminar, cenario 11",
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -237,7 +236,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_prospec_chuva0',
         ssh_conn_id='ssh_master', 
-        command= CMD_BASE +"prevs PREVS_PLUVIA_PREC_ZERO rvs 7 tag P.ZERO", 
+        command= CMD_BASE +"prevs P.ZERO rodada Preliminar", 
         conn_timeout=28800,
         cmd_timeout=28800,
         execution_timeout=timedelta(hours=20),
@@ -300,7 +299,7 @@ def run_python_update_with_dynamic_params(**kwargs):
     params = kwargs.get('params', {})
     print(params)
     # Iniciando a construção do comando para o script
-    command= CMD_BASE + "prevs PREVS_PLUVIA_RAIZEN rvs 1 mapas ONS_Pluvia tag NEXT-RV"
+    command= CMD_BASE + "prevs UPDATE rodada Preliminar"
     
     # Adicionando parâmetros ao comando dinamicamente, se existirem
     for key, value in params.items():
@@ -341,14 +340,13 @@ with DAG(
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Definindo a DAG para '2.1-PROSPEC_NAO-CONSISTIDO'
-# Função que executa o script com parâmetros dinâmicos
 def run_python_with_dynamic_params(**kwargs):
     # Recuperando todos os parâmetros passados para a DAG
     print(kwargs.get('params'))
     params = kwargs.get('params', {})
     print(params)
     # Iniciando a construção do comando para o script
-    command= CMD_BASE + "prevs PREVS_NAO_CONSISTIDO rvs 1",
+    command= CMD_BASE + "prevs NAO-CONSISTIDO",
     
     # Adicionando parâmetros ao comando dinamicamente, se existirem
     for key, value in params.items():
@@ -434,7 +432,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_decomp_ons_grupos',
         ssh_conn_id='ssh_master',  # Verifique se isso corresponde ao ID de conexão configurado na UI do Airflow
-        command= CMD_BASE + "prevs PREVS_ONS_GRUPOS preliminar 0",
+        command= CMD_BASE + "prevs ONS-GRUPOS rodada Preliminar",
         conn_timeout=None,
         cmd_timeout=None,
         get_pty=True,
@@ -478,7 +476,7 @@ with DAG(
         trigger_rule="none_failed_min_one_success",
         task_id='run_pconjunto_prel_precipitacao',
         ssh_conn_id='ssh_master',  # Ensure this matches the connection ID set in the Airflow UI
-        command= CMD_BASE + "prevs PREVS_PLUVIA_APR rvs 2 preliminar 0",
+        command= CMD_BASE + "prevs P.APR rodada Preliminar",
         conn_timeout = None,
         cmd_timeout = None,
         get_pty=True,

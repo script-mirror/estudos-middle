@@ -1,25 +1,29 @@
 from typing import List, Dict, Any, Tuple
 import os
 import copy
-import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 import warnings
 import shutil
 import sys
 import zipfile
 import logging  # Already present, kept for clarity
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+from copy import deepcopy
+from config_default import PARAMETROS
+from middle.utils.constants import Constants 
+from middle.decomp.atualiza_decomp import process_decomp 
+from middle.decomp import DecompParams
+from middle.decomp.patamar_processor import read_patamar_carga, read_patamar_pq
+from main_roda_estudos import send_email
+consts = Constants()
 
-API_PROSPEC_USERNAME:   str = os.getenv('API_PROSPEC_USERNAME')
-API_PROSPEC_PASSWORD:   str = os.getenv('API_PROSPEC_PASSWORD')
-SERVER_DEFLATE_PROSPEC: str = os.getenv('SERVER_DEFLATE_PROSPEC')
-SEND_MAIL:              str = os.getenv('RUN_STUDY_PROSPEC')
-EMAIL_GILSEU:           str = os.getenv('USER_EMAIL_GILSEU')
-PATH_ARQUIVOS:          str = os.getenv('PATH_ARQUIVOS')
-PATH_PROJETOS:          str = os.getenv('PATH_PROJETOS')
-ABS_PATH:               str = os.path.join(PATH_ARQUIVOS, "prospec/roda_sensibilidades")
+sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/"))
+sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
+from functionsProspecAPI import *
+from main_roda_estudos import rodar
+
+parametros = deepcopy(PARAMETROS)
+ABS_PATH:               str = os.path.join(consts.PATH_ARQUIVOS, "prospec/roda_sensibilidades")
 ABS_PATH_LOG:           str = os.path.join(ABS_PATH, 'log_sens.log')
 
 os.makedirs(ABS_PATH, exist_ok=True)
@@ -38,41 +42,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-from middle.decomp.atualiza_decomp import process_decomp 
-from middle.decomp import DecompParams
-from middle.decomp.patamar_processor import read_patamar_carga, read_patamar_pq
-
-# Cria diretórios se não existirem
-os.makedirs(ABS_PATH, exist_ok=True)
-
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/"))
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/estudos_prospec/rodada_automatica_prospec"))
-
-from functionsProspecAPI import *
-from main_roda_estudos import run_with_params
-
-
 def clear_log_file(log_file_path):
     with open(log_file_path, 'w') as f:
         f.truncate(0)
-        
-def criar_estudo(params: Dict[str, Any]) -> Any:
-    logger.info("Creating study with params=%s", params)
-    sys.argv = [
-        'mainRodadaAutoProspec.py',
-        'prevs', 'PREVS_PLUVIA_RAIZEN',
-        'rvs', '1',
-        'mapas', str(params['mapa']),
-        'aguardar_fim', '0',
-        'executar_estudo', '0',
-        'tag', 'SENS',
-        'nome_estudo', str(params['case'])
-    ]
-    result = run_with_params()
-    logger.info("Study created with id=%s", result)
-    return result
-
+       
  
 def get_path_dadger(caminho_zip: str) -> Tuple[List[str], List[str]]:
     logger.info("Extracting dadger files from zip=%s", caminho_zip)
@@ -103,31 +76,19 @@ def get_path_dadger(caminho_zip: str) -> Tuple[List[str], List[str]]:
     logger.info("Found %s dadger files", len(arquivos_dadger))
     return caminho_completo, arquivos_dadger
 
-# Send email notification after study completion or back
-def send_email_notification(id_list: List[Any], email_list: str, subject: str) -> None:
-    logger.info("Sending email notification for id_list=%s, subject=%s", id_list, subject)
-    cmd = (SEND_MAIL + f" apenas_email 1 id_estudo '{id_list}' list_email '{email_list}' assunto_email '{subject}'")
-
-    try:
-        os.system(cmd)
-        logger.info("Email notification sent successfully")
-    except Exception as e:
-        logger.error("Failed to send email notification: %s", e)
-        raise
-
 
 def start_study(params: Dict[str, Any]) -> None:
 
     logger.info("Starting study execution with id=%s", params['id_estudo'])
-    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
+    authenticateProspec(consts.API_PROSPEC_USERNAME, consts.API_PROSPEC_PASSWORD)
     info: Dict[str, Any] = getInfoFromStudy(params['id_estudo'])
     logger.debug("Retrieved study info: %s", info)
     
     idNEWAVEJson: Dict[int, Any] = {2025: info['NewaveVersionId']}
     idDECOMPJson: Dict[int, Any] = {2025: info['DecompVersionId']}
     idDESSEMJson: Dict[int, Any] = {2025: info['DessemVersionId']}
-    idServer: Any = getIdOfServer(SERVER_DEFLATE_PROSPEC)
-    idQueue: Any = getIdOfFirstQueueOfServer(SERVER_DEFLATE_PROSPEC)
+    idServer: Any = getIdOfServer(consts.SERVER_DEFLATE_PROSPEC)
+    idQueue: Any = getIdOfFirstQueueOfServer(consts.SERVER_DEFLATE_PROSPEC)
     logger.debug("Server ID=%s, Queue ID=%s", idServer, idQueue)
     pat_dadger = os.path.join(params['output_path'], params['arquivo'])
     
@@ -136,7 +97,7 @@ def start_study(params: Dict[str, Any]) -> None:
     time.sleep(5)  # Wait for the file to be processed
     sendFileToDeck(params['id_estudo'], str(info['Decks'][0]['Id']), ABS_PATH_LOG, 'log_sens.log')
 
-    runExecution(params['id_estudo'], idServer, idQueue, idNEWAVEJson, idDECOMPJson, idDESSEMJson, SERVER_DEFLATE_PROSPEC, 0, 3, 3, 2)
+    runExecution(params['id_estudo'], idServer, idQueue, idNEWAVEJson, idDECOMPJson, idDESSEMJson, consts.SERVER_DEFLATE_PROSPEC, 0, 3, 3, 2)
     logger.info("Study execution started")
     print(" ")
     print(" ")
@@ -160,10 +121,11 @@ def gerar_estudo_prospec(params: Dict[str, Any]) -> Dict[str, Any]:
     output_dir: str = clear_dir(os.path.abspath(ABS_PATH + '/output/decomp'))
     logger.debug("Input dir=%s, Output dir=%s", input_dir, output_dir)
 
-    id_estudo: Any = criar_estudo(params)
+    id_estudo: Any = rodar(parametros)
+    
     logger.debug("Created study with id=%s", id_estudo)
 
-    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
+    authenticateProspec(consts.API_PROSPEC_USERNAME, consts.API_PROSPEC_PASSWORD)
     downloadDecksOfStudy(id_estudo, input_dir + '/', 'decomp.zip')
     logger.debug("Downloaded decomp.zip to %s", input_dir)
 
@@ -183,18 +145,24 @@ def gerar_estudo_prospec(params: Dict[str, Any]) -> Dict[str, Any]:
 def run_with_parms() -> None:
     
     params: Dict[str, Any] = {}
-    argumentos: str = sys.argv[1]
-    #argumentos = "{'BASE': {'dp': {'carga': {'1': {'1': 0}, 'absoluto': 0}}}, 'CARGA-SE(-100)': {'dp': {'carga': {'1': {'1': -100}, 'absoluto': 0}}}, 'mapa': 'ONS'}"
+    #argumentos: str = sys.argv[1]
+    argumentos = "{'BASE': {'dp': {'carga': {'1': {'1': 0}, 'absoluto': 0}}}, 'CARGA-SE(-100)': {'dp': {'carga': {'1': {'1': -100}, 'absoluto': 0}}}, 'mapa': 'ONS'}"
     params['sensibilidades']: Dict[str, Any] = eval(argumentos)
     print (argumentos)
     print(eval(argumentos))
 
       # Set default values for parameters  
-    params['mapa']: str = 'ONS_Pluvia'
-    
+    parametros['prevs'] = 'SENS'
+    parametros['rvs'] = '1'
+    parametros['aguardar_fim'] = False
+    parametros['executar_estudo'] = False
+    parametros['tag'] = 'SENS'
+    parametros['mapas'] = ['ONS_Pluvia']
+    parametros['membros'] = ['NULO']
+
     # If 'mapa' is provided in sensitivities, use it
     if 'mapa'in params['sensibilidades']:
-        params['mapa'] = params['sensibilidades']['mapa']
+        parametros['mapas'] = [params['sensibilidades']['mapa']]
         del params['sensibilidades']['mapa']
         
     sensibilidades = params['sensibilidades']
@@ -203,6 +171,7 @@ def run_with_parms() -> None:
     id_prospec_list: List[Any] = [] 
     # Loop through each sensitivity case 
     for sensitivity, sensitivity_df in sensibilidades.items():
+        parametros['nome_estudo'] = '-'+sensitivity
         
         clear_log_file(ABS_PATH_LOG)
         
@@ -223,9 +192,15 @@ def run_with_parms() -> None:
         start_study(params)
 
     logger.info("Waiting 10 minutes before sending email")
-    time.sleep(600)
-    send_email_notification( id_prospec_list, f'["{EMAIL_GILSEU}"]', "Sensibilidades")
+    #time.sleep(600)
 
+    parametros['apenas_email'] = True
+    parametros['aguardar_fim'] = True
+    parametros['id_estudo']    = id_prospec_list
+    
+    
+    send_email(parametros)
+    
    # "{'BASE': {'dp': {'carga': {'1': {'1': 0}, 'absoluto': 0}}}, 'CARGA-SE(-100)': {'dp': {'carga': {'1': {'1': -100}, 'absoluto': 0}}}, 'mapa': 'ONS'}"
 if __name__ == '__main__':
     logger.info("Script execution started")

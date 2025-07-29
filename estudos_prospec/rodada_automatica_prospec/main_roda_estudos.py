@@ -1,94 +1,26 @@
 import os
 import sys
-import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 import time
-import pdb
 import random
+from copy import deepcopy
 from dateutil.relativedelta import relativedelta
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+from processa_resultados import gerar_resultados
+from config_default import PARAMETROS, EMAIL_CONFIG
+from functions import *
+from middle.utils.constants import Constants 
+consts = Constants()
 
-API_PROSPEC_USERNAME:  str = os.getenv('API_PROSPEC_USERNAME')
-API_PROSPEC_PASSWORD:  str = os.getenv('API_PROSPEC_PASSWORD')
-PATH_ARQUIVOS:        str = os.getenv('PATH_ARQUIVOS')
-PATH_PROJETOS:        str = os.getenv('PATH_PROJETOS')
-PATH_PREVS_PROSPEC:   str = os.getenv('PATH_PREVS_PROSPEC')
-PATH_RESULTS_PROSPEC: str = os.getenv('PATH_RESULTS_PROSPEC')
-PATH_PREVS_INTERNO:   str = os.getenv('PATH_PREVS_INTERNO')
-USER_EMAIL_MIDDLE:    str = os.getenv('USER_EMAIL_MIDDLE')
-USER_EMAIL_FRONT:     str = os.getenv('USER_EMAIL_FRONT')
-USER_EMAIL_GILSEU:    str = os.getenv('USER_EMAIL_GILSEU')
-USER_EMAIL_CELSO:     str = os.getenv('USER_EMAIL_CELSO')
-RUN_GERAR_PRODUTO:    str = os.getenv('RUN_GERAR_PRODUTO')
-RUN_GERAR_PRODUTO = ". /WX/WX2TB/Documentos/fontes/PMO/scripts_unificados/env/bin/activate; cd /WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/gerarProdutos; python gerarProdutos.py"
-
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_pluvia"))
-
+sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
+sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_pluvia"))
 
 # Importando .py do Pluvia e do Prospec
 import run_prospec
 import run_pluvia
 from functionsProspecAPI import authenticateProspec, getStudiesByTag
 
-from functions import *
-
-EMAIL_CONFIG = {
-    'NEXT-RV': {
-        'description': 'Rodadas proxima RV',
-        'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
-        'n_estudos': 1
-    },
-    'P.CONJ': {
-        'description': 'Rodadas P. Conjunto',
-        'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
-        'n_estudos': 5
-    },
-    'CENARIOS': {
-        'description': 'Rodadas Cenarios Raizen',
-        'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
-        'n_estudos': 10
-    },
-    'P.ZERO': {
-        'description': 'Rodadas Chuva Zero',
-        'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
-        'n_estudos': 1
-    },
-    'P.APR': {
-        'description': 'Rodadas P. Conjunto Precipitação Agrupada',
-        'emails': f'["{USER_EMAIL_GILSEU}"]',
-        'n_estudos': 1
-    },
-    'NAO-CONSISTIDO': {
-        'description': 'Rodadas Não Consistidas',
-        'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
-        'n_estudos': 1
-    },
-    'EC-EXT': {
-        'description': 'Rodadas EC EXT',
-        'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
-        'n_estudos': 5
-    },
-    'ONS-GRUPOS': {
-        'description': 'Rodadas ONS Agrupados',
-        'emails': f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]',
-        'n_estudos': 1
-    },
-    'SENS': {
-        'description': 'Rodadas sensibilidades',
-        'emails': f'["{USER_EMAIL_GILSEU}"]',
-        'n_estudos': 1
-    },
-    'DECOMP': {
-        'description': 'Rodadas decomp convertido',
-        'emails': f'["{USER_EMAIL_GILSEU}"]',
-        'n_estudos': 1
-    }
-    
-}
-
+parametros = deepcopy(PARAMETROS)
 
 def rodar(parametros):
     
@@ -101,67 +33,22 @@ def rodar(parametros):
     print (" ")
     print (" ")
 
-    # Criando os diretórios e armazenando os caminhos como Path no dicionário parametros
-    # Configurações de caminhos
-    parametros['path_prevs_prel']   = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/preliminar")
-    parametros['path_prevs_def']    = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}/teste")
-    parametros['path_prevs_encad']  = create_directory(PATH_PREVS_INTERNO, f"{parametros.get('data', datetime.now()).strftime('%Y%m%d')}")
-    parametros['path_output_encad'] = create_directory(PATH_PREVS_PROSPEC, 'raizen_encad')
-    parametros['path_out']          = create_directory(PATH_PREVS_PROSPEC, 'all')
-    parametros['path_output_tok']   = create_directory(PATH_PREVS_PROSPEC, 'TOK')
-    parametros['path_result']       = create_directory(PATH_RESULTS_PROSPEC, '')
-
-
-    #inicia o processo
+    parametros['path_result']  = create_directory(consts.PATH_RESULTS_PROSPEC, '')
+ 
     if parametros['apenas_email'] == False:
 
-        ### Rodando o Pluvia
-        # --------------------------------------------------------------------------------------------# 
-        print(parametros['prevs'] )
-        if parametros['prevs'] not in ['PREVS_RAIZEN', 'PREVS_PLUVIA_EC_EXT', 'PREVS_RAIZEN_ENCAD', 'PREVS_ONS_GRUPOS', 'PREVS_NAO_CONSISTIDO']:            
-            parametros['sensibilidade'], parametros['rvs']  = run_pluvia.main(parametros)
-            print('n prevs',parametros['rvs'])
-
-        print(''); print(''); print ('--------------------------------------------------------------------------------#') 
-
-        ### Rodando o Pluvia EC EXT
-        # --------------------------------------------------------------------------------------------# 
-        if parametros['prevs'] == 'PREVS_PLUVIA_EC_EXT':
-            run_ec_ext(parametros)    
-
-        print(''); print(''); print ('--------------------------------------------------------------------------------#') 
-       
-        ### Rodando o Pluvia EC EXT Agrupados
-        # --------------------------------------------------------------------------------------------# 
-        if parametros['prevs'] == 'PREVS_ONS_GRUPOS':
-            run_grupos(parametros)
-
-        print(''); print(''); print ('--------------------------------------------------------------------------------#')                   
-         
-        ### Copiando prevs Raizen para o prospec
-        # --------------------------------------------------------------------------------------------#
-        if parametros['prevs'] == 'PREVS_RAIZEN' or parametros['prevs'] == 'PREVS_PLUVIA_RAIZEN':
-
-            if parametros['prevs'] == 'PREVS_PLUVIA_RAIZEN':
-                copy_prevs_to_prospec(parametros, False)
-            else:
-                parametros['sensibilidade'] = copy_prevs_to_prospec(parametros, True)[0]                   
-
-        ### Copiando prevs Raizen para o prospec ENCADEADO
-        # --------------------------------------------------------------------------------------------#
-        elif parametros['prevs'] == 'PREVS_RAIZEN_ENCAD':        
-            run_prevs_interno(parametros)
-
-        print(''); print(''); print('Copia finalizada')  
-        print ('--------------------------------------------------------------------------------#')  
+        parametros["mapas"]          = EMAIL_CONFIG[parametros["prevs"]]['rodada'][parametros["rodada"]]['precipitacao']
+        parametros["membro"]         = EMAIL_CONFIG[parametros["prevs"]]['rodada'][parametros["rodada"]]['membro']
+        parametros["aguardar_fim"]   = EMAIL_CONFIG[parametros["prevs"]]["aguardar_fim"]
+        parametros['path_out_prevs'] = create_directory(consts.PATH_PREVS_PROSPEC, EMAIL_CONFIG[parametros["prevs"]]["path_prevs"])
         
-        if parametros['nome_estudo'] != '':
+        parametros = BLOCK_FUNCTIONS[parametros['prevs']](parametros)
+        
+        if parametros['nome_estudo'] != None:
             parametros['sensibilidade'] = (parametros['sensibilidade']  + parametros['nome_estudo']).upper()
 
-        print(''); print(''); print('Copia finalizada')  
         print(parametros)
 
-        print ('--------------------------------------------------------------------------------#')  
         # Rodando o prospec
         # --------------------------------------------------------------------------------------------# 
         print("Iniciando a execução do prospec!")  
@@ -173,20 +60,21 @@ def rodar(parametros):
     send_email(parametros)
     return ['sucesso']
 
-    # Função para criar diretórios e retornar o caminho como Path
-def create_directory(base_path: str, sub_path: str) -> Path:
-        full_path = Path(base_path) / sub_path
-        full_path.mkdir(parents=True, exist_ok=True)
-        return full_path.as_posix()
 
-def get_id_email(parametros):
-    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
-    estudos = getStudiesByTag({'page':1, 'pageSize':10, 'tags':parametros['tag']})
-    list_id = []   
-    for estudo in estudos['ProspectiveStudies']:
-        if estudo['Status'] == 'Concluído' and len(list_id) <= EMAIL_CONFIG[parametros['tag']]['n_estudos']:
-            list_id.append(str(estudo['Id']))        
-    return list_id
+def run_prevs_pluvia(parametros):
+    parametros['sensibilidade'], parametros['rvs']  = run_pluvia.main(parametros)
+    print('n prevs',parametros['rvs'])
+    return parametros
+
+def run_1rv_pluvia(parametros):
+    parametros['sensibilidade'], parametros['rvs']  = run_pluvia.main(parametros)
+    parametros['rvs'] = 1
+    print('n prevs',parametros['rvs'])
+    return parametros
+
+def run_nao_consistido(parametros):
+    parametros['rvs'] = 1
+    return parametros
 
 
 def send_email(parametros):
@@ -226,30 +114,23 @@ def send_email(parametros):
         parametros['path_name'] = pathName
         parametros['n_rvs'] = str(max(n_rvs))
 
-        if parametros['prevs_name'] == '':
+        if parametros['prevs_name'] == None:
             parametros['prevs_name'] = [nome.split('__')[len(nome.split('__'))-1].split('-hr-')[0] for nome in nomesEstudos]
 
-        if parametros['assunto_email'] == '':
+        if parametros['assunto_email'] == None:
             parametros['assunto_email'] = EMAIL_CONFIG[parametros['tag']]['description']
             parametros['corpo_email']   = EMAIL_CONFIG[parametros['tag']]['description']
             parametros['list_email']    = EMAIL_CONFIG[parametros['tag']]['emails']
+            parametros['list_whats']    = EMAIL_CONFIG[parametros['tag']]['whats']
 
         for i in range(len(idEstudos)):
             parametros['corpo_email']    += 'Id ' + str(idEstudos[i]) + ' com titulo   ->   ' + str(nomesEstudos[i]+ '<br> ')        
         
         parametros['assunto_email'] = parametros['assunto_email'] + ' ' +parametros['n_rvs']+'_Rvs'
         parametros['corpo_email'] = parametros['corpo_email'] +  "<br/>"
-        #parametros['enviar_whats '] = 1
-        
+            
         print("#Enviando os resultados por email-------------------------------------------#")
-        cmd = (RUN_GERAR_PRODUTO + f" produto RESULTADOS_PROSPEC enviar_whats {parametros['enviar_whats']} "
-            f"gerarmatriz {parametros['gerar_matriz']} considerarrv {parametros['considerar_rv']} "
-            f"fazer_media {parametros['media_rvs']} nomeRodadaOriginal \"{parametros['prevs_name']}\" "
-            f"destinatarioEmail \'{parametros['list_email']}\' assuntoEmail \'{parametros['assunto_email']}\' "
-            f"corpoEmail \"{parametros['corpo_email']}\" path \"{parametros['path_name']}\";")
-        
-        print(cmd)  
-        os.system(cmd)
+        gerar_resultados(parametros)
     else:
         print('Não foi possivel enviar o e-mail, pois não foi informado o id do estudo!')
         print('Favor informar o id do estudo no parametro "id_estudo"')
@@ -258,7 +139,7 @@ def send_email(parametros):
     
 def run_prevs_interno(parametros ):
     print('Copiando prevs interno para o a pasta do prospec') 
-    parametros['waitToFinish'] = False 
+    parametros['aguardar_fim'] = False 
     idEstudos = []
   
     for file in os.listdir(parametros['path_prevs_encad']):
@@ -284,9 +165,9 @@ def run_prevs_interno(parametros ):
 
 def run_ec_ext(parametros):
     
-    parametros['waitToFinish'] = False 
+    parametros['aguardar_fim'] = False 
     idEstudos = []
-    print(parametros['n_Membros'])
+    print(parametros['n_membros'])
     if parametros['n_Membros'] > 0:
         listMembers = random.sample(range(0, 100), parametros['n_Membros'])
         #listMembers = list(range(0, 100))
@@ -312,17 +193,9 @@ def run_ec_ext(parametros):
     send_email(parametros) 
 
 
-def getPesosGrupos(grupo, parametros):
-
-    dtRef = (parametros['data'] - relativedelta(days=1))
-    dtRef = datetime(dtRef.year,dtRef.month,dtRef.day)    
-    #dict_pesos = wx_dbLib.get_pesos_agrupados_ec(dtRef)
-    dict_pesos = {}
-    return round(dict_pesos['grupo_'+str(int(grupo[-2:]))]*100)
-
 def run_grupos(parametros):
     
-    parametros['waitToFinish'] = False 
+    parametros['aguardar_fim'] = False 
     idEstudos = []
     print('grupos rodar',parametros['agrupados'])
     listMembers = parametros['agrupados']    
@@ -330,7 +203,7 @@ def run_grupos(parametros):
     for membro in listMembers:
        # getPesosGrupos(membro, parametros)
         try: 
-            parametros['member']  =  str(membro)
+            parametros['member']  =  [str(membro)]
             parametros['sensibilidade'] = str(membro).zfill(2)
             a, parametros['rvs']  = run_pluvia.main(parametros)
             idEstudos.append(run_prospec.main(parametros))
@@ -343,45 +216,34 @@ def run_grupos(parametros):
     time.sleep(1200)
     send_email(parametros)       
 
-  
+
+def getPesosGrupos(grupo, parametros):
+
+    dtRef = (parametros['data'] - relativedelta(days=1))
+    dtRef = datetime(dtRef.year,dtRef.month,dtRef.day)    
+    #dict_pesos = wx_dbLib.get_pesos_agrupados_ec(dtRef)
+    dict_pesos = {}
+    return round(dict_pesos['grupo_'+str(int(grupo[-2:]))]*100)
+
+
+def create_directory(base_path: str, sub_path: str) -> Path:
+        full_path = Path(base_path) / sub_path
+        full_path.mkdir(parents=True, exist_ok=True)
+        return full_path.as_posix()
+
+
+def get_id_email(parametros):
+    authenticateProspec(consts.API_PROSPEC_USERNAME, consts.API_PROSPEC_PASSWORD)
+    estudos = getStudiesByTag({'page':1, 'pageSize':10, 'tags':parametros['tag']})
+    list_id = []   
+    for estudo in estudos['ProspectiveStudies']:
+        if estudo['Status'] == 'Concluído' and len(list_id) <= EMAIL_CONFIG[parametros['tag']]['n_estudos']:
+            list_id.append(str(estudo['Id']))        
+    return list_id
+
 
 def run_with_params():
-    parametros = {}
-    # DEFINIÇÃO DOS PARAMETROS PADRÃO
-    parametros['enviar_whats']  = 1
-    parametros["preliminar"]     = 1
-    parametros["data"]           = datetime.now()
-    #parametros["data"]           = datetime.strptime('01/06/2025', '%d/%m/%Y')
-    parametros['path_prevs']     = ''
-    parametros['apenas_email']   = False
-    parametros['assunto_email']  = ''
-    parametros['corpo_email']    = ''
-    parametros['list_email']     = f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]'
-    #parametros['list_email']     = f'["{USER_EMAIL_GILSEU}"]'
-    parametros['prevs_name']     = ''
-    parametros['considerar_rv']  = 'sem'
-    parametros['gerar_matriz']   = 0
-    parametros['path_name']      = ''
-    parametros['subir_banco']    = False
-    parametros['back_teste']     = False
-    parametros['aguardar_fim']   = True
-    parametros['executar_estudo']= True
-    parametros['mapas']          = ['GEFS','ONS_Pluvia', 'ONS_ETAd_1_Pluvia','ECMWF_ENS','ECMWF_ENS','GEFS' ]
-    #parametros['mapas']          = ['ONS_Pluvia']
-    parametros['membros']        = ['ENSEMBLE','NULO','NULO','ENSEMBLE','00','00'] 
-    parametros['cenario']        = 1 
-    parametros['media_rvs']      = 0 
-    parametros['n_Membros']      = 0
-    #parametros['n_Membros']      = 50
-    parametros['percentis_ec']   = []
-    #parametros['percentis_ec']   = ['24','77','71','37','05','02','43','78','72','93']
-    parametros['agrupados']      = ['Grupo01','Grupo02','Grupo03','Grupo04','Grupo05','Grupo06','Grupo07','Grupo08','Grupo09','Grupo10']
-    parametros['nome_estudo']    = ''
-    parametros['rvs']            = 1
-    parametros['sensibilidade']  = 'NAO-INFORMADA'
-    parametros ["tag"]           = None
-    parametros ["id_estudo"]     = None
-    
+        
     if len(sys.argv) > 3:
 	
         for i in range(1, len(sys.argv)):
@@ -392,7 +254,6 @@ def run_with_params():
             elif argumento ==   "preliminar": parametros[argumento] = int(sys.argv[i+1])            
             elif argumento ==   "path_prevs": parametros[argumento] = sys.argv[i+1]            
             elif argumento == "apenas_email": parametros[argumento] = bool(int(sys.argv[i+1]))            
-            elif argumento ==   "prevs_name": parametros[argumento] = sys.argv[i+1]            
             elif argumento =="assunto_email": parametros[argumento] = sys.argv[i+1] 
             elif argumento ==  "nome_estudo": parametros[argumento] = str("_"+sys.argv[i+1])            
             elif argumento ==    "id_estudo": parametros[argumento] = sys.argv[i+1]
@@ -424,42 +285,44 @@ def run_with_params():
         print("    Não foram encontrados os argumentos necessarios!")  
 
 
+BLOCK_FUNCTIONS = {
+    'NEXT-RV': run_1rv_pluvia,
+    'P.CONJ': run_prevs_pluvia,
+    'CENARIOS': run_prevs_pluvia,
+    'P.ZERO': run_prevs_pluvia,
+    'P.APR': run_prevs_pluvia,
+    'NAO-CONSISTIDO': run_nao_consistido,
+    'ONS-GRUPOS': run_grupos,
+    'EC-EXT': run_ec_ext,
+    'SENS': run_1rv_pluvia,
+    'RZ': run_prevs_interno
+} 
+
 if __name__ == '__main__':
-    """ parametros = {}
-    # DEFINIÇÃO DOS PARAMETROS PADRÃO
-    parametros['enviar_whats']  = 1
-    parametros["preliminar"]     = 1
-    parametros["data"]           = datetime.now()
-    #parametros["data"]           = datetime.strptime('01/06/2025', '%d/%m/%Y')
-    parametros['path_prevs']     = ''
-    parametros['apenas_email']   = False
-    parametros['assunto_email']  = ''
-    parametros['corpo_email']    = ''
-    parametros['list_email']     = f'["{USER_EMAIL_MIDDLE}", "{USER_EMAIL_FRONT}"]'
-    parametros['list_email']     = f'["{USER_EMAIL_GILSEU}"]'
-    parametros['prevs_name']     = ''
-    parametros['considerar_rv']  = 'sem'
-    parametros['gerar_matriz']   = 0
-    parametros['path_name']      = ''
-    parametros['subir_banco']    = False
-    parametros['back_teste']     = False
-    parametros['aguardar_fim']   = True
-    parametros['executar_estudo']= True
-    parametros['mapas']          = ['GEFS','ONS_Pluvia', 'ONS_ETAd_1_Pluvia','ECMWF_ENS','ECMWF_ENS','GEFS' ]
-    parametros['mapas']          = ['ONS']
-    parametros['membros']        = ['ENSEMBLE','NULO','NULO','ENSEMBLE','00','00'] 
-    parametros['cenario']        = 1 
-    parametros['media_rvs']      = 0 
-    parametros['n_Membros']      = 0
-    parametros['prevs']          = 'PREVS_PLUVIA'
-    parametros['percentis_ec']   = []
-    #parametros['percentis_ec']   = ['24','77','71','37','05','02','43','78','72','93']
-    parametros['agrupados']      = ['Grupo01','Grupo02','Grupo03','Grupo04','Grupo05','Grupo06','Grupo07','Grupo08','Grupo09','Grupo10']
-    parametros['nome_estudo']    = ''
-    parametros['rvs']            = 1
-    parametros['sensibilidade']  = 'NAO-INFORMADA'
-    parametros ["id_estudo"]     = "['26562','26569']"
-    parametros ["tag"]     = 'P.CONJ"""
+    PARAMETROS =  {
+        "rodada": 'Preliminar',
+        "data": datetime.now(),
+        "apenas_email": False,
+        "assunto_email": None,
+        "corpo_email": None,
+        "considerar_rv": 'sem',
+        "gerar_matriz": False,
+        "path_name": None,
+        "back_teste": False,
+        "aguardar_fim": True,
+        "executar_estudo": True,
+        "media_rvs": False,
+        "n_membros": 0,
+        "percentis_ec": [],
+        "nome_estudo": None,
+        "sensibilidade": None,
+        "tag": 'NEXT-RV',
+        "id_estudo": None,
+        "prevs":'NEXT-RV',
+        "cenario":10,
+        "prevs_name": None,
+        "n_tentativas": 10
+    }
     
-    #rodar(parametros)
+    rodar(PARAMETROS)
     run_with_params()

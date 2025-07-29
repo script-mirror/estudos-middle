@@ -1,31 +1,22 @@
 import time
 from datetime import datetime
-import calendar
 import sys
 import os
 from functionsProspecAPI import *
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")),'.env'))
+from middle.utils.constants import Constants 
+constants = Constants()
 
-API_PROSPEC_USERNAME:   str = os.getenv('API_PROSPEC_USERNAME')
-API_PROSPEC_PASSWORD:   str = os.getenv('API_PROSPEC_PASSWORD')
-SERVER_DEFLATE_PROSPEC: str = os.getenv('SERVER_DEFLATE_PROSPEC')
-PATH_PROJETOS:          str = os.getenv('PATH_PROJETOS')
-PATH_PREVS_PROSPEC:     str = os.getenv('PATH_PREVS_PROSPEC')
-PATH_RESULTS_PROSPEC:   str = os.getenv('PATH_RESULTS_PROSPEC')
-PATH_PREVS_INTERNO:     str = os.getenv('PATH_PREVS_INTERNO')
-PATH_ALL_PREVS = PATH_PREVS_PROSPEC + '/all/'
-PATH_VOLUME = PATH_PROJETOS + '/estudos-middle/api_prospec/calculo_volume'
+PATH_VOLUME = constants.PATH_PROJETOS + '/estudos-middle/api_prospec/calculo_volume'
 
 def run_VE(config):
  
     date  = datetime.today()
     time_sleep = 600
     # First step is to authenticate | Primeiro passo é autenticar
-    print('Nome do usuário: ', API_PROSPEC_USERNAME) 
+    print('Nome do usuário: ', constants.API_PROSPEC_USERNAME) 
 
     #print('Senha do usuário: ', API_PROSPEC_PASSWORD)
-    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
+    authenticateProspec(constants.API_PROSPEC_USERNAME, constants.API_PROSPEC_PASSWORD)
 
     # Get number of total requests | Buscar quantidade de requests já usados
 
@@ -35,8 +26,8 @@ def run_VE(config):
     idNEWAVE = {2024: getIdOfNEWAVE('30.0.4'), 2025: getIdOfNEWAVE('30.0.4')}
     idDECOMP = {2024: getIdOfDECOMP('32.0.1'), 2025: getIdOfDECOMP('32.0.1')}
     idDESSEM = {2024: getIdOfDESSEM(''), 2025: getIdOfDESSEM('')}
-    idServer = getIdOfServer(SERVER_DEFLATE_PROSPEC)
-    idQueue  = getIdOfFirstQueueOfServer(SERVER_DEFLATE_PROSPEC)
+    idServer = getIdOfServer(constants.SERVER_DEFLATE_PROSPEC)
+    idQueue  = getIdOfFirstQueueOfServer(constants.SERVER_DEFLATE_PROSPEC)
 
     if config.prospecStudyIdToDuplicate != '':
 
@@ -61,13 +52,13 @@ def run_VE(config):
     # Send prevs files to each deck | Enviar arquivo prevs para cada deck
 
     if config.sendAllPREVStoStudy:
-        sendAllPrevsToStudy(prospecStudyId, PATH_ALL_PREVS)
+        sendAllPrevsToStudy(prospecStudyId, config.pathToAllPrevs+'/')
 
     elif config.sendAllPREVStoDeck:
-        sendAllPrevsToEachDeck(prospecStudyId, PATH_ALL_PREVS)
+        sendAllPrevsToEachDeck(prospecStudyId, config.pathToAllPrevs+'/')
 
     elif config.sendPREVS:
-        sendPrevsToStudy(prospecStudyId, PATH_ALL_PREVS)
+        sendPrevsToStudy(prospecStudyId, config.pathToAllPrevs+'/')
 
     if config.sendVolume:
         previousStage       = []
@@ -81,7 +72,7 @@ def run_VE(config):
     
     # Download decks | Download decks
     if config.dowloadDecks:
-        downloadDecksOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC + '/', 'CompleteStudy.zip')
+        downloadDecksOfStudy(prospecStudyId, constants.PATH_RESULTS_PROSPEC + '/', 'CompleteStudy.zip')
 
     # Associate Cuts and Volumes/GNL | Reaproveitar Cortes e Volumes/GNL
     if config.associateDecks:
@@ -124,13 +115,13 @@ def run_VE(config):
     if config.startStudy:
         initialStatus = studyStatus
         if studyStatus != 'Executing':
-            if SERVER_DEFLATE_PROSPEC == '':
+            if constants.SERVER_DEFLATE_PROSPEC == '':
                 runExecution(prospecStudyId, idServer,
                          idQueue,idNEWAVE, idDECOMP, idDESSEM, '', 0, config.infeasibilityHandling,
                          config.infeasibilityHandlingSensibility, config.maxRestarts)
             else:
                 runExecution(prospecStudyId, idServer,
-                         idQueue,idNEWAVE, idDECOMP, idDESSEM, SERVER_DEFLATE_PROSPEC, 0, config.infeasibilityHandling,
+                         idQueue,idNEWAVE, idDECOMP, idDESSEM, constants.SERVER_DEFLATE_PROSPEC, 0, config.infeasibilityHandling,
                          config.infeasibilityHandlingSensibility, config.maxRestarts)
 
     # Wait Execution to Finish | Aguardar execução terminar
@@ -185,7 +176,7 @@ def run_VE(config):
             # Dowload Compilation | Download da compilação de resultados
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC +'/',
+            downloadCompilationOfStudy(prospecStudyId, constants.PATH_RESULTS_PROSPEC +'/',
                                'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
             print('Compilado baixado com sucesso')
         
@@ -196,7 +187,7 @@ def run_VE(config):
                     if deck['Model'] == 'DECOMP':
                         arrayOfFiles = ['dadger.rv'+str(deck['Revision']), 'dadgnl.rv'+str(deck['Revision']), 'vazoes.rv'+str(deck['Revision'])]
                         try:
-                            downloadFileFromDeckV2(deck['Id'],PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
+                            downloadFileFromDeckV2(deck['Id'],constants.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
                             break
                         except:
                             pass
@@ -213,7 +204,7 @@ def run_VE(config):
                         print(deck)
                         fileName = deck['FileName']
                         idDeck   = deck['Id']
-                        downloadDeckOfStudy(prospecStudyId,idDeck, PATH_RESULTS_PROSPEC + '/newave/', fileName)
+                        downloadDeckOfStudy(prospecStudyId,idDeck, constants.PATH_RESULTS_PROSPEC + '/newave/', fileName)
                         break 
 
             except Exception as e:
@@ -232,15 +223,15 @@ def runBackTeste(config):
  
     date  = datetime.today()
 
-    print('Nome do usuário: ', API_PROSPEC_USERNAME) 
+    print('Nome do usuário: ', constants.API_PROSPEC_USERNAME) 
 
-    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
+    authenticateProspec(constants.API_PROSPEC_USERNAME, constants.API_PROSPEC_PASSWORD)
 
     idNEWAVE = {2024: getIdOfNEWAVE('30.0.4'), 2025: getIdOfNEWAVE('30.0.4')}
     idDECOMP = {2024: getIdOfDECOMP('32.0.1'), 2025: getIdOfDECOMP('32.0.1')}
     idDESSEM = {2024: getIdOfDESSEM(''), 2025: getIdOfDESSEM('')}
-    idServer = getIdOfServer(SERVER_DEFLATE_PROSPEC)
-    idQueue  = getIdOfFirstQueueOfServer(SERVER_DEFLATE_PROSPEC)
+    idServer = getIdOfServer(constants.SERVER_DEFLATE_PROSPEC)
+    idQueue  = getIdOfFirstQueueOfServer(constants.SERVER_DEFLATE_PROSPEC)
 
     prospecStudyId = createStudy(config.studyName,
                                     'Back Test',
@@ -295,7 +286,7 @@ def runBackTeste(config):
     if config.startStudy:
         initialStatus = studyStatus
         if studyStatus != 'Executing':
-            if SERVER_DEFLATE_PROSPEC == '':
+            if constants.SERVER_DEFLATE_PROSPEC == '':
                 runExecution(prospecStudyId, idServer,
                          idQueue,idNEWAVE, idDECOMP, idDESSEM, '', 0, 1,
                          2, 2)
@@ -345,7 +336,7 @@ def runBackTeste(config):
             # Dowload Compilation | Download da compilação de resultados
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC + '/',
+            downloadCompilationOfStudy(prospecStudyId, constants.PATH_RESULTS_PROSPEC + '/',
                                'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
             time.sleep(10)
             print('Finalizado o  Download do compilado')
@@ -360,19 +351,13 @@ def runBackTeste(config):
 def downloadResultados(config, parametros):
 
     prospecStudyId = int(parametros['id_estudo'])
-    # First step is to authenticate | Primeiro passo é autenticar
-    authenticateProspec(API_PROSPEC_USERNAME, API_PROSPEC_PASSWORD)
-    #time.sleep(60)
+    authenticateProspec(constants.API_PROSPEC_USERNAME, constants.API_PROSPEC_PASSWORD)
     studyStatus = getStatusFromStudy(prospecStudyId)
-    #print(parametros['aguardar_fim'])
-    #print(studyStatus)
     if parametros['aguardar_fim']:
+      
+        # Wait to finish | Aguardar terminar
         if studyStatus != 'Finished':
             time.sleep(60)
-            print(studyStatus)
-        
-        # Wait to finish | Aguardar terminar
-        if studyStatus == 'Executing' or studyStatus == 'Finished' or studyStatus == 'NotReady':
             countIterations = 0
             while countIterations < 60:
                 countIterations = countIterations + 1
@@ -395,7 +380,7 @@ def downloadResultados(config, parametros):
         # Dowload Compilation | Download da compilação de resultados
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC +'/',
+            downloadCompilationOfStudy(prospecStudyId, constants.PATH_RESULTS_PROSPEC +'/',
                                 'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
 
         if studyStatus == 'Failed' or studyStatus == 'Aborted':        
@@ -406,7 +391,7 @@ def downloadResultados(config, parametros):
     else:
         if config.downloadCompilation:
             print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, PATH_RESULTS_PROSPEC +'/',
+            downloadCompilationOfStudy(prospecStudyId, constants.PATH_RESULTS_PROSPEC +'/',
                                 'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
             print('Finalizado o  Download do compilado do estudo: ',prospecStudyId)
     prospecStudy = getInfoFromStudy(prospecStudyId)
