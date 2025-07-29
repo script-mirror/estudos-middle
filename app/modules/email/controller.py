@@ -20,10 +20,12 @@ class EmailController:
                  )
     async def send_email(
         self,
-        destinatario: str = Form(...),
+        destinatario: List[str] = Form(...),
         assunto: str = Form(default="teste"),
         mensagem: str = Form(...),
         arquivos: Optional[List[UploadFile]] = File(None),
         user: Optional[str] = Form(None)
     ):
-        return await self.service.send_email(destinatario, assunto, mensagem, arquivos, user)
+        return await self.service.send_email(
+            destinatario, assunto, mensagem, arquivos, user
+        )
