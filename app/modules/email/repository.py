@@ -10,6 +10,7 @@ from typing import Optional, List
 from app.core.config import settings
 from .schemas import EmailResponseDto, EmailUser
 from middle.utils import setup_logger
+import base64
 
 logger = setup_logger()
 class EmailRepository:
@@ -25,7 +26,8 @@ class EmailRepository:
         assunto: str,
         mensagem: str,
         arquivos: Optional[List[UploadFile]] = None,
-        user: Optional[str] = None
+        user: Optional[str] = None,
+        inserir_image_no_corpo: bool = True
     ) -> EmailResponseDto:
         logger.info(f"Iniciando envio de email para: {destinatario} | Assunto: {assunto}")
         try:
@@ -51,8 +53,7 @@ class EmailRepository:
             msg['Subject'] = assunto
 
             content_type = 'html'
-            msg.attach(MIMEText(mensagem, content_type))
-            logger.debug("Mensagem principal anexada ao email.")
+            imagens_html = ""
 
             if arquivos:
                 for arquivo in arquivos:
@@ -75,7 +76,18 @@ class EmailRepository:
                         f'attachment; filename="{arquivo.filename}"'
                     )
                     msg.attach(part)
+
+                    # Se for imagem e inserir_image_no_corpo for True, adiciona tag <img>
+                    if inserir_image_no_corpo and main_type == "image" and sub_type in ["png", "jpeg", "jpg"]:
+                        img_base64 = base64.b64encode(file_content).decode('utf-8')
+                        ext = sub_type if sub_type != "jpg" else "jpeg"
+                        imagens_html += f'<br><img src="data:image/{ext};base64,{img_base64}" alt="{arquivo.filename}" style="max-width:600px;"><br>'
                 logger.debug("Todos os arquivos anexados.")
+
+            # Adiciona imagens ao final da mensagem, se houver
+            mensagem_final = mensagem + imagens_html if imagens_html else mensagem
+            msg.attach(MIMEText(mensagem_final, content_type))
+            logger.debug("Mensagem principal anexada ao email.")
 
             logger.info(f"Conectando ao servidor SMTP: {self.host}:{self.port}")
             server = smtplib.SMTP(self.host, self.port)
