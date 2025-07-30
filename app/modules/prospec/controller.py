@@ -30,10 +30,10 @@ class ProspecController:
     @router.get("/study/{study_id}",
                response_model=StudyInfoReadDto,
                )
-    async def get_study_info(self, study_id: str):
+    async def get_study_by_id(self, study_id: str):
         """Get information about a specific study"""
         try:
-            return await self.service.get_study_info(study_id)
+            return await self.service.get_study_by_id(study_id)
         except Exception as e:
             raise HTTPException(status_code=404, detail=f"Study not found: {str(e)}")
 

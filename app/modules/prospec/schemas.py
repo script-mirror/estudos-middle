@@ -62,13 +62,6 @@ class EstudoResponseDto(BaseModel):
     message: Optional[str] = None
 
 
-class StudyStatusEnum(str, Enum):
-    executing = "Executing"
-    finished = "Finished"
-    aborted = "Aborted"
-    failed = "Failed"
-    ready = "Ready"
-    not_ready = "NotReady"
 
 
 class StudyCreateDto(BaseModel):
@@ -108,7 +101,7 @@ class StudyInfoReadDto(BaseModel):
     id: str
     title: str
     description: str
-    status: StudyStatusEnum
+    status: str
     decks: List[dict]
     creation_date: datetime.datetime
 
@@ -116,7 +109,7 @@ class StudyInfoReadDto(BaseModel):
 class StudyResultDto(BaseModel):
     study_id: str
     compilation_file: str
-    status: StudyStatusEnum
+    status: stgr
     n_decks: int
 
 
@@ -129,6 +122,6 @@ class BackTestDto(BaseModel):
 
 class DownloadResultDto(BaseModel):
     compilation_file: str
-    status: StudyStatusEnum
+    status: stgr
     study_title: str
     n_decks: int

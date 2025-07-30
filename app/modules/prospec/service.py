@@ -86,7 +86,7 @@ class ProspecService:
         config['volume_study_id'] = await self._get_volume_study_id()
         
         # Configure study name
-        base_study_info = await self.repository.get_study_info(config['base_study_id'])
+        base_study_info = await self.repository.get_study_by_id(config['base_study_id'])
         config['study_name'] = await self._get_study_name(base_study_info)
         config['study_name'] = f"{config['study_name']}__{parametros.sensibilidade}".upper()
         
@@ -138,7 +138,7 @@ class ProspecService:
 
     async def _send_volume_files(self, study_id: str) -> None:
         """Send volume files to study"""
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         
         for deck in study_info['Decks']:
             if deck['Model'] == 'DECOMP':
@@ -148,7 +148,7 @@ class ProspecService:
 
     async def _associate_cuts_and_volumes(self, study_id: str, config: dict) -> None:
         """Associate cuts and volumes"""
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         
         # Associate cuts
         destination_cuts_id = []
@@ -175,7 +175,7 @@ class ProspecService:
 
     async def _start_execution(self, study_id: str, config: dict) -> None:
         """Start study execution"""
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         
         # Check if contains NEWAVE
         contains_newave = any(deck['Model'] == 'NEWAVE' for deck in study_info['Decks'])
@@ -219,7 +219,7 @@ class ProspecService:
             await self.repository.download_compilation(study_id, download_path)
         
         # Count decks
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         n_decks = sum(1 for deck in study_info['Decks'] 
                      if deck['Model'] == 'DECOMP' and deck['SensibilityInfo'] == 'Original')
         
@@ -256,7 +256,7 @@ class ProspecService:
             await self.repository.download_compilation(study_id, download_path)
         
         # Get study info
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         n_decks = sum(1 for deck in study_info['Decks'] 
                      if deck['Model'] == 'DECOMP' and deck['SensibilityInfo'] == 'Original')
         
@@ -273,10 +273,10 @@ class ProspecService:
         # This would follow similar pattern but with different configuration
         pass
 
-    async def get_study_info(self, study_id: str) -> StudyInfoReadDto:
+    async def get_study_by_id(self, study_id: str) -> StudyInfoReadDto:
         """Get study information"""
         await self.repository.authenticate()
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         
         return StudyInfoReadDto(
             id=study_id,
