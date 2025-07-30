@@ -8,6 +8,8 @@ from .schemas import (
     StudyExecutionDto, StudyResultDto, 
     DownloadResultDto, StudyInfoReadDto
 )
+from middle.utils import setup_logger
+logger = setup_logger()
 
 
 class ProspecService:
@@ -16,42 +18,34 @@ class ProspecService:
 
     async def run_prospec_study(self, parametros: StudyExecutionDto) -> StudyResultDto:
         """Main function to run Prospec studies"""
-        print('')
-        print('--------------------------------------------------------------------------------#')
-        print(f'#-API do Prospec Iniciado: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        logger.info('')
+        logger.info('--------------------------------------------------------------------------------#')
+        logger.info(f'#-API do Prospec Iniciado: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
 
         if parametros.apenas_email:
-            print(f'Iniciando download dos resultados do estudo com id: {parametros.id_estudo}')
+            logger.info(f'Iniciando download dos resultados do estudo com id: {parametros.id_estudo}')
             return await self._download_resultados(parametros)
         
         elif not parametros.back_teste:
             return await self._run_regular_study(parametros)
         
-        else:
-            return await self._run_back_test(parametros)
 
     async def _run_regular_study(self, parametros: StudyExecutionDto) -> StudyResultDto:
         """Run regular Prospec study"""
         await self.repository.authenticate()
         
-        # Get base study configuration
         config = await self._get_study_configuration(parametros)
         
-        # Duplicate study
         study_id = await self._duplicate_and_configure_study(config, parametros)
         
-        # Send volume files if needed
         if config.get('send_volume', True):
             await self._send_volume_files(study_id)
         
-        # Associate cuts and volumes
         await self._associate_cuts_and_volumes(study_id, config)
         
-        # Start execution
         if parametros.executar_estudo:
             await self._start_execution(study_id, config)
         
-        # Wait for completion
         if parametros.aguardar_fim:
             return await self._wait_for_completion(study_id, config)
         
@@ -206,7 +200,7 @@ class ProspecService:
                 await asyncio.sleep(600)  # 10 minutes between checks
             
             status = await self.repository.get_study_status(study_id)
-            print(f"Study status: {status}")
+            logger.info(f"Study status: {status}")
             
             if status in ['Finished', 'Aborted', 'Failed']:
                 break
@@ -236,13 +230,12 @@ class ProspecService:
         await self.repository.authenticate()
         
         if parametros.aguardar_fim:
-            # Wait for completion
             for i in range(60):
                 if i > 0:
-                    await asyncio.sleep(600)  # 10 minutes between checks
+                    await asyncio.sleep(600)
                 
                 status = await self.repository.get_study_status(study_id)
-                print(f"Study status: {status}")
+                logger.info(f"Study status: {status}")
                 
                 if status in ['Finished', 'Aborted', 'Failed']:
                     break
@@ -267,11 +260,6 @@ class ProspecService:
             n_decks=n_decks
         )
 
-    async def _run_back_test(self, parametros: StudyExecutionDto) -> StudyResultDto:
-        """Run back test study"""
-        # Implementation for back test functionality
-        # This would follow similar pattern but with different configuration
-        pass
 
     async def get_study_by_id(self, study_id: str) -> StudyInfoReadDto:
         """Get study information"""
@@ -284,7 +272,7 @@ class ProspecService:
             description=study_info.get('Description', ''),
             status=study_info['Status'].lower(),
             decks=study_info['Decks'],
-            creation_date=datetime.now()  # Would need to parse from API response
+            creation_date=datetime.now()
         )
 
     async def get_base_study_ids(self) -> list:
