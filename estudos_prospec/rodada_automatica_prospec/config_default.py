@@ -33,7 +33,7 @@ EMAIL_CONFIG = frozendict({
         'description': 'Rodadas P. Conjunto',
         'emails': [const.EMAIL_MIDDLE, const.EMAIL_FRONT],
         'whats': const.WHATSAPP_PRECO,
-        'n_estudos': 5,
+        'n_estudos': 10,
         'path_prevs': 'p_conj',
         'aguardar_fim': True,
         'rodada':{'Preliminar':{'precipitacao': ['ONS_Pluvia'], 'membro':['NULO']},
