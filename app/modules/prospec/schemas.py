@@ -109,7 +109,7 @@ class StudyInfoReadDto(BaseModel):
 class StudyResultDto(BaseModel):
     study_id: str
     compilation_file: str
-    status: stgr
+    status: str
     n_decks: int
 
 
@@ -122,6 +122,6 @@ class BackTestDto(BaseModel):
 
 class DownloadResultDto(BaseModel):
     compilation_file: str
-    status: stgr
+    status: str
     study_title: str
     n_decks: int
