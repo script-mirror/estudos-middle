@@ -109,7 +109,7 @@ def run(username,password,  parametros):
 
                 forecast = forecasts_in 
             
-            if len(forecast) == 0 and parametros['preliminar'] == 'Preliminar' and parametros['prevs'] != 'PREVS_PLUVIA_USUARIO' :   
+            if len(forecast) == 0 and parametros['rodada'] == 'Preliminar' and parametros['prevs'] != 'PREVS_PLUVIA_USUARIO' :   
                 preliminary = 'Preliminar'                 
                 idModo = []
                 for mode in modes:    
