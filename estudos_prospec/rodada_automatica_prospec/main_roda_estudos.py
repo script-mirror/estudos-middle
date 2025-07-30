@@ -39,6 +39,7 @@ def rodar(parametros):
 
         parametros["mapas"]          = EMAIL_CONFIG[parametros["prevs"]]['rodada'][parametros["rodada"]]['precipitacao']
         parametros["membro"]         = EMAIL_CONFIG[parametros["prevs"]]['rodada'][parametros["rodada"]]['membro']
+        parametros["tag"]            = parametros["prevs"]
         parametros["aguardar_fim"]   = EMAIL_CONFIG[parametros["prevs"]]["aguardar_fim"]
         parametros['path_out_prevs'] = create_directory(consts.PATH_PREVS_PROSPEC, EMAIL_CONFIG[parametros["prevs"]]["path_prevs"])
         

@@ -14,24 +14,18 @@ from typing import List, Dict, Any, Optional, Tuple
 import pandas as pd
 from middle.utils import SemanaOperativa
 from middle.decomp import ons_to_ccee
-from middle.message import send_whatsapp_message
+from middle.message import send_whatsapp_message, send_email_message
 from ComparaCT import *
-from dotenv import load_dotenv
+from middle.utils.constants import Constants 
+consts = Constants()
 
-load_dotenv(os.path.join(os.path.abspath(os.path.expanduser("~")), '.env'))
-
-PATH_ARQUIVOS: str = os.getenv('PATH_ARQUIVOS')
-PATH_PROJETOS: str = os.getenv('PATH_PROJETOS')
-PATH_BASE:     str = os.path.join(PATH_ARQUIVOS, 'decomp', 'backtest_decomp')
-NUN_GILSEU:    str = os.getenv('NUN_GILSEU')
-EMAIL_GILSEU:  str = os.getenv('USER_EMAIL_GILSEU')
-ATIVAR_ENV:    str = os.getenv('ATIVAR_ENV')
-SEND_MAIL:     str = os.getenv('RUN_STUDY_PROSPEC')
-os.makedirs(PATH_ARQUIVOS,exist_ok=True)
-os.makedirs(PATH_PROJETOS,exist_ok=True)
+PATH_BASE:     str = os.path.join(consts.PATH_ARQUIVOS,  'prospec/backtest_decomp')
+os.makedirs(consts.PATH_ARQUIVOS,exist_ok=True)
 os.makedirs(PATH_BASE    ,exist_ok=True)
-sys.path.append(os.path.join(PATH_PROJETOS, "estudos-middle/api_prospec"))
+sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
 import run_prospec
+from functionsProspecAPI import  getStudiesByTag, authenticateProspec, getInfoFromStudy, downloadFileFromDeckV2, downloadDeckOfStudy
+from createStudyProspecAPI import downloadResultados
 
 def create_directory(base_path: str, sub_path: str) -> Path:
         full_path = Path(base_path) / sub_path
@@ -40,12 +34,10 @@ def create_directory(base_path: str, sub_path: str) -> Path:
 
 # Constants
 PATH_CONFIG: Dict[str, str] = {
-    'output_decks':          create_directory(PATH_BASE, 'output/decks'),
-    'output_ct':             os.path.join(create_directory(PATH_BASE, 'output'), f'saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
-    'oficial_decomp':        create_directory(PATH_BASE, 'input/oficial/decomp'),
-    'raizen_decomp':         create_directory(PATH_BASE, 'input/raizen/decomp'),
-    'raizen_prospec_decomp': create_directory(PATH_BASE, 'input/raizenProspec/decomp'),
-    'oficial_decomp_zip':    create_directory(os.path.join(PATH_ARQUIVOS, 'decomp'), 'ons')
+    'output_decks':   create_directory(PATH_BASE, 'output/decks'),
+    'output_ct':      os.path.join(create_directory(PATH_BASE, 'output'), f'saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
+    'decomp_ons':     create_directory(consts.PATH_ARQUIVOS, 'decomp/ons'),
+    'decomp_interno': create_directory(PATH_BASE, 'input/decomp/interno')
 }
 
 FILES_TO_COPY: List[str] = ['caso.dat', 'hidr.dat', 'mlt.dat', 'perdas.dat', 'polinjus.csv', 'indices.csv']
@@ -58,6 +50,21 @@ logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 logger: logging.Logger = logging.getLogger(__name__)
 
 
+def get_deck_interno():
+    authenticateProspec(consts.API_PROSPEC_USERNAME, consts.API_PROSPEC_PASSWORD)
+    estudos = getStudiesByTag({'page':1, 'pageSize':3, 'tags':'P.CONJ'})
+    for estudo in estudos['ProspectiveStudies']:
+        if estudo['Status'] == 'Concluído':
+            prospecStudy = getInfoFromStudy(estudo['Id'])
+            listOfDecks  = prospecStudy['Decks']
+            for deck in listOfDecks:
+                if deck['Model'] == 'DECOMP':
+                    path = consts.PATH_RESULTS_PROSPEC + '/decomp/' + deck['FileName']
+                    downloadDeckOfStudy(estudo['Id'],deck['Id'], consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'])
+                    path_unzip = extract_zip_folder(path, path)
+                    return path_unzip
+     
+
 def setup_directories(paths: List[str]) -> None:
     """Create or clear directories as needed."""
     for path in paths:
@@ -69,17 +76,16 @@ def setup_directories(paths: List[str]) -> None:
         except Exception as e:
             logger.warning(f"Failed to setup directory {path}: {e}")
 
-def convert_deck_ons_to_ccee(input_path: str = PATH_CONFIG['oficial_decomp'], output_path: str = PATH_CONFIG['raizen_decomp']) -> None:
+def convert_deck_ons_to_ccee(input_path: str = PATH_CONFIG['decomp_ons'], output_path: str = PATH_CONFIG['decomp_interno']) -> None:
     """Execute script to convert ONS deck to CCEE format."""
-    data: date = date.today()
+    data: datetime = datetime.today()
     data_rv: SemanaOperativa = SemanaOperativa(data)
     rev: str = 'RV{}'.format(int(data_rv.current_revision))
 
-    dt_decomp: date = data_rv.first_day_of_month + timedelta(days=6)
+    dt_decomp: datetime = data_rv.first_day_of_month + timedelta(days=6)
 
     arqzip: str = 'PMO_deck_preliminar.zip'
     arqdec: str = 'DEC_ONS_' + dt_decomp.strftime('%m%Y') + '_' + rev + '_VE.zip'
-        
     try:
         ons_to_ccee(input_path, output_path, arqzip, arqdec, rev, dt_decomp)
         logger.info("ONS to CCEE conversion completed")
@@ -210,15 +216,14 @@ def execute_prospec(params: Dict[str, Any], deck_path: str, deck_name: str) -> A
     params['tag'] = 'DECOMP'
     
     try:
-        prospec_out: Any = roda_prospec.main(params)
+        prospec_out: Any = run_prospec.rodar(params)
         logger.info(f"Prospec executed for deck {deck_name}: {prospec_out}")
         return prospec_out
     except Exception as e:
         logger.error(f"Prospec execution failed for {deck_name}: {e}")
         raise
-
+"""
 def send_email_notification(id_list: List[Any], email_list: str, subject: str) -> None:
-    """Send email notification with Prospec results."""
     cmd: str = (SEND_MAIL + f" apenas_email 1 id_estudo '{id_list}' list_email '{email_list}' assunto_email '{subject}'")
     try:
         os.system(cmd)
@@ -226,20 +231,20 @@ def send_email_notification(id_list: List[Any], email_list: str, subject: str) -
     except Exception as e:
         logger.error(f"Failed to send email notification: {e}")
         raise
-
+"""
 def rodar(parametros: Dict[str, Any]) -> None:
     """Main function to process and compare decks."""
     # Setup directories
     setup_directories([
         PATH_CONFIG['output_decks'],
-        PATH_CONFIG['raizen_decomp']
+        PATH_CONFIG['decomp_interno']
     ])
-
+    
+    path = get_deck_interno()
     # Convert ONS deck to CCEE
-    convert_deck_ons_to_ccee()
-
+    convert_deck_ons_to_ccee( PATH_CONFIG['decomp_ons'], PATH_CONFIG['decomp_ons'])
     # Find dadger file
-    dadger_file: str = find_dadger_file(PATH_CONFIG['oficial_decomp'])
+    dadger_file: str = find_dadger_file(PATH_CONFIG['decomp_ons'])
     rv: str = dadger_file[-1:]
     logger.info(f"Found dadger file: {dadger_file} with rv: {rv}")
 
@@ -288,7 +293,7 @@ def rodar(parametros: Dict[str, Any]) -> None:
     # Send WhatsApp notifications
     for fig_ct in path_fig:
         print(fig_ct)
-        send_whatsapp_message(NUN_GILSEU, 'PILHA TÉRMICA', fig_ct)
+        send_whatsapp_message(consts.WHATSAPP_GILSEU, 'PILHA TÉRMICA', fig_ct)
 
     # Setup output decks
     for folder in [path_decomp + '__ONS-TO-CCEE', path_decomp + '__RAIZEN', path_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN']:
@@ -330,7 +335,7 @@ def rodar(parametros: Dict[str, Any]) -> None:
     # Wait and send email
     logger.info("Waiting 10 minutes before sending email")
     time.sleep(600)
-    send_email_notification(id_prospec_list, f'["{EMAIL_GILSEU}"]', "Back Test Decomp")
+    #send_email_notification(id_prospec_list, f'["{EMAIL_GILSEU}"]', "Back Test Decomp")
 
 def run_with_params() -> None:
     """Parse command-line arguments and run the main process."""
@@ -340,7 +345,6 @@ def run_with_params() -> None:
         'path_prevs': '',
         'apenas_email': False,
         'assunto_email': '',
-        'list_email': f'["{EMAIL_GILSEU}"]',
         'prevs_name': '',
         'considerar_rv': 'sem',
         'gerar_matriz': 0,
@@ -373,4 +377,6 @@ def run_with_params() -> None:
     rodar(params)
 
 if __name__ == '__main__':
+    params = {}
+    rodar(params)
     run_with_params()

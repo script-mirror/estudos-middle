@@ -747,14 +747,16 @@ def abortExecution(idStudy):
 # Download study | Download de um estudo
 # -----------------------------------------------------------------------------
 def downloadDeckOfStudy(idStudy,idDeck, pathToDownload, fileName):
+    os.makedirs(pathToDownload ,exist_ok=True)
     response = getFileFromAPI(token, '/api/prospectiveStudies/' + str(idStudy)
                               + '/DeckDownload?deckId='+str(idDeck), fileName, pathToDownload)
-
+    print(response)
+"""
 def downloadDecksOfStudy(idStudy, pathToDownload, fileName):
     if os.path.exists (pathToDownload) == False: os.mkdir (pathToDownload)
     response = getFileFromAPI(token, '/api/prospectiveStudies/' + str(idStudy)
                               + '/DeckDownload', fileName, pathToDownload)
-
+"""
 # -----------------------------------------------------------------------------
 # Download File From Deck Results | Download de um arquivo de um resultado do deck
 # ----------------------------------------------------------------------------- 

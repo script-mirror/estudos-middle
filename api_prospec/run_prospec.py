@@ -19,7 +19,7 @@ def main(parametros):
     
     if parametros['apenas_email']:
         print('Iniciando download dos resultados do estudo com id:',int(parametros['id_estudo']))
-        return downloadResultados(config, parametros)
+        return downloadResultados(parametros)
     
     elif parametros['back_teste'] == False:
 

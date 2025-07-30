@@ -348,7 +348,7 @@ def runBackTeste(config):
 
 
 
-def downloadResultados(config, parametros):
+def downloadResultados(parametros):
 
     prospecStudyId = int(parametros['id_estudo'])
     authenticateProspec(constants.API_PROSPEC_USERNAME, constants.API_PROSPEC_PASSWORD)
@@ -378,10 +378,9 @@ def downloadResultados(config, parametros):
                     print('Estudo executando...')
         
         # Dowload Compilation | Download da compilação de resultados
-        if config.downloadCompilation:
-            print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, constants.PATH_RESULTS_PROSPEC +'/',
-                                'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
+        print('Iniciando Download do compilado')
+        downloadCompilationOfStudy(prospecStudyId, constants.PATH_RESULTS_PROSPEC +'/',
+                            'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
 
         if studyStatus == 'Failed' or studyStatus == 'Aborted':        
             print('Prospec não rodou com sucesso, por favor conferir o estudo ',prospecStudyId,' !')
@@ -389,11 +388,11 @@ def downloadResultados(config, parametros):
         elif studyStatus == 'Finished':
             print('Prospec rodou com sucesso!')  
     else:
-        if config.downloadCompilation:
-            print('Iniciando Download do compilado')
-            downloadCompilationOfStudy(prospecStudyId, constants.PATH_RESULTS_PROSPEC +'/',
-                                'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
-            print('Finalizado o  Download do compilado do estudo: ',prospecStudyId)
+       
+        print('Iniciando Download do compilado')
+        downloadCompilationOfStudy(prospecStudyId, constants.PATH_RESULTS_PROSPEC +'/',
+                            'Estudo_'+ str(prospecStudyId) + '_compilation.zip')
+        print('Finalizado o  Download do compilado do estudo: ',prospecStudyId)
     prospecStudy = getInfoFromStudy(prospecStudyId)
     n_decks = 0
     for deck in prospecStudy['Decks']:
