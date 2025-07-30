@@ -5,9 +5,11 @@ from datetime import datetime
 from app.core.config import settings
 from .repository import ProspecRepository
 from .schemas import (
-    StudyExecutionDto, StudyResultDto, StudyStatusEnum, 
-    BackTestDto, DownloadResultDto, StudyInfoReadDto
+    StudyExecutionDto, StudyResultDto, 
+    DownloadResultDto, StudyInfoReadDto
 )
+from middle.utils import setup_logger
+logger = setup_logger()
 
 
 class ProspecService:
@@ -16,51 +18,50 @@ class ProspecService:
 
     async def run_prospec_study(self, parametros: StudyExecutionDto) -> StudyResultDto:
         """Main function to run Prospec studies"""
-        print('')
-        print('--------------------------------------------------------------------------------#')
-        print(f'#-API do Prospec Iniciado: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        logger.info('')
+        logger.info('--------------------------------------------------------------------------------#')
+        logger.info(f'#-API do Prospec Iniciado: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
 
         if parametros.apenas_email:
-            print(f'Iniciando download dos resultados do estudo com id: {parametros.id_estudo}')
+            logger.info(f'Iniciando download dos resultados do estudo com id: {parametros.id_estudo}')
             return await self._download_resultados(parametros)
         
         elif not parametros.back_teste:
             return await self._run_regular_study(parametros)
         
-        else:
-            return await self._run_back_test(parametros)
+
+    async def get_study_status(self, study_id: str) -> str:
+        status = await self.repository.get_study_status(study_id)
+        logger.info(f"Study status: {status}")
+        return status
+
 
     async def _run_regular_study(self, parametros: StudyExecutionDto) -> StudyResultDto:
         """Run regular Prospec study"""
         await self.repository.authenticate()
         
-        # Get base study configuration
         config = await self._get_study_configuration(parametros)
         
-        # Duplicate study
         study_id = await self._duplicate_and_configure_study(config, parametros)
         
-        # Send volume files if needed
         if config.get('send_volume', True):
             await self._send_volume_files(study_id)
         
-        # Associate cuts and volumes
         await self._associate_cuts_and_volumes(study_id, config)
         
-        # Start execution
         if parametros.executar_estudo:
             await self._start_execution(study_id, config)
         
-        # Wait for completion
         if parametros.aguardar_fim:
             return await self._wait_for_completion(study_id, config)
         
         return StudyResultDto(
             study_id=study_id,
             compilation_file="",
-            status=StudyStatusEnum.ready,
+            status="ready",
             n_decks=0
         )
+
 
     async def _get_study_configuration(self, parametros: StudyExecutionDto) -> dict:
         """Get study configuration based on parameters"""
@@ -86,11 +87,12 @@ class ProspecService:
         config['volume_study_id'] = await self._get_volume_study_id()
         
         # Configure study name
-        base_study_info = await self.repository.get_study_info(config['base_study_id'])
+        base_study_info = await self.repository.get_study_by_id(config['base_study_id'])
         config['study_name'] = await self._get_study_name(base_study_info)
         config['study_name'] = f"{config['study_name']}__{parametros.sensibilidade}".upper()
         
         return config
+
 
     async def _get_volume_study_id(self) -> str:
         """Get ID of volume study"""
@@ -106,12 +108,14 @@ class ProspecService:
         
         return ""
 
+
     async def _get_study_name(self, study_info: dict) -> str:
         """Generate study name from deck information"""
         for deck in study_info['Decks']:
             if deck['Model'] == 'DECOMP':
                 return f"DC{deck['Year']}{str(deck['Month']).zfill(2)}-RV{deck['Revision']}"
         return ""
+
 
     async def _duplicate_and_configure_study(self, config: dict, parametros: StudyExecutionDto) -> str:
         """Duplicate and configure study"""
@@ -136,9 +140,10 @@ class ProspecService:
         
         return study_id
 
+
     async def _send_volume_files(self, study_id: str) -> None:
         """Send volume files to study"""
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         
         for deck in study_info['Decks']:
             if deck['Model'] == 'DECOMP':
@@ -146,9 +151,10 @@ class ProspecService:
                 await self.repository.send_file_to_deck(study_id, deck['Id'], volume_path, 'volume_uhe.csv')
                 break
 
+
     async def _associate_cuts_and_volumes(self, study_id: str, config: dict) -> None:
         """Associate cuts and volumes"""
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         
         # Associate cuts
         destination_cuts_id = []
@@ -173,9 +179,10 @@ class ProspecService:
             }]
             await self.repository.associate_volumes(study_id, volume_associations)
 
+
     async def _start_execution(self, study_id: str, config: dict) -> None:
         """Start study execution"""
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         
         # Check if contains NEWAVE
         contains_newave = any(deck['Model'] == 'NEWAVE' for deck in study_info['Decks'])
@@ -193,6 +200,7 @@ class ProspecService:
         
         await self.repository.run_execution(study_id, execution_config)
 
+
     async def _wait_for_completion(self, study_id: str, config: dict) -> StudyResultDto:
         """Wait for study completion and download results"""
         # Wait initial period
@@ -205,8 +213,7 @@ class ProspecService:
             else:
                 await asyncio.sleep(600)  # 10 minutes between checks
             
-            status = await self.repository.get_study_status(study_id)
-            print(f"Study status: {status}")
+            status = await self.get_study_status(study_id)
             
             if status in ['Finished', 'Aborted', 'Failed']:
                 break
@@ -219,16 +226,17 @@ class ProspecService:
             await self.repository.download_compilation(study_id, download_path)
         
         # Count decks
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         n_decks = sum(1 for deck in study_info['Decks'] 
                      if deck['Model'] == 'DECOMP' and deck['SensibilityInfo'] == 'Original')
         
         return StudyResultDto(
             study_id=study_id,
             compilation_file=compilation_file,
-            status=StudyStatusEnum(status.lower()),
+            status=status.lower(),
             n_decks=n_decks
         )
+
 
     async def _download_resultados(self, parametros: StudyExecutionDto) -> DownloadResultDto:
         """Download results from existing study"""
@@ -236,13 +244,11 @@ class ProspecService:
         await self.repository.authenticate()
         
         if parametros.aguardar_fim:
-            # Wait for completion
             for i in range(60):
                 if i > 0:
-                    await asyncio.sleep(600)  # 10 minutes between checks
+                    await asyncio.sleep(600)
                 
-                status = await self.repository.get_study_status(study_id)
-                print(f"Study status: {status}")
+                status = await self.get_study_status(study_id)
                 
                 if status in ['Finished', 'Aborted', 'Failed']:
                     break
@@ -251,40 +257,35 @@ class ProspecService:
         compilation_file = f'Estudo_{study_id}_compilation.zip'
         download_path = os.path.join(settings.path_arquivos, compilation_file)
         
-        status = await self.repository.get_study_status(study_id)
+        status = await self.get_study_status(study_id)
         if status == 'Finished':
             await self.repository.download_compilation(study_id, download_path)
         
         # Get study info
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         n_decks = sum(1 for deck in study_info['Decks'] 
                      if deck['Model'] == 'DECOMP' and deck['SensibilityInfo'] == 'Original')
         
         return DownloadResultDto(
             compilation_file=compilation_file,
-            status=StudyStatusEnum(status.lower()),
+            status=status.lower(),
             study_title=study_info['Title'],
             n_decks=n_decks
         )
 
-    async def _run_back_test(self, parametros: StudyExecutionDto) -> StudyResultDto:
-        """Run back test study"""
-        # Implementation for back test functionality
-        # This would follow similar pattern but with different configuration
-        pass
 
-    async def get_study_info(self, study_id: str) -> StudyInfoReadDto:
+    async def get_study_by_id(self, study_id: str) -> StudyInfoReadDto:
         """Get study information"""
         await self.repository.authenticate()
-        study_info = await self.repository.get_study_info(study_id)
+        study_info = await self.repository.get_study_by_id(study_id)
         
         return StudyInfoReadDto(
             id=study_id,
             title=study_info['Title'],
             description=study_info.get('Description', ''),
-            status=StudyStatusEnum(study_info['Status'].lower()),
+            status=study_info['Status'].lower(),
             decks=study_info['Decks'],
-            creation_date=datetime.now()  # Would need to parse from API response
+            creation_date=datetime.now()
         )
 
     async def get_base_study_ids(self) -> list:

@@ -2,9 +2,7 @@ import httpx
 import json
 import os
 import time
-from datetime import datetime
 from app.core.config import settings
-from .schemas import StudyStatusEnum, StudyInfoReadDto
 
 
 class ProspecRepository:
@@ -67,7 +65,7 @@ class ProspecRepository:
             response.raise_for_status()
             return response.json()
 
-    async def get_study_info(self, study_id: str) -> dict:
+    async def get_study_by_id(self, study_id: str) -> dict:
         """Get information about a specific study"""
         url = f"{self.base_url}/api/prospectiveStudies/{study_id}"
         headers = await self._get_headers()
@@ -84,7 +82,7 @@ class ProspecRepository:
 
     async def get_study_status(self, study_id: str) -> str:
         """Get status of a specific study"""
-        study_info = await self.get_study_info(study_id)
+        study_info = await self.get_study_by_id(study_id)
         return study_info['Status']
 
     async def duplicate_study(self, study_id: str, title: str, description: str, tags: list, 

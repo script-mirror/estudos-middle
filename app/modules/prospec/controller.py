@@ -21,7 +21,12 @@ class ProspecController:
                 response_model=StudyResultDto,
                 )
     async def run_study(self, parametros: StudyExecutionDto):
-        """Execute a Prospec study with given parameters"""
+        """
+        Executa um estudo Prospec com os parâmetros fornecidos.
+
+        Este endpoint inicia a execução de um estudo Prospec utilizando os parâmetros informados.
+        Retorna o resultado do estudo após a execução.
+        """
         try:
             return await self.service.run_prospec_study(parametros)
         except Exception as e:
@@ -30,71 +35,71 @@ class ProspecController:
     @router.get("/study/{study_id}",
                response_model=StudyInfoReadDto,
                )
-    async def get_study_info(self, study_id: str):
-        """Get information about a specific study"""
+    async def get_study_by_id(self, study_id: str):
+        """
+        Consulta informações detalhadas de um estudo específico.
+
+        Forneça o ID do estudo para obter informações detalhadas sobre o mesmo.
+        """
         try:
-            return await self.service.get_study_info(study_id)
+            return await self.service.get_study_by_id(study_id)
         except Exception as e:
             raise HTTPException(status_code=404, detail=f"Study not found: {str(e)}")
 
-    @router.post("/download-results",
-                response_model=DownloadResultDto,
-                )
-    async def download_results(self, parametros: StudyExecutionDto):
-        """Download results from an existing study"""
-        if not parametros.id_estudo:
-            raise HTTPException(status_code=400, detail="id_estudo is required for download")
-        
-        parametros.apenas_email = True
-        try:
-            return await self.service.run_prospec_study(parametros)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    @router.post("/back-test",
-                response_model=StudyResultDto,
-                )
-    async def run_back_test(self, parametros: StudyExecutionDto):
-        """Run a back test study"""
-        parametros.back_teste = True
-        try:
-            return await self.service.run_prospec_study(parametros)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
 
     @router.get("/base-studies",
                response_model=list,
                )
     async def get_base_study_ids(self):
-        """Get IDs of all base studies"""
+        """
+        Lista os IDs de todos os estudos base disponíveis.
+
+        Retorna uma lista contendo os identificadores dos estudos base cadastrados no sistema.
+        """
         try:
             return await self.service.get_base_study_ids()
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+
     @router.post("/start-study/{study_id}")
     async def start_study(self, study_id: str):
-        """Start execution of a specific study"""
+        """
+        Inicia a execução de um estudo específico.
+
+        Forneça o ID do estudo para iniciar sua execução. Retorna mensagem de sucesso e o ID do estudo.
+        """
         try:
             await self.service.start_study_execution(study_id)
-            return {"message": "Study started successfully", "study_id": study_id}
+            return {"message": "Estudo iniciado com sucesso", "study_id": study_id}
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error starting study: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Erro ao iniciar estudo: {str(e)}")
+
 
     @router.post("/abort-study/{study_id}")
     async def abort_study(self, study_id: str):
-        """Abort execution of a specific study"""
+        """
+        Aborta a execução de um estudo específico.
+
+        Forneça o ID do estudo para abortar sua execução. Retorna mensagem de sucesso e o ID do estudo.
+        """
         try:
             await self.service.abort_study_execution(study_id)
-            return {"message": "Study aborted successfully", "study_id": study_id}
+            return {"message": "Estudo abortado com sucesso", "study_id": study_id}
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error aborting study: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Erro ao abortar estudo: {str(e)}")
+
 
     @router.get("/study/{study_id}/status")
     async def get_study_status(self, study_id: str):
-        """Get current status of a specific study"""
+        """
+        Consulta o status atual de um estudo específico.
+
+        Forneça o ID do estudo para obter o status atual da execução.
+        """
         try:
             status = await self.service.get_study_status(study_id)
             return {"study_id": study_id, "status": status}
         except Exception as e:
             raise HTTPException(status_code=404, detail=f"Study not found: {str(e)}")
+
