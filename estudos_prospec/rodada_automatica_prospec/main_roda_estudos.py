@@ -251,7 +251,7 @@ def run_with_params():
 
             if   argumento ==        "prevs": parametros[argumento] = sys.argv[i+1].upper()            
             elif argumento ==          "rvs": parametros[argumento] = int(sys.argv[i+1])            
-            elif argumento ==   "preliminar": parametros[argumento] = int(sys.argv[i+1])            
+            elif argumento ==       "rodada": parametros[argumento] = sys.argv[i+1]          
             elif argumento ==   "path_prevs": parametros[argumento] = sys.argv[i+1]            
             elif argumento == "apenas_email": parametros[argumento] = bool(int(sys.argv[i+1]))            
             elif argumento =="assunto_email": parametros[argumento] = sys.argv[i+1] 
