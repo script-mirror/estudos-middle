@@ -87,8 +87,9 @@ def send_email(parametros):
     idEstudos = []
     
     if parametros['tag'] is not None and parametros['id_estudo'] is None:
-        if EMAIL_CONFIG[parametros['tag']]['n_estudos'] == 1:
-             parametros['id_estudo'] = [parametros['prospec_out'][0]]
+        if parametros['tag'] in EMAIL_CONFIG.keys():
+            if EMAIL_CONFIG[parametros['tag']]['n_estudos'] == 1:
+                parametros['id_estudo'] = [parametros['prospec_out'][0]]
         else:
             parametros['id_estudo'] = get_id_email(parametros)
             
@@ -234,10 +235,14 @@ def create_directory(base_path: str, sub_path: str) -> Path:
 
 def get_id_email(parametros):
     authenticateProspec(consts.API_PROSPEC_USERNAME, consts.API_PROSPEC_PASSWORD)
-    estudos = getStudiesByTag({'page':1, 'pageSize':10, 'tags':parametros['tag']})
+    n_estudos=30
+    if parametros['tag'] in EMAIL_CONFIG.keys():
+        n_estudos = EMAIL_CONFIG[parametros['tag']]['n_estudos']
+    
+    estudos = getStudiesByTag({'page':1, 'pageSize':n_estudos+3, 'tags':parametros['tag']})
     list_id = []   
     for estudo in estudos['ProspectiveStudies']:
-        if estudo['Status'] == 'Concluído' and len(list_id) <= EMAIL_CONFIG[parametros['tag']]['n_estudos']:
+        if estudo['Status'] == 'Concluído' and len(list_id) <= n_estudos:
             list_id.append(str(estudo['Id']))        
     return list_id
 
