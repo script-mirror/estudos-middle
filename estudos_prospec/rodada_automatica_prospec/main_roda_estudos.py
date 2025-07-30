@@ -299,7 +299,7 @@ BLOCK_FUNCTIONS = {
 } 
 
 if __name__ == '__main__':
-    PARAMETROS =  {
+    """   PARAMETROS =  {
         "rodada": 'Preliminar',
         "data": datetime.now(),
         "apenas_email": False,
@@ -322,7 +322,7 @@ if __name__ == '__main__':
         "cenario":10,
         "prevs_name": None,
         "n_tentativas": 10
-    }
+    }"""
     
-    rodar(PARAMETROS)
+    #rodar(PARAMETROS)
     run_with_params()
