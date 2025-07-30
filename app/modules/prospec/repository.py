@@ -2,9 +2,7 @@ import httpx
 import json
 import os
 import time
-from datetime import datetime
 from app.core.config import settings
-from .schemas import StudyStatusEnum, StudyInfoReadDto
 
 
 class ProspecRepository:
