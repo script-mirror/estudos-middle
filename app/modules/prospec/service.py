@@ -30,6 +30,12 @@ class ProspecService:
             return await self._run_regular_study(parametros)
         
 
+    async def get_study_status(self, study_id: str) -> str:
+        status = await self.repository.get_study_status(study_id)
+        logger.info(f"Study status: {status}")
+        return status
+
+
     async def _run_regular_study(self, parametros: StudyExecutionDto) -> StudyResultDto:
         """Run regular Prospec study"""
         await self.repository.authenticate()
@@ -55,6 +61,7 @@ class ProspecService:
             status="ready",
             n_decks=0
         )
+
 
     async def _get_study_configuration(self, parametros: StudyExecutionDto) -> dict:
         """Get study configuration based on parameters"""
@@ -86,6 +93,7 @@ class ProspecService:
         
         return config
 
+
     async def _get_volume_study_id(self) -> str:
         """Get ID of volume study"""
         studies = await self.repository.get_studies_by_tag({
@@ -100,12 +108,14 @@ class ProspecService:
         
         return ""
 
+
     async def _get_study_name(self, study_info: dict) -> str:
         """Generate study name from deck information"""
         for deck in study_info['Decks']:
             if deck['Model'] == 'DECOMP':
                 return f"DC{deck['Year']}{str(deck['Month']).zfill(2)}-RV{deck['Revision']}"
         return ""
+
 
     async def _duplicate_and_configure_study(self, config: dict, parametros: StudyExecutionDto) -> str:
         """Duplicate and configure study"""
@@ -130,6 +140,7 @@ class ProspecService:
         
         return study_id
 
+
     async def _send_volume_files(self, study_id: str) -> None:
         """Send volume files to study"""
         study_info = await self.repository.get_study_by_id(study_id)
@@ -139,6 +150,7 @@ class ProspecService:
                 volume_path = os.path.join(settings.path_projetos, 'estudos-middle/api_prospec/calculo_volume/volume_uhe.csv')
                 await self.repository.send_file_to_deck(study_id, deck['Id'], volume_path, 'volume_uhe.csv')
                 break
+
 
     async def _associate_cuts_and_volumes(self, study_id: str, config: dict) -> None:
         """Associate cuts and volumes"""
@@ -167,6 +179,7 @@ class ProspecService:
             }]
             await self.repository.associate_volumes(study_id, volume_associations)
 
+
     async def _start_execution(self, study_id: str, config: dict) -> None:
         """Start study execution"""
         study_info = await self.repository.get_study_by_id(study_id)
@@ -187,6 +200,7 @@ class ProspecService:
         
         await self.repository.run_execution(study_id, execution_config)
 
+
     async def _wait_for_completion(self, study_id: str, config: dict) -> StudyResultDto:
         """Wait for study completion and download results"""
         # Wait initial period
@@ -199,8 +213,7 @@ class ProspecService:
             else:
                 await asyncio.sleep(600)  # 10 minutes between checks
             
-            status = await self.repository.get_study_status(study_id)
-            logger.info(f"Study status: {status}")
+            status = await self.get_study_status(study_id)
             
             if status in ['Finished', 'Aborted', 'Failed']:
                 break
@@ -224,6 +237,7 @@ class ProspecService:
             n_decks=n_decks
         )
 
+
     async def _download_resultados(self, parametros: StudyExecutionDto) -> DownloadResultDto:
         """Download results from existing study"""
         study_id = parametros.id_estudo
@@ -234,8 +248,7 @@ class ProspecService:
                 if i > 0:
                     await asyncio.sleep(600)
                 
-                status = await self.repository.get_study_status(study_id)
-                logger.info(f"Study status: {status}")
+                status = await self.get_study_status(study_id)
                 
                 if status in ['Finished', 'Aborted', 'Failed']:
                     break
@@ -244,7 +257,7 @@ class ProspecService:
         compilation_file = f'Estudo_{study_id}_compilation.zip'
         download_path = os.path.join(settings.path_arquivos, compilation_file)
         
-        status = await self.repository.get_study_status(study_id)
+        status = await self.get_study_status(study_id)
         if status == 'Finished':
             await self.repository.download_compilation(study_id, download_path)
         
