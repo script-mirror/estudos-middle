@@ -5,8 +5,8 @@ from datetime import datetime
 from app.core.config import settings
 from .repository import ProspecRepository
 from .schemas import (
-    StudyExecutionDto, StudyResultDto, StudyStatusEnum, 
-    BackTestDto, DownloadResultDto, StudyInfoReadDto
+    StudyExecutionDto, StudyResultDto, 
+    DownloadResultDto, StudyInfoReadDto
 )
 
 
@@ -58,7 +58,7 @@ class ProspecService:
         return StudyResultDto(
             study_id=study_id,
             compilation_file="",
-            status=StudyStatusEnum.ready,
+            status="ready",
             n_decks=0
         )
 
@@ -226,7 +226,7 @@ class ProspecService:
         return StudyResultDto(
             study_id=study_id,
             compilation_file=compilation_file,
-            status=StudyStatusEnum(status.lower()),
+            status=status.lower(),
             n_decks=n_decks
         )
 
@@ -262,7 +262,7 @@ class ProspecService:
         
         return DownloadResultDto(
             compilation_file=compilation_file,
-            status=StudyStatusEnum(status.lower()),
+            status=status.lower(),
             study_title=study_info['Title'],
             n_decks=n_decks
         )
@@ -282,7 +282,7 @@ class ProspecService:
             id=study_id,
             title=study_info['Title'],
             description=study_info.get('Description', ''),
-            status=StudyStatusEnum(study_info['Status'].lower()),
+            status=study_info['Status'].lower(),
             decks=study_info['Decks'],
             creation_date=datetime.now()  # Would need to parse from API response
         )
