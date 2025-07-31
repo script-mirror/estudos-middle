@@ -307,7 +307,7 @@ BLOCK_FUNCTIONS = {
 } 
 
 if __name__ == '__main__':
-    PARAMETROS =  {
+   """ PARAMETROS =  {
         "rodada": 'Preliminar',
         "data": datetime.now(),
         "apenas_email": False,
@@ -332,6 +332,6 @@ if __name__ == '__main__':
         "n_tentativas": 10
     }
     send_email(PARAMETROS)
-    
+    """
     #rodar(PARAMETROS)
     run_with_params()
