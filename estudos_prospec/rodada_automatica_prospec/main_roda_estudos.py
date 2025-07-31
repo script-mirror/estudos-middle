@@ -86,7 +86,7 @@ def send_email(parametros):
     pathName = []
     nomesEstudos = []
     idEstudos = []
-    
+    print(parametros['tag'])
     if parametros['tag'] is not None and parametros['id_estudo'] is None:
         if parametros['tag'] in EMAIL_CONFIG.keys():
             if EMAIL_CONFIG[parametros['tag']]['n_estudos'] == 1:
@@ -170,8 +170,8 @@ def run_ec_ext(parametros):
     parametros['aguardar_fim'] = False 
     idEstudos = []
     print(parametros['n_membros'])
-    if parametros['n_Membros'] > 0:
-        listMembers = random.sample(range(0, 100), parametros['n_Membros'])
+    if parametros['n_membros'] > 0:
+        listMembers = random.sample(range(0, 100), parametros['n_membros'])
         #listMembers = list(range(0, 100))
     else:
         listMembers = parametros['percentis_ec']

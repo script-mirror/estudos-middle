@@ -11,11 +11,10 @@ from datetime import datetime, date, timedelta
 from string import ascii_lowercase
 from copy import deepcopy
 from typing import List, Dict, Any, Optional, Tuple
-import pandas as pd
 from middle.utils import SemanaOperativa
 from middle.decomp import ons_to_ccee
 from middle.message import send_whatsapp_message, send_email_message
-from ComparaCT import *
+import main_roda_estudos
 from middle.utils.constants import Constants 
 consts = Constants()
 
@@ -55,12 +54,17 @@ def get_deck_interno():
     estudos = getStudiesByTag({'page':1, 'pageSize':3, 'tags':'P.CONJ'})
     for estudo in estudos['ProspectiveStudies']:
         if estudo['Status'] == 'Concluído':
-            prospecStudy = getInfoFromStudy(estudo['Id'])
+            prospecId = estudo['Id']
+            prospecId = '26760'
+            prospecStudy = getInfoFromStudy(prospecId)
+            #prospecStudy = getInfoFromStudy(estudo['Id'])
             listOfDecks  = prospecStudy['Decks']
             for deck in listOfDecks:
                 if deck['Model'] == 'DECOMP':
                     path = consts.PATH_RESULTS_PROSPEC + '/decomp/' + deck['FileName']
-                    downloadDeckOfStudy(estudo['Id'],deck['Id'], consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'])
+                    arrayOfFiles = ['dadger.rv'+str(deck['Revision']), 'dadgnl.rv'+str(deck['Revision']), 'vazoes.rv'+str(deck['Revision'])]
+                    downloadFileFromDeckV2(deck['Id'],consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
+                    #downloadDeckOfStudy(prospecId,deck['Id'], consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'])
                     path_unzip = extract_zip_folder(path, path)
                     return path_unzip
      
@@ -76,7 +80,7 @@ def setup_directories(paths: List[str]) -> None:
         except Exception as e:
             logger.warning(f"Failed to setup directory {path}: {e}")
 
-def convert_deck_ons_to_ccee(input_path: str = PATH_CONFIG['decomp_ons'], output_path: str = PATH_CONFIG['decomp_interno']) -> None:
+def convert_deck_ons_to_ccee(input_path: str = PATH_CONFIG['decomp_ons']) -> None:
     """Execute script to convert ONS deck to CCEE format."""
     data: datetime = datetime.today()
     data_rv: SemanaOperativa = SemanaOperativa(data)
@@ -86,12 +90,15 @@ def convert_deck_ons_to_ccee(input_path: str = PATH_CONFIG['decomp_ons'], output
 
     arqzip: str = 'PMO_deck_preliminar.zip'
     arqdec: str = 'DEC_ONS_' + dt_decomp.strftime('%m%Y') + '_' + rev + '_VE.zip'
+    output_path = input_path + '/DC' + dt_decomp.strftime('%Y%m') + '_' + rev 
     try:
         ons_to_ccee(input_path, output_path, arqzip, arqdec, rev, dt_decomp)
         logger.info("ONS to CCEE conversion completed")
     except Exception as e:
         logger.error(f"ONS to CCEE conversion failed: {e}")
         raise
+    return output_path
+
 
 def find_dadger_file(directory: str) -> str:
     """Find the dadger file in the specified directory."""
@@ -214,24 +221,18 @@ def execute_prospec(params: Dict[str, Any], deck_path: str, deck_name: str) -> A
     params['deck'] = f"{deck_name}.zip"
     params['path_deck'] = deck_path + '/'
     params['tag'] = 'DECOMP'
-    
+    params['aguardar_fim'] = False
+    params['apenas_email'] = False
+    params['back_teste'] = True
+
     try:
-        prospec_out: Any = run_prospec.rodar(params)
+        prospec_out: Any = run_prospec.main(params)
         logger.info(f"Prospec executed for deck {deck_name}: {prospec_out}")
         return prospec_out
     except Exception as e:
         logger.error(f"Prospec execution failed for {deck_name}: {e}")
         raise
-"""
-def send_email_notification(id_list: List[Any], email_list: str, subject: str) -> None:
-    cmd: str = (SEND_MAIL + f" apenas_email 1 id_estudo '{id_list}' list_email '{email_list}' assunto_email '{subject}'")
-    try:
-        os.system(cmd)
-        logger.info("Email notification sent")
-    except Exception as e:
-        logger.error(f"Failed to send email notification: {e}")
-        raise
-"""
+
 def rodar(parametros: Dict[str, Any]) -> None:
     """Main function to process and compare decks."""
     # Setup directories
@@ -240,85 +241,75 @@ def rodar(parametros: Dict[str, Any]) -> None:
         PATH_CONFIG['decomp_interno']
     ])
     
-    path = get_deck_interno()
+    path_in = get_deck_interno()
     # Convert ONS deck to CCEE
-    convert_deck_ons_to_ccee( PATH_CONFIG['decomp_ons'], PATH_CONFIG['decomp_ons'])
+    PATH_CONFIG['decomp_ons'] = convert_deck_ons_to_ccee( PATH_CONFIG['decomp_ons'])
     # Find dadger file
     dadger_file: str = find_dadger_file(PATH_CONFIG['decomp_ons'])
     rv: str = dadger_file[-1:]
     logger.info(f"Found dadger file: {dadger_file} with rv: {rv}")
 
-    # Extract Raizen Prospec zip
-    for folder in os.listdir(PATH_CONFIG['raizen_prospec_decomp']):
-        if '.zip' in folder:
-            path_in: str = extract_zip_folder(PATH_CONFIG['raizen_prospec_decomp'], folder)
-            break
-    else:
-        raise FileNotFoundError("No zip file found in Raizen Prospec decomp directory")
 
     # Copy necessary files
-    copy_files(FILES_TO_COPY + [f'rv{rv}'], PATH_CONFIG['oficial_decomp'], PATH_CONFIG['raizen_decomp'])
+    copy_files(FILES_TO_COPY + [f'rv{rv}'], PATH_CONFIG['decomp_ons'], PATH_CONFIG['decomp_interno'])
     convert_file_encoding(
         os.path.join(path_in, dadger_file),
-        os.path.join(PATH_CONFIG['raizen_decomp'], dadger_file)
+        os.path.join(PATH_CONFIG['decomp_interno'], dadger_file)
     )
+    
     copy_files(
         [f.format(rv) for f in DADGNL_VAZOES],
         path_in,
-        PATH_CONFIG['raizen_decomp']
+        PATH_CONFIG['decomp_interno']
     )
-
-    # Clean up extracted folder
-    try:
-        shutil.rmtree(path_in)
-        os.remove(f"{path_in}.zip")
-        logger.info(f"Cleaned up extracted folder: {path_in}")
-    except Exception as e:
-        logger.warning(f"Failed to clean up {path_in}: {e}")
-
+    data: datetime = datetime.today()
+    data_rv: SemanaOperativa = SemanaOperativa(data)
+    rev: str = 'RV{}'.format(int(data_rv.current_revision))
+    dt_decomp: datetime = data_rv.first_day_of_month + timedelta(days=6)
+    path_decomp =  'DC' + dt_decomp.strftime('%Y%m')
     # Read dadger files
-    path_dc_oficial: str = os.path.join(PATH_CONFIG['oficial_decomp'], dadger_file)
-    path_dc_raizen: str = os.path.join(PATH_CONFIG['raizen_decomp'], dadger_file)
+    path_dc_oficial: str = os.path.join(PATH_CONFIG['decomp_ons'], dadger_file)
+    path_dc_raizen: str = os.path.join(PATH_CONFIG['decomp_interno'], dadger_file)
     dadger_oficial: Dict[str, Any] = read_dadger(path_dc_oficial)
-    dadger_base: Dict[str, Any] = read_dadger(path_dc_oficial)
     dadger_raizen: Dict[str, Any] = read_dadger(path_dc_raizen)
-    path_decomp: str = 'DC' + dadger_oficial['dadger']['DT'][0].split()[3] + dadger_oficial['dadger']['DT'][0].split()[2]
 
     # Compare UH
     dict_subm: Dict[str, Dict[str, int]] = {'Raizen': {'1': 0, '2': 0, '3': 0, '4': 0}, 'CCEE': {'1': 0, '2': 0, '3': 0, '4': 0}}
 
     # Analyze CT
-    path_fig: List[str] = Analise_CT(path_dc_raizen, path_dc_oficial, dict_subm, PATH_CONFIG['output_ct'])
+    #path_fig: List[str] = Analise_CT(path_dc_raizen, path_dc_oficial, dict_subm, PATH_CONFIG['output_ct'])
 
     # Send WhatsApp notifications
-    for fig_ct in path_fig:
-        print(fig_ct)
-        send_whatsapp_message(consts.WHATSAPP_GILSEU, 'PILHA TÉRMICA', fig_ct)
+    #for fig_ct in path_fig:
+    #    print(fig_ct)
+    #    send_whatsapp_message(consts.WHATSAPP_GILSEU, 'PILHA TÉRMICA', fig_ct)
 
     # Setup output decks
     for folder in [path_decomp + '__ONS-TO-CCEE', path_decomp + '__RAIZEN', path_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN']:
         folder_path: str = os.path.join(PATH_CONFIG['output_decks'], folder)
         os.makedirs(folder_path, exist_ok=True)
         if folder == path_decomp + '__RAIZEN':
-            shutil.copytree(PATH_CONFIG['raizen_decomp'], os.path.join(folder_path, path_decomp))
+            shutil.copytree(PATH_CONFIG['decomp_interno'], os.path.join(folder_path, path_decomp))
         elif folder == path_decomp + '__ONS-TO-CCEE':
-            shutil.copytree(PATH_CONFIG['oficial_decomp'], os.path.join(folder_path, path_decomp))
+            shutil.copytree(PATH_CONFIG['decomp_ons'], os.path.join(folder_path, path_decomp))
         elif folder == path_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN':
+            shutil.copytree(PATH_CONFIG['decomp_ons'], os.path.join(folder_path, path_decomp))
             shutil.copy(
-                os.path.join(PATH_CONFIG['raizen_decomp'], f'vazoes.rv{rv}'),
+                os.path.join(PATH_CONFIG['decomp_interno'], f'vazoes.rv{rv}'),
                 os.path.join(folder_path, path_decomp)
             )
+
         logger.info(f"Setup output folder: {folder_path}")
 
     # Process checklist blocks
     for block in CHECKLIST_BLOCKS:
         deck_path: str = create_deck(
-            PATH_CONFIG['oficial_decomp'],
+            PATH_CONFIG['decomp_ons'],
             PATH_CONFIG['output_decks'],
             block, path_decomp
         )
         alter_dadger(
-            deepcopy(dadger_base),
+            deepcopy(dadger_oficial),
             block,
             dadger_raizen['dadger'][block],
             os.path.join(deck_path, dadger_file),
@@ -332,13 +323,16 @@ def rodar(parametros: Dict[str, Any]) -> None:
         zip_decomp_files(deck_path, os.path.join(PATH_CONFIG['output_decks'], deck), path_decomp)
         id_prospec_list.append(execute_prospec(parametros, PATH_CONFIG['output_decks'], deck))
 
+    params  = {'apenas_email': True, 'id_estudo':id_prospec_list}
     # Wait and send email
+    params['apenas_email'] = True
+    main_roda_estudos.rodar(parametros)
     logger.info("Waiting 10 minutes before sending email")
     time.sleep(600)
-    #send_email_notification(id_prospec_list, f'["{EMAIL_GILSEU}"]', "Back Test Decomp")
 
 def run_with_params() -> None:
-    """Parse command-line arguments and run the main process."""
+    """
+    Parse command-line arguments and run the main process.
     params: Dict[str, Any] = {
         'preliminar': 1,
         'data': datetime.now(),
@@ -372,11 +366,11 @@ def run_with_params() -> None:
                 params[arg] = datetime.strptime(value, '%d/%m/%Y')
         except ValueError as e:
             logger.error(f"Invalid value for argument {arg}: {value}. Error: {e}")
-            sys.exit(1)
+            sys.exit(1)"""
 
     rodar(params)
 
 if __name__ == '__main__':
     params = {}
     rodar(params)
-    run_with_params()
+    #run_with_params()

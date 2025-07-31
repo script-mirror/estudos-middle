@@ -244,7 +244,7 @@ def runBackTeste(config):
 
     tags = []
     tags.append('API')
-    tags.append('BackTestDC')
+    tags.append(config.tag)
     anoMes = config.nameFileDecomp[2:8]
     
     generateStudyDecks(prospecStudyId, int(anoMes[:4]), int(anoMes[-2:]), 1, [int(anoMes[-2:])],

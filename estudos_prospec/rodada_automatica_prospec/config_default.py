@@ -129,7 +129,7 @@ PARAMETROS =  {
         "executar_estudo": True,
         "media_rvs": False,
         "n_membros": 0,
-        "n_tentativas": 10,
+        "n_tentativas": 15,
         "percentis_ec": [],
         "nome_estudo": None,
         "sensibilidade": "NAO_INFORMADA",

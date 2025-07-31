@@ -59,6 +59,7 @@ def main(parametros):
         config.pathToFile                    = parametros['path_deck']
         config.nameFileDecomp                = parametros['deck']
         config.waitToFinish                  = parametros['aguardar_fim']
+        config.tag                           = parametros['tag']
         return runBackTeste(config)
 
 def get_id_volumes():

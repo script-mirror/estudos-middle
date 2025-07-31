@@ -76,7 +76,7 @@ def getFileFromS3viaAPIV2(*args):
 
     response = requests.post(url, headers=headers, data=json.dumps(dado), verify=verifyCertificate)
         
-    print(response.text)
+    #print(response.text)
       
     if (response.status_code == 401):
         token = getToken(username, password)
