@@ -344,14 +344,12 @@ def rodar(parametros: Dict[str, Any]) -> None:
     parametros['assunto_email'] = None
     parametros['id_estudo']     = id_prospec_list
     main_roda_estudos.send_email(parametros)
-    
-    
-
+   
+   
 def run_with_params() -> None:
     params = {}
     rodar(params)
 
 if __name__ == '__main__':
     
-    #rodar(params)
     run_with_params()
