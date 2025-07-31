@@ -35,7 +35,7 @@ def create_directory(base_path: str, sub_path: str) -> Path:
 PATH_CONFIG: Dict[str, str] = {
     'output_decks':   create_directory(PATH_BASE, 'output/decks'),
     'output_ct':      os.path.join(create_directory(PATH_BASE, 'output'), f'saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
-    'decomp_ons':     create_directory(consts.PATH_ARQUIVOS, 'decomp/ons'),
+    'decomp_ons':     create_directory(consts.PATH_ARQUIVOS, 'decks/decomp/ons'),
     'decomp_interno': create_directory(PATH_BASE, 'input/decomp/interno')
 }
 
