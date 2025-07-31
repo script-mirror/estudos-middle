@@ -307,7 +307,7 @@ BLOCK_FUNCTIONS = {
 } 
 
 if __name__ == '__main__':
-   """ PARAMETROS =  {
+    """ PARAMETROS =  {
         "rodada": 'Preliminar',
         "data": datetime.now(),
         "apenas_email": False,
