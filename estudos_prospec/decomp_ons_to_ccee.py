@@ -16,6 +16,10 @@ from middle.decomp import ons_to_ccee
 from middle.message import send_whatsapp_message, send_email_message
 import main_roda_estudos
 from middle.utils.constants import Constants 
+from middle.s3 import (
+    handle_webhook_file,
+    get_latest_webhook_product,
+)
 consts = Constants()
 
 PATH_BASE:     str = os.path.join(consts.PATH_ARQUIVOS,  'prospec/backtest_decomp')
@@ -234,7 +238,7 @@ def execute_prospec(params: Dict[str, Any], deck_path: str, deck_name: str) -> A
         logger.error(f"Prospec execution failed for {deck_name}: {e}")
         raise
 
-def rodar(parametros: Dict[str, Any]) -> None:
+def rodar(parametros: Dict[str, Any] = None) -> None:
     """Main function to process and compare decks."""
     # Setup directories
     setup_directories([
@@ -244,7 +248,14 @@ def rodar(parametros: Dict[str, Any]) -> None:
     
     path_in = get_deck_interno()
     # Convert ONS deck to CCEE
-    PATH_CONFIG['decomp_ons'] = convert_deck_ons_to_ccee( PATH_CONFIG['decomp_ons'])
+    payload = get_latest_webhook_product(
+        consts.WEBHOOK_DECK_DECOMP_PRELIMINAR
+    )[0]
+    path_deck_decomp = handle_webhook_file(payload, PATH_CONFIG['decomp_ons'])
+    
+    PATH_CONFIG['decomp_ons'] = convert_deck_ons_to_ccee(
+        path_deck_decomp
+    )
     # Find dadger file
     dadger_file: str = find_dadger_file(PATH_CONFIG['decomp_ons'])
     rv: str = dadger_file[-1:]
@@ -346,10 +357,9 @@ def rodar(parametros: Dict[str, Any]) -> None:
     main_roda_estudos.send_email(parametros)
    
    
-def run_with_params() -> None:
-    params = {}
-    rodar(params)
+def main() -> None:
+    rodar()
 
 if __name__ == '__main__':
     
-    run_with_params()
+    main()
