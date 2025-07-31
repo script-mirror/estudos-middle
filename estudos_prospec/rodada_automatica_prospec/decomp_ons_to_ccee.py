@@ -42,7 +42,8 @@ PATH_CONFIG: Dict[str, str] = {
 FILES_TO_COPY: List[str] = ['caso.dat', 'hidr.dat', 'mlt.dat', 'perdas.dat', 'polinjus.csv', 'indices.csv']
 DADGNL_VAZOES: List[str] = ['dadgnl.rv{}', 'vazoes.rv{}']
 LOG_FORMAT: str = '%(asctime)s - %(levelname)s - %(message)s'
-CHECKLIST_BLOCKS: List[str] = ['UH', 'CT', 'PQ', 'DP', 'MP', 'RE', 'HV', 'HQ', 'VE']
+#CHECKLIST_BLOCKS: List[str] = ['UH', 'CT', 'PQ', 'DP', 'MP', 'RE', 'HV', 'HQ', 'VE']
+CHECKLIST_BLOCKS: List[str] = []
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
@@ -162,7 +163,7 @@ def read_dadger(pathDadger: str) -> Dict[str, Any]:
     with open(pathDadger) as f:
         for line in f:
             if line[0] != '&':
-                if line[:2] in ['VL', 'VU', 'LQ', 'CQ', 'LV', 'CV', 'FU', 'LU', 'FI', 'FE', 'FT', 'HE', 'CM']:
+                if line[:2] in  ['VL', 'VU', 'LQ', 'CQ', 'LV', 'CV', 'FU', 'LU', 'FI', 'FE', 'FT', 'HE', 'CM']:
                     pass
                 else:
                     blocoAtual = line[:2]
@@ -188,10 +189,10 @@ def write_dadger(arquivo: str, dadger: Dict[str, Any]) -> None:
                 fh.write(linha)
     time.sleep(1)
 
-def alter_dadger(base_dadger: Dict[str, Any], block: str, external_block_data: List[str], output_path: str, altered_blocks: str) -> Dict[str, Any]:
+def alter_dadger(base_dadger: Dict[str, Any], block: str, external_block_data: List[str], output_path: str) -> Dict[str, Any]:
     """Alter the dadger file for the specified block."""
     base_dadger['dadger']['TE'] = [
-        f"TE  DECOMP OFICIAL - UTILIZANDO O BLOCO RAIZEN: {altered_blocks}\n"
+        f"TE  DECOMP OFICIAL - UTILIZANDO O BLOCO RAIZEN: {block}\n"
         if line.startswith('TE') else line
         for line in base_dadger['dadger']['TE']
     ]
@@ -303,18 +304,13 @@ def rodar(parametros: Dict[str, Any]) -> None:
 
     # Process checklist blocks
     for block in CHECKLIST_BLOCKS:
-        deck_path: str = create_deck(
-            PATH_CONFIG['decomp_ons'],
-            PATH_CONFIG['output_decks'],
-            block, path_decomp
-        )
-        alter_dadger(
-            deepcopy(dadger_oficial),
-            block,
+        deck_path: str = create_deck(PATH_CONFIG['decomp_ons'], PATH_CONFIG['output_decks'], block, path_decomp)        
+        alter_dadger( 
+            deepcopy(dadger_oficial), 
+            block,  
             dadger_raizen['dadger'][block],
-            os.path.join(deck_path, dadger_file),
-            block
-        )
+            os.path.join(deck_path, dadger_file)
+            )
 
     # Execute Prospec for each deck
     id_prospec_list: List[Any] = []
@@ -322,55 +318,40 @@ def rodar(parametros: Dict[str, Any]) -> None:
         deck_path: str = os.path.join(PATH_CONFIG['output_decks'], deck)
         zip_decomp_files(deck_path, os.path.join(PATH_CONFIG['output_decks'], deck), path_decomp)
         id_prospec_list.append(execute_prospec(parametros, PATH_CONFIG['output_decks'], deck))
+        try:
+            if deck.split('__')[1] == 'ONS-TO-CCEE':
+                id_oficial = [id_prospec_list[-1]]
+                send_whatsapp_message(consts.WHATSAPP_GILSEU,'Deck Decomp ONS to CCEE', os.path.join(PATH_CONFIG['output_decks'], deck+'.zip'))
+        except: pass
 
-    params  = {'apenas_email': True, 'id_estudo':id_prospec_list}
     # Wait and send email
-    params['apenas_email'] = True
-    main_roda_estudos.rodar(parametros)
-    logger.info("Waiting 10 minutes before sending email")
+    parametros['apenas_email']  = True
+    parametros['id_estudo']     = id_oficial
+    parametros['aguardar_fim']  = True
+    parametros['prevs_name']    = None
+    parametros['assunto_email'] = None
+    parametros['media_rvs']     = False
+    parametros['considerar_rv'] = ''
+    parametros['assunto_email'] = 'Testendo conversão decomp ONS para CCEE'
+    parametros['corpo_email']   = 'Rodadas decomp convertido'
+    parametros['list_email']    = [consts.EMAIL_MIDDLE, consts.EMAIL_FRONT]
+    parametros['list_whats']    = [consts.WHATSAPP_PMO]
+    parametros['path_result']   = create_directory(consts.PATH_RESULTS_PROSPEC, '')
     time.sleep(600)
+    main_roda_estudos.send_email(parametros)
+    
+    parametros['prevs_name']    = None
+    parametros['assunto_email'] = None
+    parametros['id_estudo']     = id_prospec_list
+    main_roda_estudos.send_email(parametros)
+    
+    
 
 def run_with_params() -> None:
-    """
-    Parse command-line arguments and run the main process.
-    params: Dict[str, Any] = {
-        'preliminar': 1,
-        'data': datetime.now(),
-        'path_prevs': '',
-        'apenas_email': False,
-        'assunto_email': '',
-        'prevs_name': '',
-        'considerar_rv': 'sem',
-        'gerar_matriz': 0,
-        'path_name': '',
-        'subir_banco': False,
-        'back_teste': True,
-        'rvs': 1,
-        'executar_deck': True,
-        'waitToFinish': False
-    }
-
-    for i in range(1, len(sys.argv), 2):
-        arg: str = sys.argv[i].lower()
-        if i + 1 >= len(sys.argv):
-            break
-        value: str = sys.argv[i + 1]
-        try:
-            if arg in ['prevs', 'path_prevs', 'prevs_name', 'assunto_email', 'id_estudo', 'list_email', 'considerar_rv']:
-                params[arg] = value
-            elif arg in ['rvs', 'preliminar', 'gerar_matriz']:
-                params[arg] = int(value)
-            elif arg in ['apenas_email', 'back_teste']:
-                params[arg] = bool(int(value))
-            elif arg == 'data':
-                params[arg] = datetime.strptime(value, '%d/%m/%Y')
-        except ValueError as e:
-            logger.error(f"Invalid value for argument {arg}: {value}. Error: {e}")
-            sys.exit(1)"""
-
+    params = {}
     rodar(params)
 
 if __name__ == '__main__':
-    params = {}
-    rodar(params)
-    #run_with_params()
+    
+    #rodar(params)
+    run_with_params()

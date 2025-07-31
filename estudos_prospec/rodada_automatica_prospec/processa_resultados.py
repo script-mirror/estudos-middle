@@ -277,8 +277,8 @@ def gerar_resultados(params):
 		dt = SemanaOperativa(dt)
 		dts.append(dt)
 		dt_rv = datetime.datetime(dt.ref_year, dt.ref_month, 1)
-		legend_grafico.append('{} - RV{}'.format(dt_rv.strftime('%b/%y'), dt.current_revision))
-		data_rodada_html = '{} - RV{}'.format(dt_rv.strftime('%b/%y'), dt.current_revision)
+		legend_grafico.append('{} - RV{}'.format(dt_rv.strftime('%b/%y'), int(dt.current_revision)))
+		data_rodada_html = '{} - RV{}'.format(dt_rv.strftime('%b/%y'), int(dt.current_revision))
 
 		for sub in SUBMERCADOS:
 			if sub == 'SUDESTE':

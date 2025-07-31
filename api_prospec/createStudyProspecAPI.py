@@ -243,7 +243,6 @@ def runBackTeste(config):
                     config.nameFileDecomp)
 
     tags = []
-    tags.append('API')
     tags.append(config.tag)
     anoMes = config.nameFileDecomp[2:8]
     
@@ -362,7 +361,7 @@ def downloadResultados(parametros):
             while countIterations < 60:
                 countIterations = countIterations + 1
                 if countIterations > 1:
-                    time.sleep(600)    # sleep for 10m | aguardar por 10m
+                    time.sleep(300)    # sleep for 10m | aguardar por 10m
                 studyStatus = getStatusFromStudy(prospecStudyId)
                 print(studyStatus)
                 if studyStatus == 'Finished':
