@@ -24,7 +24,6 @@ os.makedirs(PATH_BASE    ,exist_ok=True)
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
 import run_prospec
 from functionsProspecAPI import  getStudiesByTag, authenticateProspec, getInfoFromStudy, downloadFileFromDeckV2, downloadDeckOfStudy
-from createStudyProspecAPI import downloadResultados
 
 def create_directory(base_path: str, sub_path: str) -> Path:
         full_path = Path(base_path) / sub_path
@@ -58,14 +57,12 @@ def get_deck_interno():
             prospecId = estudo['Id']
             prospecId = '26760'
             prospecStudy = getInfoFromStudy(prospecId)
-            #prospecStudy = getInfoFromStudy(estudo['Id'])
             listOfDecks  = prospecStudy['Decks']
             for deck in listOfDecks:
                 if deck['Model'] == 'DECOMP':
                     path = consts.PATH_RESULTS_PROSPEC + '/decomp/' + deck['FileName']
                     arrayOfFiles = ['dadger.rv'+str(deck['Revision']), 'dadgnl.rv'+str(deck['Revision']), 'vazoes.rv'+str(deck['Revision'])]
                     downloadFileFromDeckV2(deck['Id'],consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
-                    #downloadDeckOfStudy(prospecId,deck['Id'], consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'])
                     path_unzip = extract_zip_folder(path, path)
                     return path_unzip
      
@@ -263,6 +260,7 @@ def rodar(parametros: Dict[str, Any]) -> None:
         path_in,
         PATH_CONFIG['decomp_interno']
     )
+    
     data: datetime = datetime.today()
     data_rv: SemanaOperativa = SemanaOperativa(data)
     rev: str = 'RV{}'.format(int(data_rv.current_revision))
@@ -274,17 +272,7 @@ def rodar(parametros: Dict[str, Any]) -> None:
     dadger_oficial: Dict[str, Any] = read_dadger(path_dc_oficial)
     dadger_raizen: Dict[str, Any] = read_dadger(path_dc_raizen)
 
-    # Compare UH
-    dict_subm: Dict[str, Dict[str, int]] = {'Raizen': {'1': 0, '2': 0, '3': 0, '4': 0}, 'CCEE': {'1': 0, '2': 0, '3': 0, '4': 0}}
-
-    # Analyze CT
-    #path_fig: List[str] = Analise_CT(path_dc_raizen, path_dc_oficial, dict_subm, PATH_CONFIG['output_ct'])
-
-    # Send WhatsApp notifications
-    #for fig_ct in path_fig:
-    #    print(fig_ct)
-    #    send_whatsapp_message(consts.WHATSAPP_GILSEU, 'PILHA TÉRMICA', fig_ct)
-
+  
     # Setup output decks
     for folder in [path_decomp + '__ONS-TO-CCEE', path_decomp + '__RAIZEN', path_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN']:
         folder_path: str = os.path.join(PATH_CONFIG['output_decks'], folder)
@@ -325,15 +313,9 @@ def rodar(parametros: Dict[str, Any]) -> None:
         except: pass
 
     # Wait and send email
-    parametros['apenas_email']  = True
     parametros['id_estudo']     = id_oficial
-    parametros['aguardar_fim']  = True
-    parametros['prevs_name']    = None
-    parametros['assunto_email'] = None
-    parametros['media_rvs']     = False
-    parametros['considerar_rv'] = ''
-    parametros['assunto_email'] = 'Testendo conversão decomp ONS para CCEE'
-    parametros['corpo_email']   = 'Rodadas decomp convertido'
+    parametros['assunto_email'] = 'Decomp ONS to CCEE'
+    parametros['corpo_email']   = 'Decomp ONS to CCEE'
     parametros['list_email']    = [consts.EMAIL_MIDDLE, consts.EMAIL_FRONT]
     parametros['list_whats']    = [consts.WHATSAPP_PMO]
     parametros['path_result']   = create_directory(consts.PATH_RESULTS_PROSPEC, '')
@@ -348,6 +330,12 @@ def rodar(parametros: Dict[str, Any]) -> None:
    
 def run_with_params() -> None:
     params = {}
+    params['apenas_email']  = True
+    params['aguardar_fim']  = True
+    params['prevs_name']    = None
+    params['assunto_email'] = None
+    params['media_rvs']     = False
+    params['considerar_rv'] = ''
     rodar(params)
 
 if __name__ == '__main__':

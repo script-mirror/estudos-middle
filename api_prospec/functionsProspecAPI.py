@@ -284,6 +284,7 @@ def sendVazoesToDeck(idStudy, listOfDecks, pathToFile):
     return prospecStudy
 
 def downloadFileFromDeckV2(idDeck, pathToDownload, fileNameDownload, fileName, fileNames):
+    os.makedirs(pathToDownload,exist_ok=True)
     filesToGet = fileNames
     response = getFileFromS3viaAPIV2(token, '/api/v2/prospectiveStudies/DownloadResultFiles/' + str(idDeck), filesToGet, fileName, pathToDownload)
 
