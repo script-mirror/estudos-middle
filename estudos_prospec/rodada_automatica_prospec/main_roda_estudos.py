@@ -86,13 +86,13 @@ def send_email(parametros):
     pathName = []
     nomesEstudos = []
     idEstudos = []
-    print(parametros['tag'])
+    #print(parametros['tag'])
     if parametros['tag'] is not None and parametros['id_estudo'] is None:
         if parametros['tag'] in EMAIL_CONFIG.keys():
             if EMAIL_CONFIG[parametros['tag']]['n_estudos'] == 1:
                 parametros['id_estudo'] = [parametros['prospec_out'][0]]
-        else:
-            parametros['id_estudo'] = get_id_email(parametros)
+            else:
+                parametros['id_estudo'] = get_id_email(parametros)
             
     if parametros['id_estudo'] is not None: 
         try:
@@ -307,7 +307,7 @@ BLOCK_FUNCTIONS = {
 } 
 
 if __name__ == '__main__':
-    """   PARAMETROS =  {
+    PARAMETROS =  {
         "rodada": 'Preliminar',
         "data": datetime.now(),
         "apenas_email": False,
@@ -324,13 +324,14 @@ if __name__ == '__main__':
         "percentis_ec": [],
         "nome_estudo": None,
         "sensibilidade": None,
-        "tag": 'NEXT-RV',
+        "tag": 'P.CONJ',
         "id_estudo": None,
         "prevs":'NEXT-RV',
         "cenario":10,
         "prevs_name": None,
         "n_tentativas": 10
-    }"""
+    }
+    send_email(PARAMETROS)
     
     #rodar(PARAMETROS)
     run_with_params()
