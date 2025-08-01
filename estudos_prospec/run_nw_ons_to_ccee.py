@@ -190,7 +190,7 @@ def match_file_case_insensitive(filepath):
 def get_deck_newave(path):
     preliminar  = True
     payload     = get_latest_webhook_product(consts.WEBHOOK_DECK_NEWAVE_PRELIMINAR)[0] 
-    payload_def = get_latest_webhook_product(consts.WEBHOOK_DECK_NEWAVE_DEFINITIVO)[1] 
+    payload_def = get_latest_webhook_product(consts.WEBHOOK_DECK_NEWAVE_DEFINITIVO)[0] 
     
     if datetime.fromisoformat(payload_def['createdAt'].replace('Z', '+00:00')) > datetime.fromisoformat(payload['createdAt'].replace('Z', '+00:00')):
         preliminar=False
