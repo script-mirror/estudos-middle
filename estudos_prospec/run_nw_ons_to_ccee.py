@@ -4,15 +4,17 @@ import os
 import shutil
 import sys
 from collections import defaultdict
-from datetime import datetime, date, timedelta
+from datetime import datetime
 import zipfile
-from zipfile import ZipFile, ZIP_DEFLATED
-from typing import List, Dict, Any, Optional, Tuple
 import openpyxl
 from pathlib import Path
 from middle.utils.constants import Constants 
 from tqdm import tqdm
-from middle.utils import SemanaOperativa
+from middle.message import send_whatsapp_message
+from middle.s3 import (
+    handle_webhook_file,
+    get_latest_webhook_product,
+)
 consts = Constants()
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
 import run_prospec
@@ -30,12 +32,6 @@ def create_directory(base_path: str, sub_path: str) -> Path:
         full_path.mkdir(parents=True, exist_ok=True)
         return full_path.as_posix()  
 
-# Define directory paths
-os.makedirs(consts.PATH_ARQUIVOS,exist_ok=True)
-PATH_BASE = create_directory(consts.PATH_ARQUIVOS, 'decks/nenwave/ons')
-PATH_BASE
-GTMIN = PATH_BASE + "GTMIN_CCEE_082025_preliminar.xlsx"
-
 
 def get_deck_interno():
     authenticateProspec(consts.API_PROSPEC_USERNAME, consts.API_PROSPEC_PASSWORD)
@@ -51,6 +47,7 @@ def get_deck_interno():
                     arrayOfFiles = ['dger.dat', 'vazpast.dat', 'vazoes.dat','arquivos.dat', 'confhd.dat']
                     downloadFileFromDeckV2(deck['Id'],consts.PATH_RESULTS_PROSPEC + '/newave/', deck['FileName'], deck['FileName'],arrayOfFiles)
                     return extract_zip_folder(path, path)
+
 
 def extract_zip_folder(zip_path: str, folder: str) -> str:
     """Extract a zip folder to the specified path."""
@@ -82,9 +79,11 @@ def gtmin_ccee(src):
         logging.error(f"Failed to read Excel file {src}: {e}")
         raise
 
-def update(arquivo, data, data_deck):
+
+def update_gtmin(arquivo, data, data_deck):
     """Update EXPT file with CCEE data and insert TEIFT lines."""
-    expt = arquivo.readlines()
+    with open(arquivo, 'r') as f1:
+        expt = f1.readlines()
     rows = ''
     for i in tqdm(range(2, len(expt)), desc="Processing EXPT lines"):
         ln = expt[i]
@@ -110,60 +109,13 @@ def update(arquivo, data, data_deck):
                 next_month = (data_deck.replace(day=28) + dt.timedelta(days=4)).replace(day=1)
                 extra_line = f"{str(usid).rjust(4)} TEIFT     0.00 {data_deck.month:>2} {data_deck.year} {next_month.month:>2} {next_month.year}\n"
                 rows += extra_line
-    return expt[0] + expt[1] + rows
-
-def extract_inner_zip(outer_zip):
-    """Extract inner ZIP and return its handle and data_deck date."""
-    infolist = outer_zip.infolist()
-    if not infolist or not infolist[0].filename.endswith('.zip'):
-        raise ValueError("Produtos.zip does not contain a valid inner ZIP file")
-    inner_zip = ZipFile(outer_zip.open(infolist[0], mode="r"))
-    try:
-        parts = inner_zip.filename.split('_')
-        data_deck = dt.date(int(parts[2]), int(parts[3]), 1)
-    except (IndexError, ValueError):
-        raise ValueError(f"Cannot parse date from filename: {inner_zip.filename}")
-    return inner_zip, data_deck
-
-def extract_and_find_expt(inner_zip, data_deck, output_dir):
-    """Extract inner ZIP to output directory and return EXPT file path."""
-    extract_to = os.path.join(output_dir, inner_zip.filename.replace(".zip", ""))
-    os.makedirs(extract_to, exist_ok=True)
-    inner_zip.extractall(extract_to)
-    logging.info(f"Extracted files to: {extract_to}")
-    expt_files = [f for f in os.listdir(extract_to) if "EXPT" in f]
-    if not expt_files:
-        raise FileNotFoundError("No EXPT file found in the extracted directory")
-    return os.path.join(extract_to, expt_files[0]), extract_to
-
-def process_expt(expt_path, ccee_data, data_deck):
-    """Process EXPT file and return updated content."""
-    logging.info(f"Reading EXPT file: {expt_path}")
-    with open(expt_path, 'r') as expt_ons:
-        logging.info("Updating EXPT data")
-        return update(expt_ons, ccee_data, data_deck)
-
-def create_ccee_output(inner_zip, expt_ccee, extract_to, data_deck, output_dir):
-    """Create CCEE output directory and ZIP file."""
-    extract_to_ccee = extract_to.replace('deck_newave', 'NW_ONS-TO-CCEE')
-    os.makedirs(extract_to_ccee, exist_ok=True)
-    inner_zip.extractall(extract_to_ccee)
-    logging.info(f"Extracted files to CCEE directory: {extract_to_ccee}")
-    
-    expt_ccee_path = os.path.join(extract_to_ccee, "EXPT.DAT")
-    logging.info(f"Writing updated EXPT file: {expt_ccee_path}")
-    with open(expt_ccee_path, "w") as f:
-        f.write(expt_ccee)
-    
-    output_zip = os.path.join(output_dir, "NW_CCEE.zip")
-    logging.info(f"Creating output ZIP: {output_zip}")
-    with ZipFile(output_zip, "w", compression=ZIP_DEFLATED) as deck_newave_ccee:
-        for root, _, files in os.walk(extract_to_ccee):
-            for fl in files:
-                full_path = os.path.join(root, fl)
-                arcname = os.path.relpath(full_path, os.path.dirname(extract_to_ccee))
-                deck_newave_ccee.write(full_path, arcname)
                 
+    new_expt =  expt[0] + expt[1] + rows
+    with open(arquivo, 'w') as f:
+        for line in new_expt:
+            f.write(line)
+  
+               
 def update_re(file_path):
 
     with open(file_path, 'r',  encoding='latin1') as f:
@@ -175,6 +127,7 @@ def update_re(file_path):
             if len(parts) >= 2 and parts[1].strip() == '10':
                 line = '&'+line
             f.write(line)
+
 
 def update_confhd(confhd_path, internal_path):
 
@@ -196,11 +149,10 @@ def update_confhd(confhd_path, internal_path):
             f.write(line)
 
     print(f"{len(new_lines)} line(s) added to '{internal_path}'.")
-    
+  
     
 def update_confhd(confhd_path, internal_path):
  
-
     confhd_path = match_file_case_insensitive(confhd_path)
     internal_path = match_file_case_insensitive(internal_path)
 
@@ -234,49 +186,84 @@ def match_file_case_insensitive(filepath):
             return os.path.join(directory, filename)
     raise FileNotFoundError(f"File '{target_name}' not found in '{directory}'.")
 
-# Example usage:
+
+def get_deck_newave(path):
+    preliminar  = True
+    payload     = get_latest_webhook_product(consts.WEBHOOK_DECK_NEWAVE_PRELIMINAR)[0] 
+    payload_def = get_latest_webhook_product(consts.WEBHOOK_DECK_NEWAVE_DEFINITIVO)[1] 
+    
+    if datetime.fromisoformat(payload_def['createdAt'].replace('Z', '+00:00')) > datetime.fromisoformat(payload['createdAt'].replace('Z', '+00:00')):
+        preliminar=False
+        payload = payload_def 
             
+    path_deck_nw  = handle_webhook_file(payload, path)
+    path_deck_nw  = extract_zip_folder(path_deck_nw, path_deck_nw)
+    parts             = os.listdir(path_deck_nw)[0].split('.')[0].split('_')
+    data_deck         = dt.date(int(parts[2]), int(parts[3]), 1)  
+    path_deck_nw  = path_deck_nw +'/' +os.listdir(path_deck_nw)[0]
+    path_deck_nw  = extract_zip_folder(path_deck_nw, path_deck_nw)
+    return path_deck_nw, data_deck, preliminar
+ 
+ 
+def get_gtmin(path_in):
+    payload  = get_latest_webhook_product(consts.WEBHOOK_NOTAS_TECNICAS)
+    for arquivo in payload:
+        path  = handle_webhook_file(arquivo, path_in)
+        path = extract_zip_folder(path, path)
+        for file in os.listdir(path):
+            if file.lower().startswith('gtmin_ccee'):
+                return path, file
+
+
+def get_expt_name(path):
+    for file in os.listdir(path):
+        if file.lower().startswith('expt'):
+            return path + '/'+ file 
+
+
+def zip_files(deck_path: str,  path_out: str) -> None:
+    """Zip only the files in the DC folder, without including subdirectories."""
+    
+    with zipfile.ZipFile(path_out, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for file in os.listdir(deck_path):
+            file_path: str = os.path.join(deck_path, file)
+            if os.path.isfile(file_path):
+                zipf.write(file_path, arcname=file)
+
+def execute_prospec(deck_path: str, deck_name: str):
+    params = {}
+    params['deck'] = f"{deck_name}.zip"
+    params['path_deck'] = deck_path + '/'
+    params['tag'] = 'FCF'
+    params['aguardar_fim'] = False
+    params['apenas_email'] = False
+    params['back_teste'] = True
+    run_prospec.main(params)
+             
 def main():
-    """Main function to process NEWAVE deck and create CCEE output."""
-    update_re("C:/projetos/arquivos/restricao-eletrica.csv")
-    update_confhd("C:/projetos/arquivos/confhd.dat", "C:/projetos/arquivos/CONFHD_interno.DAT")
     
+    PATH_BASE = create_directory(consts.PATH_ARQUIVOS, 'decks/newave/ons') 
+            
+    path_deck_nw, data_deck, preliminar = get_deck_newave(PATH_BASE)                   
+    path_gtmin, gtmin_file = get_gtmin(PATH_BASE)
+    path_expt = get_expt_name(path_deck_nw)
+    deck_name =  'NW' + data_deck.strftime('%Y%m')+'_ONS-TO-CCEE.zip'
     
-    try:
-        
+    if preliminar:
+        deck_name =  'NW' + data_deck.strftime('%Y%m')+'_ONS-TO-CCEE_PRELIMINAR.zip'
         PATH_NW_INTERNO = get_deck_interno()
-        data_rv = SemanaOperativa(datetime.today())
-        dt_newave = data_rv.first_day_of_month + timedelta(days=6)      
-        nome_deck =  '/NW' + dt_newave.strftime('%Y%m')
-        shutil.copy(PATH_NW_INTERNO + '/dger.dat',    PATH_BASE + '/dger.dat')
-        shutil.copy(PATH_NW_INTERNO + '/vazoes.dat',  PATH_BASE + '/vazoes.dat')
-        shutil.copy(PATH_NW_INTERNO + '/vazpast.dat', PATH_BASE + '/vazpast.dat')
-        update_re(PATH_BASE + "/restricao-eletrica.csv")
-        update_confhd(PATH_BASE + "/confhd.dat", PATH_NW_INTERNO + "/confhd.dat")
-        shutil.copy(PATH_NW_INTERNO + '/confhd.dat', PATH_BASE + '/confhd.dat')
+        shutil.copy(PATH_NW_INTERNO + '/dger.dat',     path_deck_nw + '/dger.dat')
+        shutil.copy(PATH_NW_INTERNO + '/vazoes.dat',   path_deck_nw + '/vazoes.dat')
+        shutil.copy(PATH_NW_INTERNO + '/vazpast.dat',  path_deck_nw + '/vazpast.dat')
+        shutil.copy(PATH_NW_INTERNO + '/arquivos.dat', path_deck_nw + '/arquivos.dat')
+        update_confhd(path_deck_nw + "/confhd.dat", PATH_NW_INTERNO + "/confhd.dat")
+        shutil.copy(PATH_NW_INTERNO + '/confhd.dat', path_deck_nw + '/confhd.dat')
         
-        # Define directory paths
-        os.makedirs(consts.PATH_ARQUIVOS,exist_ok=True)
-        BASE_DIR = "C:/Dev/12 - ConverteNW"
-        INPUT_DIR = os.path.join(BASE_DIR, "input")
-        OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-        ZIP_PATH = os.path.join(INPUT_DIR, "Produtos.zip")
-        GTMIN = os.path.join(INPUT_DIR, "GTMIN_CCEE_082025_preliminar.xlsx")
-
-        
-        with ZipFile(ZIP_PATH, mode="r") as outer_zip:
-            inner_zip, data_deck = extract_inner_zip(outer_zip)
-            with inner_zip:
-                expt_path, extract_to = extract_and_find_expt(inner_zip, data_deck, OUTPUT_DIR)
-                ccee_data = gtmin_ccee(GTMIN)
-                expt_ccee = process_expt(expt_path, ccee_data, data_deck)
-                create_ccee_output(inner_zip, expt_ccee, extract_to, data_deck, OUTPUT_DIR)
-        
-        logging.info("Processing completed successfully")
-    except Exception as e:
-        logging.error(f"Error during execution: {e}")
-        sys.exit(1)
-
+    update_re(path_deck_nw + "/restricao-eletrica.csv")    
+    update_gtmin(path_expt, gtmin_ccee(path_gtmin +'/'+ gtmin_file), data_deck)
+    zip_files(path_deck_nw,  PATH_BASE+'/'+deck_name)
+    send_whatsapp_message(consts.WHATSAPP_GILSEU,'Deck Newave ONS to CCEE com GTMIN: ' + gtmin_file,  PATH_BASE+'/'+deck_name)
+    execute_prospec(PATH_BASE, deck_name.split('.')[0]) 
+    
 if __name__ == "__main__":
     main()
-    sys.exit(0)

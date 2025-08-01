@@ -246,10 +246,15 @@ def runBackTeste(config):
     tags.append(config.tag)
     anoMes = config.nameFileDecomp[2:8]
     
-    generateStudyDecks(prospecStudyId, int(anoMes[:4]), int(anoMes[-2:]), 1, [int(anoMes[-2:])],
-            [int(anoMes[:4])], [False], [False], '',
-            '',config.nameFileDecomp,'', tags)
-
+    if config.nameFileDecomp[0:2] == 'NW':
+        generateStudyDecks(prospecStudyId, int(anoMes[:4]), int(anoMes[-2:]), 1, [int(anoMes[-2:])],
+                [int(anoMes[:4])], [False], [False],
+                config.nameFileDecomp,'','','', tags)
+        config.associateDecks =  False
+    else:
+        generateStudyDecks(prospecStudyId, int(anoMes[:4]), int(anoMes[-2:]), 1, [int(anoMes[-2:])],
+                [int(anoMes[:4])], [False], [False], '',
+                '',config.nameFileDecomp,'', tags)
     # Associate Cuts and Volumes/GNL | Reaproveitar Cortes e Volumes/GNL
     if config.associateDecks:
         prospecStudy          = getInfoFromStudy(prospecStudyId)
