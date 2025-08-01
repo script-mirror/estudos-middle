@@ -66,7 +66,8 @@ def get_deck_interno(year, month, rv):
             listOfDecks  = prospecStudy['Decks']
             for deck in listOfDecks:
                 if deck['Model'] == 'DECOMP':
-                    if deck['Year'] == year and deck['Month'] == month and deck['Revision'] == rv: 
+                    if deck['Year'] == year and deck['Month'] == month and deck['Revision'] == rv:
+                        print('Deck encontrado no estudo: ', prospecId) 
                         path = consts.PATH_RESULTS_PROSPEC + '/decomp/' + deck['FileName']
                         arrayOfFiles = ['dadger.rv'+str(deck['Revision']), 'dadgnl.rv'+str(deck['Revision']), 'vazoes.rv'+str(deck['Revision'])]
                         downloadFileFromDeckV2(deck['Id'],consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
