@@ -57,7 +57,7 @@ def rodar(parametros):
         if not parametros['aguardar_fim']:
             return  parametros['prospec_out']
         # --------------------------------------------------------------------------------------------#
-
+    time.sleep(600)
     send_email(parametros)
     return ['sucesso']
 

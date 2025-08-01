@@ -27,17 +27,20 @@ os.makedirs(consts.PATH_ARQUIVOS,exist_ok=True)
 os.makedirs(PATH_BASE    ,exist_ok=True)
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
 import run_prospec
-from functionsProspecAPI import  getStudiesByTag, authenticateProspec, getInfoFromStudy, downloadFileFromDeckV2, downloadDeckOfStudy
+from functionsProspecAPI import  getStudiesByTag, authenticateProspec, getInfoFromStudy, downloadFileFromDeckV2
 
 def create_directory(base_path: str, sub_path: str) -> Path:
         full_path = Path(base_path) / sub_path
+        try: os.remove(full_path) if os.path.exists(full_path) else None
+        except: pass
+        try: shutil.rmtree(full_path) if os.path.exists(full_path) else None
+        except: pass
         full_path.mkdir(parents=True, exist_ok=True)
-        return full_path.as_posix()
+        return full_path.as_posix()  
 
 # Constants
 PATH_CONFIG: Dict[str, str] = {
     'output_decks':   create_directory(PATH_BASE, 'output/decks'),
-    'output_ct':      os.path.join(create_directory(PATH_BASE, 'output'), f'saidaCT_{date.today().strftime("%Y_%m_%d")}.csv'),
     'decomp_ons':     create_directory(consts.PATH_ARQUIVOS, 'decks/decomp/ons'),
     'decomp_interno': create_directory(PATH_BASE, 'input/decomp/interno')
 }
@@ -53,22 +56,22 @@ logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-def get_deck_interno():
+def get_deck_interno(year, month, rv):
     authenticateProspec(consts.API_PROSPEC_USERNAME, consts.API_PROSPEC_PASSWORD)
     estudos = getStudiesByTag({'page':1, 'pageSize':3, 'tags':'P.CONJ'})
     for estudo in estudos['ProspectiveStudies']:
         if estudo['Status'] == 'Concluído':
             prospecId = estudo['Id']
-            prospecId = '26760'
             prospecStudy = getInfoFromStudy(prospecId)
             listOfDecks  = prospecStudy['Decks']
             for deck in listOfDecks:
                 if deck['Model'] == 'DECOMP':
-                    path = consts.PATH_RESULTS_PROSPEC + '/decomp/' + deck['FileName']
-                    arrayOfFiles = ['dadger.rv'+str(deck['Revision']), 'dadgnl.rv'+str(deck['Revision']), 'vazoes.rv'+str(deck['Revision'])]
-                    downloadFileFromDeckV2(deck['Id'],consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
-                    path_unzip = extract_zip_folder(path, path)
-                    return path_unzip
+                    if deck['Year'] == year and deck['Month'] == month and deck['Revision'] == rv: 
+                        path = consts.PATH_RESULTS_PROSPEC + '/decomp/' + deck['FileName']
+                        arrayOfFiles = ['dadger.rv'+str(deck['Revision']), 'dadgnl.rv'+str(deck['Revision']), 'vazoes.rv'+str(deck['Revision'])]
+                        downloadFileFromDeckV2(deck['Id'],consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
+                        path_unzip = extract_zip_folder(path, path)
+                        return path_unzip
      
 
 def setup_directories(paths: List[str]) -> None:
@@ -82,19 +85,11 @@ def setup_directories(paths: List[str]) -> None:
         except Exception as e:
             logger.warning(f"Failed to setup directory {path}: {e}")
 
-def convert_deck_ons_to_ccee(input_path: str = PATH_CONFIG['decomp_ons']) -> None:
+def convert_deck_ons_to_ccee(input_path: str,output_path: str, arqdec: str, rev: str, data: datetime ) -> None:
     """Execute script to convert ONS deck to CCEE format."""
-    data: datetime = datetime.today()
-    data_rv: SemanaOperativa = SemanaOperativa(data)
-    rev: str = 'RV{}'.format(int(data_rv.current_revision))
 
-    dt_decomp: datetime = data_rv.first_day_of_month + timedelta(days=6)
-
-    arqzip: str = 'PMO_deck_preliminar.zip'
-    arqdec: str = 'DEC_ONS_' + dt_decomp.strftime('%m%Y') + '_' + rev + '_VE.zip'
-    output_path = input_path + '/DC' + dt_decomp.strftime('%Y%m') + '_' + rev 
     try:
-        ons_to_ccee(input_path, output_path, arqzip, arqdec, rev, dt_decomp)
+        ons_to_ccee(input_path, output_path,  arqdec, rev, data)
         logger.info("ONS to CCEE conversion completed")
     except Exception as e:
         logger.error(f"ONS to CCEE conversion failed: {e}")
@@ -102,10 +97,10 @@ def convert_deck_ons_to_ccee(input_path: str = PATH_CONFIG['decomp_ons']) -> Non
     return output_path
 
 
-def find_dadger_file(directory: str) -> str:
+def find_dadger_file(directory: str, arquivo: str) -> str:
     """Find the dadger file in the specified directory."""
     for file in os.listdir(directory):
-        if file.lower().startswith('dadger'):
+        if file.lower().startswith(arquivo.lower()):
             return file
     raise FileNotFoundError(f"No dadger file found in {directory}")
 
@@ -235,48 +230,31 @@ def execute_prospec(params: Dict[str, Any], deck_path: str, deck_name: str) -> A
         logger.error(f"Prospec execution failed for {deck_name}: {e}")
         raise
 
-def rodar(parametros: Dict[str, Any] = None) -> None:
+def main() -> None:
+    parametros = {}
     """Main function to process and compare decks."""
-    # Setup directories
-    setup_directories([
-        PATH_CONFIG['output_decks'],
-        PATH_CONFIG['decomp_interno']
-    ])
+    setup_directories([PATH_CONFIG['output_decks'], PATH_CONFIG['decomp_interno']])
     
-    path_in = get_deck_interno()
-    # Convert ONS deck to CCEE
-    payload = get_latest_webhook_product(
-        consts.WEBHOOK_DECK_DECOMP_PRELIMINAR
-    )[0]
+    data             = datetime.today() + timedelta(days=7)
+    data_rv          = SemanaOperativa(data)
+    rev              = 'RV{}'.format(int(data_rv.current_revision))
+    path_in          = get_deck_interno(data.year, data.month, int(data_rv.current_revision))
+    payload          = get_latest_webhook_product(consts.WEBHOOK_DECK_DECOMP_PRELIMINAR)[0]       
     path_deck_decomp = handle_webhook_file(payload, PATH_CONFIG['decomp_ons'])
+    deck_decomp      = 'DC' + data_rv.date.strftime('%Y%m') + '-' + rev
+    output_path      = path_deck_decomp[:-4] + '/' + deck_decomp 
+    arqdec           = 'DEC_ONS_' + data_rv.date.strftime('%m%Y') + '_' + rev + '_VE.zip'
+    PATH_CONFIG['decomp_ons'] = convert_deck_ons_to_ccee( path_deck_decomp, output_path, arqdec, rev, data)
     
-    PATH_CONFIG['decomp_ons'] = convert_deck_ons_to_ccee(
-        path_deck_decomp
-    )
     # Find dadger file
-    dadger_file: str = find_dadger_file(PATH_CONFIG['decomp_ons'])
+    dadger_file: str = find_dadger_file(PATH_CONFIG['decomp_ons'], 'dadger.'+ rev)
     rv: str = dadger_file[-1:]
-    logger.info(f"Found dadger file: {dadger_file} with rv: {rv}")
-
 
     # Copy necessary files
     copy_files(FILES_TO_COPY + [f'rv{rv}'], PATH_CONFIG['decomp_ons'], PATH_CONFIG['decomp_interno'])
-    convert_file_encoding(
-        os.path.join(path_in, dadger_file),
-        os.path.join(PATH_CONFIG['decomp_interno'], dadger_file)
-    )
+    convert_file_encoding( os.path.join(path_in, dadger_file), os.path.join(PATH_CONFIG['decomp_interno'], dadger_file))    
+    copy_files([f.format(rv) for f in DADGNL_VAZOES], path_in, PATH_CONFIG['decomp_interno'])
     
-    copy_files(
-        [f.format(rv) for f in DADGNL_VAZOES],
-        path_in,
-        PATH_CONFIG['decomp_interno']
-    )
-    
-    data: datetime = datetime.today()
-    data_rv: SemanaOperativa = SemanaOperativa(data)
-    rev: str = 'RV{}'.format(int(data_rv.current_revision))
-    dt_decomp: datetime = data_rv.first_day_of_month + timedelta(days=6)
-    path_decomp =  'DC' + dt_decomp.strftime('%Y%m')
     # Read dadger files
     path_dc_oficial: str = os.path.join(PATH_CONFIG['decomp_ons'], dadger_file)
     path_dc_raizen: str = os.path.join(PATH_CONFIG['decomp_interno'], dadger_file)
@@ -285,25 +263,24 @@ def rodar(parametros: Dict[str, Any] = None) -> None:
 
   
     # Setup output decks
-    for folder in [path_decomp + '__ONS-TO-CCEE', path_decomp + '__RAIZEN', path_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN']:
+    for folder in [deck_decomp + '__ONS-TO-CCEE', deck_decomp + '__RAIZEN', deck_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN']:
         folder_path: str = os.path.join(PATH_CONFIG['output_decks'], folder)
         os.makedirs(folder_path, exist_ok=True)
-        if folder == path_decomp + '__RAIZEN':
-            shutil.copytree(PATH_CONFIG['decomp_interno'], os.path.join(folder_path, path_decomp))
-        elif folder == path_decomp + '__ONS-TO-CCEE':
-            shutil.copytree(PATH_CONFIG['decomp_ons'], os.path.join(folder_path, path_decomp))
-        elif folder == path_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN':
-            shutil.copytree(PATH_CONFIG['decomp_ons'], os.path.join(folder_path, path_decomp))
+        if folder == deck_decomp + '__RAIZEN':
+            shutil.copytree(PATH_CONFIG['decomp_interno'], os.path.join(folder_path, deck_decomp))
+        elif folder == deck_decomp + '__ONS-TO-CCEE':
+            shutil.copytree(PATH_CONFIG['decomp_ons'], os.path.join(folder_path, deck_decomp))
+        elif folder == deck_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN':
+            shutil.copytree(PATH_CONFIG['decomp_ons'], os.path.join(folder_path, deck_decomp))
             shutil.copy(
                 os.path.join(PATH_CONFIG['decomp_interno'], f'vazoes.rv{rv}'),
-                os.path.join(folder_path, path_decomp)
-            )
+                os.path.join(folder_path, deck_decomp) )
 
         logger.info(f"Setup output folder: {folder_path}")
 
     # Process checklist blocks
     for block in CHECKLIST_BLOCKS:
-        deck_path: str = create_deck(PATH_CONFIG['decomp_ons'], PATH_CONFIG['output_decks'], block, path_decomp)        
+        deck_path: str = create_deck(PATH_CONFIG['decomp_ons'], PATH_CONFIG['output_decks'], block, deck_decomp)        
         alter_dadger( 
             deepcopy(dadger_oficial), 
             block,  
@@ -315,7 +292,7 @@ def rodar(parametros: Dict[str, Any] = None) -> None:
     id_prospec_list: List[Any] = []
     for deck in os.listdir(PATH_CONFIG['output_decks']):
         deck_path: str = os.path.join(PATH_CONFIG['output_decks'], deck)
-        zip_decomp_files(deck_path, os.path.join(PATH_CONFIG['output_decks'], deck), path_decomp)
+        zip_decomp_files(deck_path, os.path.join(PATH_CONFIG['output_decks'], deck), deck_decomp)
         id_prospec_list.append(execute_prospec(parametros, PATH_CONFIG['output_decks'], deck))
         try:
             if deck.split('__')[1] == 'ONS-TO-CCEE':
@@ -324,6 +301,12 @@ def rodar(parametros: Dict[str, Any] = None) -> None:
         except: pass
 
     # Wait and send email
+    parametros['apenas_email']  = True
+    parametros['aguardar_fim']  = True
+    parametros['prevs_name']    = None
+    parametros['assunto_email'] = None
+    parametros['media_rvs']     = False
+    parametros['considerar_rv'] = ''
     parametros['id_estudo']     = id_oficial
     parametros['assunto_email'] = 'Decomp ONS to CCEE'
     parametros['corpo_email']   = 'Decomp ONS to CCEE'
@@ -337,12 +320,8 @@ def rodar(parametros: Dict[str, Any] = None) -> None:
     parametros['assunto_email'] = None
     parametros['id_estudo']     = id_prospec_list
     main_roda_estudos.send_email(parametros)
+ 
    
-   
-def run_with_params() -> None:
-    params = {}
-    rodar(params)
-
 if __name__ == '__main__':
     
     main()
