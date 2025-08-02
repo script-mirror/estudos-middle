@@ -117,7 +117,7 @@ EMAIL_CONFIG = frozendict({
 # Parâmetros globais predefinidos
 PARAMETROS =  {
         "rodada": 'Preliminar',
-        "data":datetime.strptime("01/08/2025", "%d/%m/%Y") ,
+        "data": datetime.now(),
         "apenas_email": False,
         "assunto_email": None,
         "corpo_email": None,
