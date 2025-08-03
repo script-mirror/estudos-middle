@@ -57,7 +57,7 @@ def rodar(parametros):
         if not parametros['aguardar_fim']:
             return  parametros['prospec_out']
         # --------------------------------------------------------------------------------------------#
-    time.sleep(600)
+        time.sleep(600)
     send_email(parametros)
     return ['sucesso']
 
@@ -93,7 +93,8 @@ def send_email(parametros):
                 parametros['id_estudo'] = [parametros['prospec_out'][0]]
             else:
                 parametros['id_estudo'] = get_id_email(parametros)
-            
+        else:
+            parametros['id_estudo'] = get_id_email(parametros)   
     if parametros['id_estudo'] is not None: 
         try:
             idEstudos = eval(parametros['id_estudo'])
