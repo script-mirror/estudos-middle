@@ -237,6 +237,30 @@ def zip_files(deck_path: str,  path_out: str) -> None:
             if os.path.isfile(file_path):
                 zipf.write(file_path, arcname=file)
 
+
+def delete_file(diretorio, lista_nomes):
+    arquivos_no_dir = os.listdir(diretorio)
+    
+    # Cria um dicionário com nomes minúsculos para facilitar comparação
+    arquivos_mapeados = {arq.lower(): arq for arq in arquivos_no_dir}
+
+    for nome in lista_nomes:
+        nome_lower = nome.lower()
+        if nome_lower in arquivos_mapeados:
+            caminho_completo = os.path.join(diretorio, arquivos_mapeados[nome_lower])
+            if os.path.isfile(caminho_completo):
+                try:
+                    os.remove(caminho_completo)
+                    print(f"✅ Deletado: {caminho_completo}")
+                except Exception as e:
+                    print(f"⚠️ Erro ao deletar {caminho_completo}: {e}")
+            else:
+                print(f"🚫 Não é um arquivo: {caminho_completo}")
+        else:
+            print(f"🔍 Não encontrado (ignorando case): {nome}")
+           
+
+
 def execute_prospec(deck_path: str, deck_name: str):
     params = {}
     params['deck'] = f"{deck_name}.zip"
@@ -259,11 +283,12 @@ def main():
     if preliminar:
         deck_name =  'NW' + data_deck.strftime('%Y%m')+'_ONS-TO-CCEE_PRELIMINAR.zip'
         PATH_NW_INTERNO = get_deck_interno()
+        update_confhd(path_deck_nw + "/confhd.dat", PATH_NW_INTERNO + "/confhd.dat")
+        delete_file(path_deck_nw, ['DGER.DAT', 'VAZOES.DAT', 'VAZPAST.DAT', 'ARQUIVOS.DAT', 'CONFHD.DAT'])
         shutil.copy(PATH_NW_INTERNO + '/dger.dat',     path_deck_nw + '/dger.dat')
         shutil.copy(PATH_NW_INTERNO + '/vazoes.dat',   path_deck_nw + '/vazoes.dat')
         shutil.copy(PATH_NW_INTERNO + '/vazpast.dat',  path_deck_nw + '/vazpast.dat')
-        shutil.copy(PATH_NW_INTERNO + '/arquivos.dat', path_deck_nw + '/arquivos.dat')
-        update_confhd(path_deck_nw + "/confhd.dat", PATH_NW_INTERNO + "/confhd.dat")
+        shutil.copy(PATH_NW_INTERNO + '/arquivos.dat', path_deck_nw + '/arquivos.dat')       
         shutil.copy(PATH_NW_INTERNO + '/confhd.dat', path_deck_nw + '/confhd.dat')
         
     update_re(path_deck_nw + "/restricao-eletrica.csv")    
