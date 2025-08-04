@@ -106,6 +106,18 @@ EMAIL_CONFIG = frozendict({
         'rodada':{'Preliminar':{'precipitacao': ['ONS_Pluvia'], 'membro':['NULO']},
                   'Definitiva':{'precipitacao': ['ONS'], 'membro':['NULO']}}
     }),
+    'AMPERE': frozendict({
+        'description': 'Rodadas proxima RV',
+        'emails': [const.EMAIL_GILSEU],
+        'whats': const.WHATSAPP_GILSEU,
+        'n_estudos': 1,
+        'path_prevs': 'ampere',
+        'aguardar_fim': True,
+        'rodada':{'Preliminar':{'precipitacao': ['ONS-OFICIAL-NT00752020-RVEXT-VMEDPONDERADA'],
+                                      'membro': ["NULO"]},
+                  'Definitiva':{'precipitacao': ['ONS-OFICIAL-NT00752020-RVEXT-VMEDPONDERADA'],
+                                      'membro': ["NULO"]}}
+    }),
     'DECOMP': frozendict({
         'description': 'Rodadas decomp convertido',
         'emails': [const.EMAIL_GILSEU],
