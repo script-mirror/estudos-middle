@@ -95,6 +95,7 @@ def send_email(parametros):
                 parametros['id_estudo'] = get_id_email(parametros)
         else:
             parametros['id_estudo'] = get_id_email(parametros)   
+    
     if parametros['id_estudo'] is not None: 
         try:
             idEstudos = eval(parametros['id_estudo'])
@@ -120,12 +121,15 @@ def send_email(parametros):
         if parametros['prevs_name'] == None:
             parametros['prevs_name'] = [nome.split('__')[len(nome.split('__'))-1].split('-hr-')[0] for nome in nomesEstudos]
 
-        if parametros['assunto_email'] == None:
+        if parametros['assunto_email'] == None and parametros['tag'] in EMAIL_CONFIG.keys():
             parametros['assunto_email'] = EMAIL_CONFIG[parametros['tag']]['description']
             parametros['corpo_email']   = EMAIL_CONFIG[parametros['tag']]['description']
             parametros['list_email']    = EMAIL_CONFIG[parametros['tag']]['emails']
             parametros['list_whats']    = EMAIL_CONFIG[parametros['tag']]['whats']
-
+        else:
+            parametros['assunto_email'] = 'Estudos: '+ str(idEstudos)
+            parametros['corpo_email'] = 'Estudos: '
+            
         for i in range(len(idEstudos)):
             parametros['corpo_email']    += 'Id ' + str(idEstudos[i]) + ' com titulo   ->   ' + str(nomesEstudos[i]+ '<br> ')        
         
@@ -334,5 +338,9 @@ if __name__ == '__main__':
     }
     send_email(PARAMETROS)
     """
+    #parametros['apenas_email'] =  True
+    #parametros['tag'] = '2025-Q4_03/08'
+    #parametros['aguardar_fim'] = False
+    #rodar(parametros)
     #rodar(PARAMETROS)
     run_with_params()

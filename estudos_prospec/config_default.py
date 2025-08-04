@@ -121,7 +121,7 @@ PARAMETROS =  {
         "apenas_email": False,
         "assunto_email": None,
         "corpo_email": None,
-        "list_email": [const.EMAIL_MIDDLE, const.EMAIL_FRONT],
+        "list_email": [const.EMAIL_GILSEU],
         "considerar_rv": 'sem',
         "path_name": None,
         "back_teste": False,
@@ -135,7 +135,7 @@ PARAMETROS =  {
         "sensibilidade": "NAO_INFORMADA",
         "tag": None,
         "id_estudo": None,
-        "whats":const.WHATSAPP_PRECO,
+        "list_whats":const.WHATSAPP_GILSEU,
         "cenario":10,
         "prevs_name": None
     }
