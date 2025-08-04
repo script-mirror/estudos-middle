@@ -65,9 +65,9 @@ class ProspecRepository:
             response.raise_for_status()
             return response.json()
 
-    async def get_study_by_id(self, study_id: str) -> dict:
+    async def get_estudo_por_id(self, id_estudo: str) -> dict:
         """Get information about a specific study"""
-        url = f"{self.base_url}/api/prospectiveStudies/{study_id}"
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}"
         headers = await self._get_headers()
         
         async with httpx.AsyncClient() as client:
@@ -80,15 +80,15 @@ class ProspecRepository:
             response.raise_for_status()
             return response.json()
 
-    async def get_study_status(self, study_id: str) -> str:
+    async def get_status_estudo(self, id_estudo: str) -> str:
         """Get status of a specific study"""
-        study_info = await self.get_study_by_id(study_id)
+        study_info = await self.get_estudo_por_id(id_estudo)
         return study_info['Status']
 
-    async def duplicate_study(self, study_id: str, title: str, description: str, tags: list, 
+    async def duplicate_study(self, id_estudo: str, title: str, description: str, tags: list, 
                             vazoes_dat: int = 2, vazoes_rvx: int = 1, prevs_condition: int = 1) -> str:
         """Duplicate an existing study"""
-        url = f"{self.base_url}/api/prospectiveStudies/{study_id}/Duplicate"
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/Duplicate"
         headers = await self._get_headers()
         
         list_of_tags = []
@@ -119,9 +119,9 @@ class ProspecRepository:
             response.raise_for_status()
             return response.text.strip('"')
 
-    async def run_execution(self, study_id: str, execution_config: dict) -> None:
+    async def run_execution(self, id_estudo: str, execution_config: dict) -> None:
         """Start study execution"""
-        url = f"{self.base_url}/api/prospectiveStudies/{study_id}/Run"
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/Run"
         headers = await self._get_headers()
         
         async with httpx.AsyncClient() as client:
@@ -133,9 +133,9 @@ class ProspecRepository:
             
             response.raise_for_status()
 
-    async def download_compilation(self, study_id: str, file_path: str) -> None:
+    async def download_compilation(self, id_estudo: str, file_path: str) -> None:
         """Download study compilation"""
-        url = f"{self.base_url}/api/prospectiveStudies/{study_id}/CompilationDownload"
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/CompilationDownload"
         headers = await self._get_headers()
         
         async with httpx.AsyncClient() as client:
@@ -153,9 +153,9 @@ class ProspecRepository:
                         async for chunk in response.aiter_bytes():
                             f.write(chunk)
 
-    async def send_file_to_deck(self, study_id: str, deck_id: str, file_path: str, file_name: str) -> None:
+    async def send_file_to_deck(self, id_estudo: str, deck_id: str, file_path: str, file_name: str) -> None:
         """Send file to a specific deck"""
-        url = f"{self.base_url}/api/prospectiveStudies/{study_id}/UploadFiles?deckId={deck_id}"
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/UploadFiles?deckId={deck_id}"
         
         headers = {
             'Authorization': f'Bearer {self.token}'
@@ -174,9 +174,9 @@ class ProspecRepository:
                 
                 response.raise_for_status()
 
-    async def associate_cuts(self, study_id: str, associations: list) -> None:
+    async def associate_cuts(self, id_estudo: str, associations: list) -> None:
         """Associate cuts between studies"""
-        url = f"{self.base_url}/api/prospectiveStudies/{study_id}/Associate"
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/Associate"
         headers = await self._get_headers()
         
         data = {
@@ -192,9 +192,9 @@ class ProspecRepository:
             
             response.raise_for_status()
 
-    async def associate_volumes(self, study_id: str, associations: list) -> None:
+    async def associate_volumes(self, id_estudo: str, associations: list) -> None:
         """Associate volumes between studies"""
-        url = f"{self.base_url}/api/prospectiveStudies/{study_id}/Associate"
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/Associate"
         headers = await self._get_headers()
         
         data = {
@@ -209,3 +209,56 @@ class ProspecRepository:
                 response = await client.post(url, headers=headers, data=json.dumps(data))
             
             response.raise_for_status()
+
+    async def remove_study_tags(self, id_estudo: str, tags_to_remove: list) -> None:
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/RemoveTags"
+        headers = await self._get_headers()
+        
+        data = {
+            "tags": tags_to_remove
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.patch(url, headers=headers, data=json.dumps(data))
+            
+            if await self._handle_auth_error(response):
+                headers = await self._get_headers()
+                response = await client.patch(url, headers=headers, data=json.dumps(data))
+            
+            response.raise_for_status()
+            return response.json()
+
+            
+    async def add_study_tags(self, id_estudo: str, tags_to_add: list) -> None:
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/AddTags"
+        headers = await self._get_headers()
+        
+        data = {
+            "tags": tags_to_add
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, data=json.dumps(data))
+            
+            if await self._handle_auth_error(response):
+                headers = await self._get_headers()
+                response = await client.post(url, headers=headers, data=json.dumps(data))
+            
+            response.raise_for_status()
+            return response.json()
+
+
+    async def update_estudos(self, id_estudo: str, id_deck: str, filename: str, file_bytes: bytes) -> dict:
+        url = f'{self.base_url}/api/prospectiveStudies/{id_estudo}/UploadFiles'
+        headers = await self._get_headers()
+        params = {'deckId': id_deck}
+        files = {
+            "file": (filename, file_bytes, 'multipart/form-data', {'Expires': '0'})
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, params=params, files=files)
+        if await self._handle_auth_error(response):
+            headers = await self._get_headers()
+            response = await client.post(url, headers=headers, params=params, files=files)
+        response.raise_for_status()
+        return response.json()

@@ -21,14 +21,12 @@ app = FastAPI(
     openapi_url=settings.openapi_url
 )
 
-# Dynamic router configuration
 routers = [
     ccee_router,
     prospec_router,
     email_router,
 ]
 
-# Include routers dynamically
 for router in routers:
     app.include_router(
         router,
