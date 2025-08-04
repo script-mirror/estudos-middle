@@ -132,7 +132,7 @@ def send_email(parametros):
         
 def run_prevs_ampere(parametros):
     
-    str_acomph = f'ACOMPH{parametros['data'].strftime('%Y%m%d')}'
+    str_acomph = 'ACOMPH'+parametros['data'].strftime('%Y%m%d')
     str_prev = parametros['data'].strftime('%Y%m%d')
     create_directory(consts.PATH_ARQUIVOS,'ampere')
     path_zip = os.path.join(os.path.join(consts.PATH_ARQUIVOS,'ampere'), f'{parametros["mapas"][0]}.zip')
@@ -273,7 +273,7 @@ def get_id_email(parametros):
 
 
 def run_with_params():
-        
+    parametros = deepcopy(PARAMETROS)    
     if len(sys.argv) > 3:
 	
         for i in range(1, len(sys.argv)):
