@@ -29,7 +29,7 @@ class StudyInfoReadDto(BaseModel):
 
 
 class StudyResultDto(BaseModel):
-    study_id: str
+    id_estudo: str
     compilation_file: str
     status: str
     n_decks: int
