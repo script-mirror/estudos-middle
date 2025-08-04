@@ -198,13 +198,17 @@ def get_deck_newave(path):
             
     path_deck_nw  = handle_webhook_file(payload, path)
     path_deck_nw  = extract_zip_folder(path_deck_nw, path_deck_nw)
-    parts             = os.listdir(path_deck_nw)[0].split('.')[0].split('_')
-    print('DECK ENCONTRADO: ', os.listdir(path_deck_nw)[0])
-    data_deck         = dt.date(int(parts[2]), int(parts[3]), 1)  
+    parts         = filter_newave_in_dir(path_deck_nw).split('.')[0].split('_')
+    data_deck     = dt.date(int(parts[2]), int(parts[3]), 1)  
     path_deck_nw  = path_deck_nw +'/' +os.listdir(path_deck_nw)[0]
     path_deck_nw  = extract_zip_folder(path_deck_nw, path_deck_nw)
     return path_deck_nw, data_deck, preliminar
- 
+
+def filter_newave_in_dir(diretorio):
+    arquivos = os.listdir(diretorio)
+    arquivos_newave = [arq for arq in arquivos if "newave" in arq.lower()]
+    print('DECK ENCONTRADO: ', arquivos_newave[0])
+    return arquivos_newave[0]
  
 def get_gtmin(path_in):
     payload  = get_latest_webhook_product(consts.WEBHOOK_NOTAS_TECNICAS)
