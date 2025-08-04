@@ -119,3 +119,16 @@ class ProspecController:
             return {"message": "Tags and files updated successfully"}
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Error updating tags/files: {str(e)}")
+
+    @router.get("/study/{id_estudo}/download")
+    async def download_estudo(self, id_estudo: str) -> bytes:
+        """
+        Download a study by its ID.
+        
+        Forneça o ID do estudo para baixar o arquivo de compilação associado.
+        """
+        try:
+            file_content = await self.service.download_estudo(id_estudo)
+            return file_content
+        except Exception as e:
+            raise HTTPException(status_code=404, detail=f"Study not found: {str(e)}")
