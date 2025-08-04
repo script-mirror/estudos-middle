@@ -107,7 +107,7 @@ EMAIL_CONFIG = frozendict({
                   'Definitiva':{'precipitacao': ['ONS'], 'membro':['NULO']}}
     }),
     'AMPERE': frozendict({
-        'description': 'Rodadas proxima RV',
+        'description': 'Rodadas p.conjunto AMPERE',
         'emails': [const.EMAIL_GILSEU],
         'whats': const.WHATSAPP_GILSEU,
         'n_estudos': 1,
