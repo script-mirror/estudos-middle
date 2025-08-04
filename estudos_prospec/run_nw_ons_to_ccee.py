@@ -199,6 +199,7 @@ def get_deck_newave(path):
     path_deck_nw  = handle_webhook_file(payload, path)
     path_deck_nw  = extract_zip_folder(path_deck_nw, path_deck_nw)
     parts             = os.listdir(path_deck_nw)[0].split('.')[0].split('_')
+    print('DECK ENCONTRADO: ', os.listdir(path_deck_nw)[0])
     data_deck         = dt.date(int(parts[2]), int(parts[3]), 1)  
     path_deck_nw  = path_deck_nw +'/' +os.listdir(path_deck_nw)[0]
     path_deck_nw  = extract_zip_folder(path_deck_nw, path_deck_nw)
