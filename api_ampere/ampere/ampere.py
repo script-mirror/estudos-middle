@@ -28,9 +28,9 @@ from ampere.libs.opweek import ElecData
 
 # CREDENCIAIS -----------------------------------------------------------
 
-USERNAME = os.getenv("API_AMPERE_USERNAME")
-SENHA = os.getenv("API_AMPERE_PASSWORD")
-USER_ACCESS_TOKEN = os.getenv("API_AMPERE_TOKEN")
+USERNAME = os.getenv("API_AMPERE_USERNAME",'none')
+SENHA = os.getenv("API_AMPERE_PASSWORD",'none')
+USER_ACCESS_TOKEN = os.getenv("API_AMPERE_TOKEN", 'none')
         
 MD5_PASSWORD_HASH = hashlib.md5(SENHA.encode('utf-8')).hexdigest()
 
@@ -135,7 +135,7 @@ def mover_prevs(zip_path:str, path_dst:str=None, modeloBase:str=None, considerar
     # Excluir a pasta extraída e o arquivo zip
     shutil.rmtree(os.path.join(zip_dir, folder_name))
     os.remove(zip_path)
-    return 'P.CONJ_AMPERE', n_prevs
+    return n_prevs
 
 def baixar_rodada(modelo:str, data_previsao:datetime, preliminar:bool, psat:bool):
     
@@ -197,7 +197,22 @@ def listar_rodadas_disponiveis(data_previsao:datetime, preliminar:int=False, psa
     df_lista_estudos['last_update'] = pd.to_datetime(df_lista_estudos['last_update'], unit='s') - pd.Timedelta(hours=3)
     df_lista_estudos = df_lista_estudos.sort_values(by='last_update')
     print(tabulate(df_lista_estudos, headers='keys', tablefmt='grid', showindex=False))
-    
+
+def get_last_pconj(data_previsao:datetime, path_zip:str, path_out_prevs:str): 
+    sens = 'P.CONJ_AMPERE'
+    estudos_TODOS = pd.DataFrame(list_estudos())
+    p_conj = estudos_TODOS[estudos_TODOS['data_previsao'].str.contains(data_previsao.strftime('%Y%m%d'))][estudos_TODOS['cenario']== "ONS-OFICIAL-NT00752020-RVEXT-VMEDPONDERADA"].sort_values(by='last_update', ascending=False).iloc[0]
+    path_zip = os.path.join(path_zip, f'{p_conj['cenario']}.zip')
+    if get_estudos(acomph=p_conj['data_acomph'], data_prev=p_conj['data_previsao'], modelo=p_conj['cenario'], nomezip=path_zip):
+        if 'PSAT' in p_conj['data_previsao']:
+            sens+='-PSAT'
+        elif p_conj['data_acomph'].split('ACOMPH')[1] != p_conj['data_previsao'].split('-')[0]:
+            sens+='-PREL'            
+        print(f'Arquivo baixado: {path_zip}')
+        n_prevs = mover_prevs(zip_path = path_zip, path_dst=path_out_prevs)                
+    return sens, n_prevs
+
+
 
 if __name__ == '__main__':    
     

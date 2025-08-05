@@ -1,22 +1,22 @@
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import time
 import random
 from copy import deepcopy
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta 
 from processa_resultados import gerar_resultados
 from config_default import PARAMETROS, EMAIL_CONFIG
 from functions import *
-
+import pandas as pd
 from middle.utils.constants import Constants 
 consts = Constants()
 
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_pluvia"))
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_ampere"))
-from ampere.ampere import get_estudos, mover_prevs
+from ampere.ampere import get_last_pconj
 # Importando .py do Pluvia e do Prospec
 import run_prospec
 import run_pluvia
@@ -75,13 +75,7 @@ def send_email(parametros):
     idEstudos = []
     #print(parametros['tag'])
     if parametros['tag'] is not None and parametros['id_estudo'] is None:
-        if parametros['tag'] in EMAIL_CONFIG.keys():
-            if EMAIL_CONFIG[parametros['tag']]['n_estudos'] == 1:
-                parametros['id_estudo'] = [parametros['prospec_out'][0]]
-            else:
-                parametros['id_estudo'] = get_id_email(parametros)
-        else:
-            parametros['id_estudo'] = get_id_email(parametros)   
+        parametros['id_estudo'] = get_id_email(parametros)   
     
     if parametros['id_estudo'] is not None: 
         try:
@@ -130,19 +124,13 @@ def send_email(parametros):
         print('Favor informar o id do estudo no parametro "id_estudo"')
         print('Exemplo: \'["xxxx","yyyy","zzzz"]\'')
         
+
 def run_prevs_ampere(parametros):
-    
-    str_acomph = 'ACOMPH'+parametros['data'].strftime('%Y%m%d')
-    str_prev = parametros['data'].strftime('%Y%m%d')
-    create_directory(consts.PATH_ARQUIVOS,'ampere')
-    path_zip = os.path.join(os.path.join(consts.PATH_ARQUIVOS,'ampere'), f'{parametros["mapas"][0]}.zip')
-    if get_estudos(acomph=str_acomph, data_prev=str_prev, modelo=parametros["mapas"][0], nomezip=path_zip):
-        print(f'Arquivo baixado: {path_zip}')
-        parametros['sensibilidade'], parametros['rvs'] = mover_prevs(zip_path = path_zip, path_dst=parametros['path_out_prevs'])
-                
+    parametros['tag'] = 'P.CONJ'  
+    path_zip = create_directory(consts.PATH_ARQUIVOS,'ampere')
+    parametros['sensibilidade'], parametros['rvs'] = get_last_pconj(parametros['data'],path_zip, parametros['path_out_prevs'])          
     print('n prevs',parametros['rvs'])
     return parametros
-
 
  
 def run_prevs_pluvia(parametros):
@@ -150,17 +138,19 @@ def run_prevs_pluvia(parametros):
     print('n prevs',parametros['rvs'])
     return parametros
 
+
 def run_1rv_pluvia(parametros):
     parametros['sensibilidade'], parametros['rvs']  = run_pluvia.main(parametros)
     parametros['rvs'] = 1
     print('n prevs',parametros['rvs'])
     return parametros
 
+
 def run_nao_consistido(parametros):
     parametros['rvs'] = 1
     return parametros
 
-   
+
 def run_prevs_interno(parametros ):
     print('Copiando prevs interno para o a pasta do prospec') 
     parametros['aguardar_fim'] = False 
@@ -265,7 +255,7 @@ def get_id_email(parametros):
     estudos = getStudiesByTag({'page':1, 'pageSize':n_estudos+3, 'tags':parametros['tag']})
     list_id = []   
     for estudo in estudos['ProspectiveStudies']:
-        if estudo['Status'] == 'Concluído' and len(list_id) <= n_estudos:
+        if estudo['Status'] == 'Concluído' and len(list_id) < n_estudos:
             list_id.append(str(estudo['Id']))
     if len(list_id) == 0:
         print( 'Não foi encontrado nenhum estudo com a tag: ', parametros['tag'])
@@ -332,7 +322,7 @@ BLOCK_FUNCTIONS = {
 if __name__ == '__main__':
     """PARAMETROS =  {
         "rodada": 'Preliminar',
-        "data": datetime.now(),
+        "data": datetime.now()- timedelta(days=1),
         "apenas_email": False,
         "assunto_email": None,
         "corpo_email": None,
@@ -358,6 +348,6 @@ if __name__ == '__main__':
     #parametros['apenas_email'] =  True
     #parametros['tag'] = '2025-Q4_03/08'
     #parametros['aguardar_fim'] = False
-    rodar(PARAMETROS)
+    rodar(PARAMETROS)"""
     #rodar(PARAMETROS)"""
     run_with_params()
