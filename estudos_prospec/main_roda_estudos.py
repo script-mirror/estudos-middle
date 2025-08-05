@@ -255,7 +255,7 @@ def get_id_email(parametros):
     estudos = getStudiesByTag({'page':1, 'pageSize':n_estudos+3, 'tags':parametros['tag']})
     list_id = []   
     for estudo in estudos['ProspectiveStudies']:
-        if estudo['Status'] == 'Concluído' and len(list_id) <= n_estudos:
+        if estudo['Status'] == 'Concluído' and len(list_id) < n_estudos:
             list_id.append(str(estudo['Id']))
     if len(list_id) == 0:
         print( 'Não foi encontrado nenhum estudo com a tag: ', parametros['tag'])
