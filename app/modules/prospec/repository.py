@@ -262,3 +262,18 @@ class ProspecRepository:
             response = await client.post(url, headers=headers, params=params, files=files)
         response.raise_for_status()
         return response.json()
+
+
+    async def download_estudo(self, id_estudo: str) -> bytes:
+        url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/DeckDownload"
+        headers = await self._get_headers()
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+            
+            if await self._handle_auth_error(response):
+                headers = await self._get_headers()
+                response = await client.get(url, headers=headers)
+            
+            response.raise_for_status()
+            return response.content

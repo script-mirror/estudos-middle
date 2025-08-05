@@ -358,3 +358,10 @@ class ProspecService:
                 logger.info(f'{arquivo_enviado["filesUploaded"][0]} - OK')
             else:
                 logger.info(f'Falha ao enviar estudo {id_estudo}')
+
+    async def download_estudo(self, id_estudo: str) -> bytes:
+        """
+        Download study by ID.
+        """
+        return await self.repository.download_estudo(id_estudo)
+        
