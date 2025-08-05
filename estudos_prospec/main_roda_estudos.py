@@ -75,13 +75,7 @@ def send_email(parametros):
     idEstudos = []
     #print(parametros['tag'])
     if parametros['tag'] is not None and parametros['id_estudo'] is None:
-        if parametros['tag'] in EMAIL_CONFIG.keys():
-            if EMAIL_CONFIG[parametros['tag']]['n_estudos'] == 1:
-                parametros['id_estudo'] = [parametros['prospec_out'][0]]
-            else:
-                parametros['id_estudo'] = get_id_email(parametros)
-        else:
-            parametros['id_estudo'] = get_id_email(parametros)   
+        parametros['id_estudo'] = get_id_email(parametros)   
     
     if parametros['id_estudo'] is not None: 
         try:
