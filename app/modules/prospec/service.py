@@ -359,7 +359,7 @@ class ProspecService:
             else:
                 logger.info(f'Falha ao enviar estudo {id_estudo}')
 
-    async def download_estudo(self, id_estudo: str) -> bytes:
+    async def download_estudo(self, id_estudo: str) -> dict:
         """
         Download study by ID.
         """

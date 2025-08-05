@@ -264,7 +264,7 @@ class ProspecRepository:
         return response.json()
 
 
-    async def download_estudo(self, id_estudo: str) -> bytes:
+    async def download_estudo(self, id_estudo: str) -> dict:
         url = f"{self.base_url}/api/prospectiveStudies/{id_estudo}/DeckDownload"
         headers = await self._get_headers()
         
@@ -276,4 +276,4 @@ class ProspecRepository:
                 response = await client.get(url, headers=headers)
             
             response.raise_for_status()
-            return response.content
+            return {"content": response.content, "headers": response.headers}

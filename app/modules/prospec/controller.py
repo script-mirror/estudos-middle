@@ -1,4 +1,11 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    UploadFile,
+    File,
+    Form,
+    Response,
+)
 from typing import List
 from fastapi_restful.cbv import cbv
 
@@ -6,7 +13,6 @@ from app.modules.prospec.repository import ProspecRepository
 from app.modules.prospec.service import ProspecService
 from .schemas import (
     StudyExecutionDto, StudyResultDto, StudyInfoReadDto, 
-    DownloadResultDto
 )
 
 router = APIRouter(prefix="/prospec", tags=["Prospec"])
@@ -128,7 +134,7 @@ class ProspecController:
         Forneça o ID do estudo para baixar o arquivo de compilação associado.
         """
         try:
-            file_content = await self.service.download_estudo(id_estudo)
-            return file_content
+            file_response = await self.service.download_estudo(id_estudo)
+            return Response(**file_response, media_type="application/octet-stream",)
         except Exception as e:
             raise HTTPException(status_code=404, detail=f"Study not found: {str(e)}")
