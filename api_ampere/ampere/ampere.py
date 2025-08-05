@@ -28,9 +28,9 @@ from ampere.libs.opweek import ElecData
 
 # CREDENCIAIS -----------------------------------------------------------
 
-USERNAME = os.getenv("API_AMPERE_USERNAME")
-SENHA = os.getenv("API_AMPERE_PASSWORD")
-USER_ACCESS_TOKEN = os.getenv("API_AMPERE_TOKEN")
+USERNAME = os.getenv("API_AMPERE_USERNAME",'none')
+SENHA = os.getenv("API_AMPERE_PASSWORD",'none')
+USER_ACCESS_TOKEN = os.getenv("API_AMPERE_TOKEN", 'none')
         
 MD5_PASSWORD_HASH = hashlib.md5(SENHA.encode('utf-8')).hexdigest()
 

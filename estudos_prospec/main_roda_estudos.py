@@ -125,7 +125,7 @@ def send_email(parametros):
         print('Exemplo: \'["xxxx","yyyy","zzzz"]\'')
         
 def run_prevs_ampere(parametros):
-    
+    parametros['tag'] = 'P.CONJ'
     str_acomph = 'ACOMPH'+parametros['data'].strftime('%Y%m%d')
     str_prev = parametros['data'].strftime('%Y%m%d')
     create_directory(consts.PATH_ARQUIVOS,'ampere')
