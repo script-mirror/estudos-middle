@@ -62,10 +62,11 @@ def main(parametros):
     sys.exit()
     
 def get_prevs(parametros, aguardar_prevs, PATH_FORECAST_DAY):
-    logger.info('Obtendo previsões da API')
+    logger.info('Obtendo previsões via API')
+    logger.info(f'Mapas buscados: {parametros["mapas"]}')
     mapas = pd.DataFrame(getInfoFromAPI('/v2/previsoes?dataPrevisao='+parametros['data'].strftime('%d/%m/%Y'))) 
     df_mapas = mapas.loc[mapas['nome'].isin(parametros["mapas"])]
-    logger.info(f'Mapas filtrados: {df_mapas["nome"].to_list()}')
+    logger.info(f'Mapas encontrados: {df_mapas["nome"].to_list()}')
     
     if any('ONS_ETAd_1_Pluvia' in x for x in df_mapas['nome']) and any('ONS_Pluvia' in x for x in df_mapas['nome']):
         logger.info('Removendo mapas ONS_ETAd_1_Pluvia da lista')
@@ -87,7 +88,6 @@ def get_prevs(parametros, aguardar_prevs, PATH_FORECAST_DAY):
                        
     elif len(df_mapas) == len(parametros['mapas']) and aguardar_prevs:
         logger.info('Todos os mapas esperados foram encontrados')
-        print('Mapas encontrados: ', df_mapas['nome'].to_list())
         for index, row in df_mapas.iterrows():
             logger.info(f'Baixando arquivo para mapa: {row["nome"]}')
             results = pd.DataFrame(row['resultados'])
@@ -140,7 +140,7 @@ def mover_prevs(folders:str, path_dst:str=None):
             pathOutput = path_dst  +'/'+ str(int(mesOperativo[-2:]))
             os.makedirs(pathOutput, exist_ok=True)
             if nome_arquivo in os.listdir(pathOutput):
-                nome_arquivo = f'prevs-{modelo}_pluvia.rv{rv}'
+                nome_arquivo = f'prevs-{modelo.upper()}.rv{rv}'
             else:
                 sens = modelo.replace('Preliminar','Prel').replace('_Pluvia','').replace('AgrupadoPrecipitacao','A.Precip')
                 sens = sens.replace('PrecZero_60','P.Zero').replace('PrecZero_120','P.Zero').replace('Usuario_','')
