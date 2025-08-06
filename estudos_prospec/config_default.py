@@ -12,10 +12,8 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 1,
         'path_prevs': 'next_rv',
         'aguardar_fim': True,
-        'rodada':{'Preliminar':{'precipitacao': ["GEFS", "ONS_Pluvia", "ONS_ETAd_1_Pluvia", "ECMWF_ENS", "ECMWF_ENS", "GEFS"],
-                                      'membro': ["ENSEMBLE", "NULO", "NULO", "ENSEMBLE", "00", "00"]},
-                  'Definitiva':{'precipitacao': ["GEFS", "ONS_Pluvia", "ONS_ETAd_1_Pluvia", "ECMWF_ENS", "ECMWF_ENS", "GEFS"],
-                                      'membro': ["ENSEMBLE", "NULO", "NULO", "ENSEMBLE", "00", "00"]}}
+        'rodada':{'Preliminar':['ECMWF_ENS-Preliminar-SMAP', 'ONS_Pluvia-Preliminar-SMAP', 'ONS_ETAd_1_Pluvia-Preliminar-SMAP', 'GEFS-Preliminar-SMAP', 'ECMWF_ENS-00-Preliminar-SMAP', 'GEFS-00-Preliminar-SMAP'],
+                  'Definitiva':['ECMWF_ENS-SMAP', 'ONS_Pluvia-SMAP', 'ONS_ETAd_1_Pluvia-SMAP', 'GEFS-SMAP', 'ECMWF_ENS-00-SMAP', 'GEFS-00-SMAP']}
     }),
     'UPDATE': frozendict({
         'description': 'Rodadas proxima RV',
@@ -24,10 +22,9 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 1,
         'path_prevs': 'update',
         'aguardar_fim': True,
-        'rodada':{'Preliminar':{'precipitacao': ["ONS_Pluvia"],
-                                      'membro': ["NULO"]},
-                  'Definitiva':{'precipitacao': ["ONS_Pluvia"],
-                                      'membro': ["NULO"]}}
+        'rodada':{'Preliminar':['ONS_Pluvia-Preliminar-SMAP'],
+                  'Definitiva':['ONS_Pluvia-SMAP']}
+                                      
     }),
     'P.CONJ': frozendict({
         'description': 'Rodadas P. Conjunto',
@@ -36,8 +33,8 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 10,
         'path_prevs': 'p_conj',
         'aguardar_fim': True,
-        'rodada':{'Preliminar':{'precipitacao': ['ONS_Pluvia'], 'membro':['NULO']},
-                  'Definitiva':{'precipitacao': ['ONS'], 'membro':['NULO']}}
+        'rodada':{'Preliminar': ['ONS_Pluvia-Preliminar-SMAP'],
+                  'Definitiva':['ONS_Pluvia-SMAP']}
     }),
     'CENARIOS': frozendict({
         'description': 'Rodadas Cenarios Raizen',
@@ -46,8 +43,7 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 10,
         'path_prevs': 'cenarios',
         'aguardar_fim': True,
-        'rodada':{'Preliminar':{'precipitacao': ['Usuário'], 'membro':['NULO']},
-                  'Definitiva':{'precipitacao': ['Usuário'], 'membro':['NULO']}}
+        'rodada':{'Preliminar':['Usuario_MEDIA-CFS-3-DIAS-Preliminar']}
     }),
     'P.ZERO': frozendict({
         'description': 'Rodadas Chuva Zero',
@@ -56,8 +52,8 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 1,
         'path_prevs': 'p_zero',
         'aguardar_fim': True,       
-        'rodada':{'Preliminar':{'precipitacao': ['Prec. Zero'], 'membro':['NULO']},
-                  'Definitiva':{'precipitacao': ['Prec. Zero'], 'membro':['NULO']}}  
+        'rodada':{'Preliminar':['PrecZero_60-Preliminar-SMAP'],
+                  'Definitiva':['PrecZero_60-SMAP']}
     }),
     'P.APR': frozendict({
         'description': 'Rodadas P. Conjunto Precipitação Agrupada',
@@ -66,8 +62,8 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 1,
         'path_prevs': 'p_agrupada',
         'aguardar_fim': True,
-        'rodada':{'Preliminar':{'precipitacao': ['ONS_Pluvia'], 'membro':['AgrupadoPrecipitacao']},
-                  'Definitiva':{'precipitacao': ['ONS_Pluvia'], 'membro':['AgrupadoPrecipitacao']}}
+        'rodada':{'Preliminar':['ONS_Pluvia-AgrupadoPrecipitacao-Preliminar-SMAP'],
+                  'Definitiva':['ONS_Pluvia-AgrupadoPrecipitacao-SMAP']}
     }),
     'NAO-CONSISTIDO': frozendict({
         'description': 'Rodadas Não Consistidas',
@@ -83,18 +79,18 @@ EMAIL_CONFIG = frozendict({
         'whats': const.WHATSAPP_PRECO,
         'n_estudos': 5,
         'path_prevs': 'ec_ext',
-        'aguardar_fim': False,
-        'rodada':{'Definitiva':{'precipitacao': ['ECMWF_ENS_EXT'], 'membro':['ENSEMBLE']}}
+        'aguardar_fim': True,
+        'rodada':{'Definitiva':['ECMWF_ENS_ext-SMAP']}
     }),
     'ONS-GRUPOS': frozendict({
         'description': 'Rodadas ONS Agrupados',
         'emails': [const.EMAIL_MIDDLE, const.EMAIL_FRONT],
         'whats': const.WHATSAPP_PRECO,
-        'n_estudos': 1,
+        'n_estudos': 10,
         'path_prevs': 'ons_grupos',
         'aguardar_fim': False,
-        'rodada':{'Preliminar':{'precipitacao': ['ONS_Pluvia'], 'membro':[ "Grupo01", "Grupo02", "Grupo03", "Grupo04", "Grupo05", "Grupo06", "Grupo07", "Grupo08", "Grupo09", "Grupo10"]},
-                  'Definitiva':{'precipitacao': ['ONS_Pluvia'], 'membro':[ "Grupo01", "Grupo02", "Grupo03", "Grupo04", "Grupo05", "Grupo06", "Grupo07", "Grupo08", "Grupo09", "Grupo10"]}}
+        'rodada':{'Definitiva':[ "ONS_Pluvia-Grupo01-SMAP", "ONS_Pluvia-Grupo02-SMAP", "ONS_Pluvia-Grupo03-SMAP", "ONS_Pluvia-Grupo04-SMAP", "ONS_Pluvia-Grupo05-SMAP",
+                                 "ONS_Pluvia-Grupo06-SMAP", "ONS_Pluvia-Grupo07-SMAP", "ONS_Pluvia-Grupo08-SMAP", "ONS_Pluvia-Grupo09-SMAP", "ONS_Pluvia-Grupo10-SMAP"]}
     }),
     'SENS': frozendict({
         'description': 'Rodadas sensibilidades',
@@ -103,8 +99,8 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 1,
         'path_prevs': 'sens',
         'aguardar_fim': False,
-        'rodada':{'Preliminar':{'precipitacao': ['ONS_Pluvia'], 'membro':['NULO']},
-                  'Definitiva':{'precipitacao': ['ONS'], 'membro':['NULO']}}
+        'rodada':{'Preliminar': ['ONS_Pluvia-Preliminar-SMAP'],
+                  'Definitiva':['ONS_Pluvia-SMAP']}
     }),
     'AMPERE': frozendict({
         'description': 'Rodadas p.conjunto AMPERE',
@@ -113,10 +109,8 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 1,
         'path_prevs': 'ampere',
         'aguardar_fim': True,
-        'rodada':{'Preliminar':{'precipitacao': ['ONS-OFICIAL-NT00752020-RVEXT-VMEDPONDERADA'],
-                                      'membro': ["NULO"]},
-                  'Definitiva':{'precipitacao': ['ONS-OFICIAL-NT00752020-RVEXT-VMEDPONDERADA'],
-                                      'membro': ["NULO"]}}
+        'rodada':{'Preliminar': ['ONS-OFICIAL-NT00752020-RVEXT-VMEDPONDERADA'],
+                  'Definitiva': ['ONS-OFICIAL-NT00752020-RVEXT-VMEDPONDERADA']}
     }),
     'DECOMP': frozendict({
         'description': 'Rodadas decomp convertido',

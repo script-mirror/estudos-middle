@@ -1,259 +1,125 @@
-#API
-from functionsPluviaAPI import *
-from requestsPluviaAPI import authenticatePluvia
+import sys
+import glob
+from requestsPluviaAPI import *
 from datetime import datetime, timedelta
 import pathlib
 import shutil
 import zipfile
-import copy
-import sys
 import time
 import os
-from os import path
 import pandas as pd
 from middle.utils.constants import Constants 
 consts = Constants()
  
 PATH_PREVS_PLUVIA   = pathlib.Path(os.path.join(consts.PATH_ARQUIVOS,'pluvia'))
 PATH_PREVS_PROSPEC  = pathlib.Path(consts.PATH_PREVS_PROSPEC)
-
-# Cria diretórios se não existirem
 os.makedirs(PATH_PREVS_PLUVIA, exist_ok=True)
 os.makedirs(PATH_PREVS_PROSPEC, exist_ok=True)
 
-
 def main(parametros):    
 
-    
     print(''); print('')
     print ('--------------------------------------------------------------------------------#')
     print('#-API do Pluvia Iniciado: ' + str(datetime.now())[:19])
-    print('Usuário: ', consts.API_PLUVIA_USERNAME)
 
-
-    folders = run(consts.API_PLUVIA_USERNAME, consts.API_PLUVIA_PASSWORD,  parametros)
-    time.sleep(20)
-    listPrevs = copiaPrevsProspec(path, folders, parametros)
-    
-    print(''); print('')
-    print ('#-API do Pluvia Terminado em: '  +  str(datetime.now())[:19])
-    print ('--------------------------------------------------------------------------------#')
-
-    return listPrevs
-
-
-# -----------------------------------------------------------------------------
-# Casos a serem executados
-# -----------------------------------------------------------------------------
-def run(username,password,  parametros):
-    global PATH_FORECAST_DAY
-    # -----------------------------------------------------------------------------
-    # Criação                
-    # -----------------------------------------------------------------------------
-    authenticatePluvia(username, password)
-    data                     = parametros['data']
-    forecastDate             = data.strftime('%d/%m/%Y')
-    precipitationDataSources = parametros['mapas']
-    forecastModels           = ['SMAP']
-    bias                     = '' 
-    preliminary              = parametros["rodada"] 
-    years                    = [data.year]
-    members                  = parametros['membro']
-    PATH_FORECAST_DAY        =  pathlib.Path(os.path.join(PATH_PREVS_PLUVIA, parametros['prevs'],data.strftime('%Y-%m-%d'))) 
-    nTentarivas              = parametros['n_tentativas']
-    pathFolders              = []
-    cenario                  = parametros['cenario']
-    modes                    = []
-  
-    print('')
-    print('Parametros: ',parametros) 
-    print('')
-    
-    os.makedirs(PATH_FORECAST_DAY, exist_ok=True)
-
-    countIterations = 0
-
-    print(precipitationDataSources)
-    while len(precipitationDataSources) > 0 and countIterations < nTentarivas:
-
-        precipitationAux = []
-        authenticatePluvia(username, password)
-
-        for i in range(len(precipitationDataSources)): 
-
-            member = [members[i]]
-            precipitationDataSource = precipitationDataSources[i]
-            idPrecipitationDataSource = []
-            idForecast = []  
-            idPrecipitationDataSource.append(getIdOfPrecipitationDataSource(precipitationDataSource))
-
-            for forecastModel in forecastModels:    
-                idForecast.append(getIdOfForecastModel(forecastModel))
-            idModo = []
-            for mode in modes:    
-                idModo.append(getIdOfModes(mode))
-
-            forecasts_in = getForecasts(forecastDate, idPrecipitationDataSource, idForecast, bias, preliminary, idModo, years, member)
-            forecast = []
-
-            if parametros['prevs'] == 'CENARIOS':
-                for forecast_aux in forecasts_in:
-                    #try:
-                    if int(forecast_aux['nome'].split('__')[1])==cenario:
-                        print((forecast_aux['nome']))
-                        forecast = [forecast_aux]
-                    #except:
-                       #pass
-                forecasts_in = forecast 
-            else:
-
-                forecast = forecasts_in 
-            
-            if len(forecast) == 0 and parametros['rodada'] == 'Preliminar' and parametros['prevs'] != 'PREVS_PLUVIA_USUARIO' :   
-                preliminary = 'Preliminar'                 
-                idModo = []
-                for mode in modes:    
-                    idModo.append(getIdOfModes(mode))
-
-                forecast = getForecasts(forecastDate, idPrecipitationDataSource, idForecast, bias, preliminary, idModo, years, member)
-                forecast = forecasts_in 
-                
-            if len(forecast) > 0:
-                if 'Prevs' not in str(forecast[0]['resultados']):
-                    forecast = []
-
-            if len(forecast) > 0:
-                time.sleep(10)
-
-                for dado in forecasts_in[0]['resultados']:
-                    if dado['nome'] == 'Prevs':
-                        downloadForecast(dado['id'], PATH_FORECAST_DAY, forecast[0]['nome'] + '-' + forecast[0]['membro'] + '-Prevs.zip')
-                        pathFolders.append(forecast[0]['nome'] + '-' + forecast[0]['membro'] + '-Prevs.zip')
-                    
-                        if preliminary == 'Preliminar':
-                            print('Download mapa', precipitationDataSource, 'preliminar membro ' + forecast[0]['membro']+ ' com sucesso em: ' + str(datetime.now())[:19])
-                        else:
-                            print('Download mapa', precipitationDataSource, 'definitivo membro ' + forecast[0]['membro']+ ' com sucesso em: ' + str(datetime.now())[:19])
-            else:
-                precipitationAux.append(precipitationDataSource)
-
-        precipitationDataSources = copy.deepcopy(precipitationAux) 
-
-        countIterations = countIterations + 1
-        if len(precipitationDataSources) > 0 and countIterations < nTentarivas:
-            try:
-                print('Aguardando disponibilização dos prevs: ', precipitationDataSource, members, preliminary, str(datetime.now())[:19])
-            except:
-                pass
-            if countIterations == 1: 
-                time.sleep(600)
-            else:    
-                time.sleep(600)
-            del idPrecipitationDataSource
-            del forecast
-            del member
-            del precipitationDataSource
-            del precipitationAux
-            
-
-    return pathFolders
-
-def copiaPrevsProspec(path, folders, parametros ):
-    data = parametros['data']
-    
-    listPrevs = [] 
-    pathOutput      = parametros['path_out_prevs']+'/'
-    os.makedirs(pathOutput, exist_ok=True)
-
-    for pasta in os.listdir(pathOutput):
-        pathOutput2 = pathOutput  + pasta
-        for arquivos in os.listdir(pathOutput2): 
-            try: os.remove(pathOutput2 + '/' + arquivos) 
-            except: (print('Não foi possivel excluir o aqruivo: ' + pathOutput2 + '/' + arquivos))
-        try: os.rmdir(pathOutput2)
-        except: (print('Não foi possivel excluir a pasta: ' + pathOutput2))
-
-    for mes in range(int(data.month),int(data.month + 3)):
-        if mes < 13:
-            pathOutput2 = pathOutput  + str(mes)
-        else:
-            pathOutput2 = pathOutput  + str(mes-12)
-
-        if os.path.exists (pathOutput2) == False: os.mkdir (pathOutput2)
-        for arquivos in os.listdir(pathOutput2): 
-            try: os.remove(pathOutput2 + '/' + arquivos) 
-            except: (print('Não foi possivel excluir o aqruivo: ' + pathOutput2 + '/' + arquivos))
-
-    for folder in folders:
-        try:
-            ExtractFolder(PATH_FORECAST_DAY, PATH_FORECAST_DAY, folder)
-            
-            pathInput = os.path.join(PATH_FORECAST_DAY ,folder[0:len(folder)-4])
-            listaPrevs = os.listdir(pathInput)
-            #print(listaPrevs)
-            #del listaPrevs[0]
-            #print(listaPrevs)
-
-            listaAux = [file for file in listaPrevs if not file.lower().endswith('.rv6')]
-            #print(listaAux)
-            #sys.exit()
-            mumeroRvs = len(listaAux)
-            for files in os.listdir(pathInput):
-                prevsVE = False
-                rv = files[-4:]
-                nomePrevs = files.split('-')[3]
-                if 'AGRUPADOPRECIPITACAO' in files:
-                    nomePrevs = nomePrevs + '-AGRUPADOPRECIPITACAO'
-
-                if len(files.split('-')[4]) == 2:
-                    nomePrevs = nomePrevs + '-' + files.split('-')[4]
-                    
-                if 'PRELIMINAR' in files:
-                    nomePrevs = nomePrevs + '-PREL'
-
-                mes = str(int((files[4:6])))
-                print(nomePrevs)
-
-                if 'usuario' in files.lower():
-                    nomePrevs = files.split('__')[len(files.split('__'))-1][:-12]
-
-                if  parametros['prevs'] == 'PREVS_PLUVIA_EC_EXT': nomePrevs = files[18:-21]
-                if 'ONS' in files and parametros['prevs'] == 'PREVS_PLUVIA_EC_EXT': prevsVE = True
-                    
-
-                if os.path.exists (os.path.join(pathOutput + mes ,'prevs' + rv)) == False or prevsVE == True:
-                    os.rename(os.path.join(pathInput ,files) , os.path.join(pathOutput + mes ,'prevs' + rv))
-
-                    if 'PLUVIA' in nomePrevs.upper():
-                        listPrevs.append(nomePrevs.upper())
-                    else:
-                        listPrevs.append(nomePrevs.upper() +  '_PLUVIA')
-
-                    print(files + ' impresso em ' + os.path.join(pathOutput + mes, 'prevs' +  rv))
-
-                else:
-                    os.rename(os.path.join(pathInput ,files) , os.path.join(pathOutput + mes ,'prevs-' + nomePrevs +'_pluvia' +  rv))
-                    print(files + ' impresso em ' + os.path.join(pathOutput + mes, 'prevs-' + nomePrevs +'_pluvia' +  rv))
-        except:
-            pass
-
-    shutil.rmtree(PATH_FORECAST_DAY, ignore_errors=True)       
-    if len(listPrevs) == 0:
-        print('Pluvia não encontrou nenhum mapa, por favor conferir processo!')
-        if parametros['prevs'] != 'PREVS_PLUVIA_RAIZEN' and parametros['prevs'] != 'PREVS_PLUVIA_2_RV':
-            sys.exit()
-    
-    return listPrevs[0],mumeroRvs
-
-def ExtractFolder(pathIn, pathOut, arquivo):
- 
-    nome_arq = arquivo[0:len(arquivo)-4]
-    
-    if os.path.exists (os.path.join(pathOut ,nome_arq)) == False: os.mkdir (os.path.join(pathOut ,nome_arq))
+    authenticatePluvia(consts.API_PLUVIA_USERNAME, consts.API_PLUVIA_PASSWORD)
    
-    with zipfile.ZipFile(os.path.join(pathOut ,arquivo), 'r') as pastaCompactada:
-        for arquivoInZip in pastaCompactada.namelist():
-            pastaCompactada.extract(arquivoInZip, os.path.join(pathOut ,nome_arq))
+    PATH_FORECAST_DAY =  pathlib.Path(os.path.join(PATH_PREVS_PLUVIA, parametros['prevs'], parametros['data'].strftime('%Y-%m-%d')))    
+    os.makedirs(PATH_FORECAST_DAY, exist_ok=True)
+    n_tentativas = 0
+    aguardar_prevs = True
+    
+    while n_tentativas <= parametros['n_tentativas']:
+        if n_tentativas == parametros['n_tentativas']:
+            aguardar_prevs = False
+        sucesso, folders = get_prevs(parametros, aguardar_prevs, PATH_FORECAST_DAY)
+        if sucesso:
+            return mover_prevs(folders, parametros['path_out_prevs'])
+        else:
+            n_tentativas += 1
+            print(f'Tentativa {n_tentativas} de {parametros["n_tentativas"]}...')
+            time.sleep(600)
+    print('Número máximo de tentativas atingido. Encerrando o processo.')
+    sys.exit()
+    
+def get_prevs(parametros, aguardar_prevs, PATH_FORECAST_DAY):
+    mapas    = pd.DataFrame(getInfoFromAPI('/v2/previsoes?dataPrevisao='+parametros['data'].strftime('%d/%m/%Y'))) 
+    df_mapas = mapas.loc[mapas['nome'].isin(parametros["mapas"])]
+    
+    if any('ONS_ETAd_1_Pluvia' in x for x in df_mapas['nome']) and any('ONS_Pluvia' in x for x in df_mapas['nome']):
+        df_mapas = df_mapas[~df_mapas['nome'].str.contains('ONS_ETAd_1_Pluvia', na=False)]
+        parametros["mapas"] = [item for item in parametros["mapas"] if "ONS_ETAd_1_Pluvia" not in item]
+    
+    pathFolders = []
+    if not aguardar_prevs:
+        print('Mapas request    : ', parametros['mapas'])
+        print('Mapas encontrados: ', df_mapas['nome'].to_list())
+        for index, row in df_mapas.iterrows():
+            results = pd.DataFrame(row['resultados'])
+            getFileFromAPI('/v2/resultados/' + str(results[results['nome']=='Prevs']['id'].iloc[0]), row['nome'] + '.zip', PATH_FORECAST_DAY)
+            pathFolders.append(os.path.join(PATH_FORECAST_DAY, row['nome'] + '.zip'))
+        return True, pathFolders    
+                       
+    elif len(df_mapas) == len(parametros['mapas']) and aguardar_prevs:
+        print('Mapas encontrados: ', df_mapas['nome'].to_list())
+        for index, row in df_mapas.iterrows():
+            results = pd.DataFrame(row['resultados'])
+            getFileFromAPI('/v2/resultados/' + str(results[results['nome']=='Prevs']['id'].iloc[0]), row['nome'] + '.zip', PATH_FORECAST_DAY)
+            #downloadForecast(int(results[results['nome']=='Prevs']['id'].iloc[0]), PATH_FORECAST_DAY, row['nome'] + '.zip')
+            pathFolders.append(os.path.join(PATH_FORECAST_DAY, row['nome'] + '.zip'))
+        return True, pathFolders   
+                 
+    else:
+        print('Mapas request    : ', parametros['mapas'])
+        print('Mapas encontrados: ', df_mapas['nome'].to_list())
+        print('Aguardando mapas serem disponibilizados...')
+        return False, []
+
+
+def unzip_file(zip_path, path_unzip:str=None):
+    
+    if path_unzip == None:
+        path_unzip = os.path.dirname(zip_path)
+        
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(path_unzip)
+    
+    return path_unzip
+
+def mover_prevs(folders:str, path_dst:str=None):
+    
+    shutil.rmtree(path_dst, ignore_errors=True)
+    if os.path.exists: 
+        try: os.remove(path_dst)
+        except: pass                
+    os.makedirs(path_dst, exist_ok=True)
+    sens = ''
+    list_prevs = []
+    for zip_path in folders:       
+        n_prevs = 0 
+        unzip_dir = unzip_file(zip_path,zip_path.replace('.zip',''))    
+        modelo = os.path.basename(unzip_dir).replace('-SMAP','')        
+        padrao_glob_prevs = os.path.join(unzip_dir, '*prevs-*.rv[0-5]')      
+        for arquivo in glob.glob(padrao_glob_prevs):
+            prevs = os.path.basename(arquivo)
+            mesOperativo = prevs.split('-')[0]
+            rv = prevs[-1:]           
+            nome_arquivo = f'prevs.rv{rv}'
+            pathOutput = path_dst  +'/'+ str(int(mesOperativo[-2:]))
+            os.makedirs(pathOutput, exist_ok=True)
+            if nome_arquivo in os.listdir(pathOutput):
+                nome_arquivo = f'prevs-{modelo}_pluvia.rv{rv}'
+            else:
+                sens = modelo.replace('Preliminar','Prel').replace('_Pluvia','').replace('AgrupadoPrecipitacao','A.Precip')
+                sens = sens.replace('PrecZero_60','P.Zero').replace('PrecZero_120','P.Zero').replace('Usuario_','')
+            n_prevs += 1
+            caminho_arquivo_destino = os.path.join(pathOutput, nome_arquivo)
+            shutil.copy2(arquivo, caminho_arquivo_destino)
+        list_prevs.append(n_prevs)
+        shutil.rmtree(unzip_dir, ignore_errors=True)
+        os.remove(zip_path)
+    return sens, max(list_prevs)
+
 
 if __name__ == '__main__': 
     parametros =  dict()

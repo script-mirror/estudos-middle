@@ -16,12 +16,12 @@ consts = Constants()
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_pluvia"))
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_ampere"))
-from ampere.ampere import get_last_pconj
+
 # Importando .py do Pluvia e do Prospec
 import run_prospec
 import run_pluvia
 from functionsProspecAPI import authenticateProspec, getStudiesByTag
-
+from ampere.ampere import get_last_pconj
 parametros = deepcopy(PARAMETROS)
 PATH_PREVS_AMPERE   = os.path.join(consts.PATH_ARQUIVOS,'ampere')
 
@@ -40,8 +40,7 @@ def rodar(parametros):
  
     if parametros['apenas_email'] == False:
 
-        parametros["mapas"]          = EMAIL_CONFIG[parametros["prevs"]]['rodada'][parametros["rodada"]]['precipitacao']
-        parametros["membro"]         = EMAIL_CONFIG[parametros["prevs"]]['rodada'][parametros["rodada"]]['membro']
+        parametros["mapas"]          = EMAIL_CONFIG[parametros["prevs"]]['rodada'][parametros["rodada"]]
         parametros["tag"]            = parametros["prevs"]
         parametros["aguardar_fim"]   = EMAIL_CONFIG[parametros["prevs"]]["aguardar_fim"]
         parametros['path_out_prevs'] = create_directory(consts.PATH_PREVS_PROSPEC, EMAIL_CONFIG[parametros["prevs"]]["path_prevs"])
@@ -55,7 +54,8 @@ def rodar(parametros):
 
         # Rodando o prospec
         # --------------------------------------------------------------------------------------------# 
-        print("Iniciando a execução do prospec!")  
+        print("Iniciando a execução do prospec!")
+        parametros['rvs'] = min(parametros['rvs'], 8) 
         parametros['prospec_out'] = run_prospec.main(parametros)  
         if not parametros['aguardar_fim']:
             return  parametros['prospec_out']
@@ -179,54 +179,23 @@ def run_prevs_interno(parametros ):
 
 def run_ec_ext(parametros):
     
-    parametros['aguardar_fim'] = False 
-    idEstudos = []
-    print(parametros['n_membros'])
-    if parametros['n_membros'] > 0:
-        listMembers = random.sample(range(0, 100), parametros['n_membros'])
-        #listMembers = list(range(0, 100))
-    else:
-        listMembers = parametros['percentis_ec']
-    listMembers.append('ENSEMBLE')
-    print('Rodando os seguintes membros: ',listMembers)
-    
-    for membro in listMembers:
-        try: 
-            parametros['member']  =  str(membro).zfill(2)
-            parametros['sensibilidade'] = 'EC_EXT-M:_'+str(membro)
-            if membro =='ENSEMBLE':  parametros['sensibilidade'] = 'EC_EXT-ENS' 
-            a, parametros['rvs']  = run_pluvia.main(parametros)
-            idEstudos.append(run_prospec.main(parametros))
-        except:
-            pass
+    list_mapas = deepcopy(parametros['mapas'])
+    for maps in list_mapas:
+        parametros['mapas'] = [maps]
+        parametros['sensibilidade'], parametros['rvs']  = run_pluvia.main(parametros)
+        run_prospec.main(parametros)
 
-    parametros['id_estudo']     = idEstudos
-    parametros['apenas_email']  = True    
-
-    time.sleep(1200)
+    #time.sleep(1200)
     send_email(parametros) 
 
 
 def run_grupos(parametros):
     
-    parametros['aguardar_fim'] = False 
-    idEstudos = []
-    print('grupos rodar',parametros['agrupados'])
-    listMembers = parametros['agrupados']    
-        
-    for membro in listMembers:
-       # getPesosGrupos(membro, parametros)
-        try: 
-            parametros['member']  =  [str(membro)]
-            parametros['sensibilidade'] = str(membro).zfill(2)
-            a, parametros['rvs']  = run_pluvia.main(parametros)
-            idEstudos.append(run_prospec.main(parametros))
-        except:
-            pass
-
-    parametros['id_estudo']     = idEstudos
-    parametros['apenas_email']  = True    
-
+    list_mapas = deepcopy(parametros['mapas'])
+    for maps in list_mapas:
+        parametros['mapas'] = [maps]
+        parametros['sensibilidade'], parametros['rvs']  = run_pluvia.main(parametros)
+        run_prospec.main(parametros)
     time.sleep(1200)
     send_email(parametros)       
 
@@ -320,9 +289,9 @@ BLOCK_FUNCTIONS = {
 } 
 
 if __name__ == '__main__':
-    """PARAMETROS =  {
-        "rodada": 'Preliminar',
-        "data": datetime.now()- timedelta(days=1),
+    PARAMETROS =  {
+        "rodada": 'Definitiva',
+        "data": datetime.now() -timedelta(days=1),
         "apenas_email": False,
         "assunto_email": None,
         "corpo_email": None,
@@ -337,9 +306,9 @@ if __name__ == '__main__':
         "percentis_ec": [],
         "nome_estudo": None,
         "sensibilidade": None,
-        "tag": 'AMPERE',
+        "tag": 'P.APR',
         "id_estudo": None,
-        "prevs":'AMPERE',
+        "prevs":'P.CONJ',
         "cenario":10,
         "prevs_name": None,
         "n_tentativas": 10
@@ -348,6 +317,6 @@ if __name__ == '__main__':
     #parametros['apenas_email'] =  True
     #parametros['tag'] = '2025-Q4_03/08'
     #parametros['aguardar_fim'] = False
-    rodar(PARAMETROS)"""
+    rodar(PARAMETROS)
     #rodar(PARAMETROS)"""
     run_with_params()
