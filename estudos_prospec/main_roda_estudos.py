@@ -278,7 +278,7 @@ BLOCK_FUNCTIONS = {
     'NEXT-RV': run_1rv_pluvia,
     'P.CONJ': run_prevs_pluvia,
     'CENARIOS': run_prevs_pluvia,
-    'UPDATE': run_prevs_pluvia,
+    'UPDATE': run_1rv_pluvia,
     'P.ZERO': run_prevs_pluvia,
     'P.APR': run_prevs_pluvia,
     'NAO-CONSISTIDO': run_nao_consistido,
