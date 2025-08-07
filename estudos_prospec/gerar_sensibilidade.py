@@ -9,7 +9,7 @@ import sys
 import zipfile
 import logging  # Already present, kept for clarity
 from copy import deepcopy
-from estudos_prospec.config_default_old import PARAMETROS
+from estudos_prospec.config_default import PARAMETROS
 from middle.utils.constants import Constants 
 from middle.decomp.atualiza_decomp import process_decomp 
 from middle.decomp import DecompParams
@@ -157,8 +157,7 @@ def run_with_parms() -> None:
     parametros['aguardar_fim'] = False
     parametros['executar_estudo'] = False
     parametros['tag'] = 'SENS'
-    parametros['mapas'] = ['ONS_Pluvia']
-    parametros['membros'] = ['NULO']
+    parametros['mapas'] = ['ONS_Pluvia-SMAP']
 
     # If 'mapa' is provided in sensitivities, use it
     if 'mapa'in params['sensibilidades']:

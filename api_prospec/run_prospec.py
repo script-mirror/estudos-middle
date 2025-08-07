@@ -87,7 +87,6 @@ def get_id_estudos_base():
     for i in range(1, 9):
         list_id.append(getStudiesByTag({'page':1, 'pageSize':1, 'tags':f"BASE-{i}-RV"})['ProspectiveStudies'][0]['Id'])
     return list_id       
-
         
 if __name__ == '__main__':    
     main()

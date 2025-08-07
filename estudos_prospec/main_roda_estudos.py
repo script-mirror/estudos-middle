@@ -3,7 +3,6 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 import time
-import random
 from copy import deepcopy
 from dateutil.relativedelta import relativedelta 
 from processa_resultados import gerar_resultados
@@ -11,6 +10,7 @@ from config_default import PARAMETROS, EMAIL_CONFIG
 from functions import *
 import pandas as pd
 from middle.utils.constants import Constants 
+
 consts = Constants()
 
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
@@ -278,6 +278,7 @@ BLOCK_FUNCTIONS = {
     'NEXT-RV': run_1rv_pluvia,
     'P.CONJ': run_prevs_pluvia,
     'CENARIOS': run_prevs_pluvia,
+    'UPDATE': run_prevs_pluvia,
     'P.ZERO': run_prevs_pluvia,
     'P.APR': run_prevs_pluvia,
     'NAO-CONSISTIDO': run_nao_consistido,
@@ -318,5 +319,5 @@ if __name__ == '__main__':
     #parametros['tag'] = '2025-Q4_03/08'
     #parametros['aguardar_fim'] = False
     rodar(PARAMETROS)
-    #rodar(PARAMETROS)"""
+    #rodar(PARAMETROS)"""   
     run_with_params()
