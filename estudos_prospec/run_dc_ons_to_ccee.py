@@ -249,7 +249,6 @@ def main() -> None:
     data             = datetime.today() + timedelta(days=7)
     data_rv          = SemanaOperativa(data)
     rev              = 'RV{}'.format(int(data_rv.current_revision))
-    rev              = 'RV{}'.format(int(1))
     deck_decomp      = 'DC' + data_rv.date.strftime('%Y%m') + '-' + rev    
     arqdec           = 'DEC_ONS_' + data_rv.date.strftime('%m%Y') + '_' + rev + '_VE.zip'
     path_deck_decomp = get_latest_deck(arqdec)
