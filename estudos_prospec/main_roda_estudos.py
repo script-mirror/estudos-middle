@@ -289,7 +289,7 @@ BLOCK_FUNCTIONS = {
 } 
 
 if __name__ == '__main__':
-    PARAMETROS =  {
+    """PARAMETROS =  {
         "rodada": 'Definitiva',
         "data": datetime.now() -timedelta(days=1),
         "apenas_email": False,
