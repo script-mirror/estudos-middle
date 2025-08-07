@@ -1,5 +1,7 @@
 import os
 import sys
+import shutil
+import glob
 from datetime import datetime, timedelta
 from pathlib import Path
 import time
@@ -8,7 +10,13 @@ from dateutil.relativedelta import relativedelta
 from processa_resultados import gerar_resultados
 from config_default import PARAMETROS, EMAIL_CONFIG
 import pandas as pd
-from middle.utils.constants import Constants 
+from middle.utils.constants import Constants
+from middle.utils.file_manipulation import extract_zip
+
+from middle.s3 import (
+    handle_webhook_file,
+    get_latest_webhook_product,
+)
 
 consts = Constants()
 
@@ -145,8 +153,23 @@ def run_1rv_pluvia(parametros):
     return parametros
 
 
-def run_nao_consistido(parametros):
+def run_consistido(parametros):
+    
+    parametros['sensibilidade'] = 'NAO-CONSISTIDO'
+    payload     = get_latest_webhook_product(consts.WEBHOOK_NAO_CONSISTIDO)[0] 
+    payload_def = get_latest_webhook_product(consts.WEBHOOK_CONSISTIDO)[0] 
+    
+    if datetime.fromisoformat(payload_def['createdAt'].replace('Z', '+00:00')) > datetime.fromisoformat(payload['createdAt'].replace('Z', '+00:00')):
+        parametros['sensibilidade'] = 'CONSISTIDO'
+        payload = payload_def 
+  
+    path_deck_decomp = handle_webhook_file(payload, parametros['path_out_prevs'])
+    deck_encontrado  = extract_zip(path_deck_decomp)
+    rv = glob.glob(os.path.join(deck_encontrado, os.listdir(deck_encontrado)[0], '*_REV*'))[0].split('REV')[1][0]
+    prevs = glob.glob(os.path.join(deck_encontrado, os.listdir(deck_encontrado)[0], 'Prev*.prv'))[0]
+    shutil.copy(prevs, parametros['path_out_prevs'] + '/prevs.rv'+ rv)    
     parametros['rvs'] = 1
+    parametros['tag'] = 'CONSISTIDO'
     return parametros
 
 
@@ -280,7 +303,7 @@ BLOCK_FUNCTIONS = {
     'UPDATE':     run_1rv_pluvia,
     'P.ZERO':     run_prevs_pluvia,
     'P.APR':      run_prevs_pluvia,
-    'CONSISTIDO': run_nao_consistido,
+    'CONSISTIDO': run_consistido,
     'ONS-GRUPOS': run_grupos,
     'EC-EXT':     run_ec_ext,
     'SENS':       run_1rv_pluvia,
@@ -306,9 +329,9 @@ if __name__ == '__main__':
         "percentis_ec": [],
         "nome_estudo": None,
         "sensibilidade": None,
-        "tag": 'P.APR',
+        "tag": 'CONSISTIDO',
         "id_estudo": None,
-        "prevs":'P.CONJ',
+        "prevs":'CONSISTIDO',
         "cenario":10,
         "prevs_name": None,
         "n_tentativas": 10

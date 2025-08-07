@@ -71,7 +71,9 @@ EMAIL_CONFIG = frozendict({
         'whats': const.WHATSAPP_PRECO,
         'n_estudos': 1,
         'aguardar_fim': True,
-        'path_prevs': 'nao_consistido'
+        'path_prevs': 'nao_consistido',
+        'rodada':{'Preliminar':['CONSISTIDO'],
+                  'Definitiva':['CONSISTIDO']}
     }),
     'EC-EXT': frozendict({
         'description': 'Rodadas EC EXT',

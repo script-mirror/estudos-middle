@@ -15,7 +15,8 @@ from middle.utils import SemanaOperativa
 from middle.decomp import ons_to_ccee
 from middle.message import send_whatsapp_message, send_email_message
 import main_roda_estudos
-from middle.utils.constants import Constants 
+from middle.utils.constants import Constants
+from middle.utils.file_manipulation import extract_zip
 from middle.s3 import (
     handle_webhook_file,
     get_latest_webhook_product,
@@ -71,7 +72,7 @@ def get_deck_interno(year, month, rv):
                         path = consts.PATH_RESULTS_PROSPEC + '/decomp/' + deck['FileName']
                         arrayOfFiles = ['dadger.rv'+str(deck['Revision']), 'dadgnl.rv'+str(deck['Revision']), 'vazoes.rv'+str(deck['Revision'])]
                         downloadFileFromDeckV2(deck['Id'],consts.PATH_RESULTS_PROSPEC + '/decomp/', deck['FileName'], deck['FileName'],arrayOfFiles)
-                        path_unzip = extract_zip_folder(path, path)
+                        path_unzip = extract_zip(path)
                         return path_unzip
      
 
@@ -104,16 +105,6 @@ def find_dadger_file(directory: str, arquivo: str) -> str:
         if file.lower().startswith(arquivo.lower()):
             return file
     raise FileNotFoundError(f"No dadger file found in {directory}")
-
-def extract_zip_folder(zip_path: str, folder: str) -> str:
-    """Extract a zip folder to the specified path."""
-    unzip_path: str = os.path.join(zip_path, folder[:-4])
-    if not os.path.exists(unzip_path):
-        os.makedirs(unzip_path)
-    with zipfile.ZipFile(os.path.join(zip_path, folder), 'r') as zip_ref:
-        zip_ref.extractall(unzip_path)
-    logger.info(f"Extracted zip: {folder} to {unzip_path}")
-    return unzip_path
 
 def copy_files(file_list: List[str], src: str, dst: str) -> None:
     """Copy specified files from source to destination."""
@@ -233,7 +224,7 @@ def execute_prospec(params: Dict[str, Any], deck_path: str, deck_name: str) -> A
 def get_latest_deck(arqdec):
     payload          = get_latest_webhook_product(consts.WEBHOOK_DECK_DECOMP_PRELIMINAR)[0]       
     path_deck_decomp = handle_webhook_file(payload, PATH_CONFIG['decomp_ons'])
-    deck_encontrado = extract_zip_folder(path_deck_decomp, path_deck_decomp)
+    deck_encontrado = extract_zip(path_deck_decomp)
     if arqdec in os.listdir(deck_encontrado):
         logger.info(f"Deck {arqdec} found in {deck_encontrado}")
         return path_deck_decomp
