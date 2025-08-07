@@ -65,7 +65,7 @@ EMAIL_CONFIG = frozendict({
         'rodada':{'Preliminar':['ONS_Pluvia-AgrupadoPrecipitacao-Preliminar-SMAP'],
                   'Definitiva':['ONS_Pluvia-AgrupadoPrecipitacao-SMAP']}
     }),
-    'NAO-CONSISTIDO': frozendict({
+    'CONSISTIDO': frozendict({
         'description': 'Rodadas Não Consistidas',
         'emails': [const.EMAIL_MIDDLE, const.EMAIL_FRONT],
         'whats': const.WHATSAPP_PRECO,

@@ -7,7 +7,6 @@ from copy import deepcopy
 from dateutil.relativedelta import relativedelta 
 from processa_resultados import gerar_resultados
 from config_default import PARAMETROS, EMAIL_CONFIG
-from functions import *
 import pandas as pd
 from middle.utils.constants import Constants 
 
@@ -275,22 +274,22 @@ def run_with_params():
 
 
 BLOCK_FUNCTIONS = {
-    'NEXT-RV': run_1rv_pluvia,
-    'P.CONJ': run_prevs_pluvia,
-    'CENARIOS': run_prevs_pluvia,
-    'UPDATE': run_1rv_pluvia,
-    'P.ZERO': run_prevs_pluvia,
-    'P.APR': run_prevs_pluvia,
-    'NAO-CONSISTIDO': run_nao_consistido,
+    'NEXT-RV':    run_1rv_pluvia,
+    'P.CONJ':     run_prevs_pluvia,
+    'CENARIOS':   run_prevs_pluvia,
+    'UPDATE':     run_1rv_pluvia,
+    'P.ZERO':     run_prevs_pluvia,
+    'P.APR':      run_prevs_pluvia,
+    'CONSISTIDO': run_nao_consistido,
     'ONS-GRUPOS': run_grupos,
-    'EC-EXT': run_ec_ext,
-    'SENS': run_1rv_pluvia,
-    'RZ': run_prevs_interno,
-    'AMPERE': run_prevs_ampere
+    'EC-EXT':     run_ec_ext,
+    'SENS':       run_1rv_pluvia,
+    'RZ':         run_prevs_interno,
+    'AMPERE':     run_prevs_ampere
 } 
 
 if __name__ == '__main__':
-    """PARAMETROS =  {
+    PARAMETROS =  {
         "rodada": 'Definitiva',
         "data": datetime.now() -timedelta(days=1),
         "apenas_email": False,

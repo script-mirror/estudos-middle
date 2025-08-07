@@ -230,21 +230,31 @@ def execute_prospec(params: Dict[str, Any], deck_path: str, deck_name: str) -> A
     except Exception as e:
         logger.error(f"Prospec execution failed for {deck_name}: {e}")
         raise
-
+def get_latest_deck(arqdec):
+    payload          = get_latest_webhook_product(consts.WEBHOOK_DECK_DECOMP_PRELIMINAR)[0]       
+    path_deck_decomp = handle_webhook_file(payload, PATH_CONFIG['decomp_ons'])
+    deck_encontrado = extract_zip_folder(path_deck_decomp, path_deck_decomp)
+    if arqdec in os.listdir(deck_encontrado):
+        logger.info(f"Deck {arqdec} found in {deck_encontrado}")
+        return path_deck_decomp
+    else:
+        logger.error(f"Deck {arqdec} not found in {deck_encontrado}")
+        logger.error(f"Available decks: {os.listdir(deck_encontrado)}")
+        raise FileNotFoundError(f"Deck {arqdec} not found in {deck_encontrado}")    
+    
+    
 def main() -> None:
     parametros = {}
-    """Main function to process and compare decks."""
-    setup_directories([PATH_CONFIG['output_decks'], PATH_CONFIG['decomp_interno']])
-    
+    setup_directories([PATH_CONFIG['output_decks'], PATH_CONFIG['decomp_interno']]) 
     data             = datetime.today() + timedelta(days=7)
     data_rv          = SemanaOperativa(data)
     rev              = 'RV{}'.format(int(data_rv.current_revision))
-    path_in          = get_deck_interno(data.year, data.month, int(data_rv.current_revision))
-    payload          = get_latest_webhook_product(consts.WEBHOOK_DECK_DECOMP_PRELIMINAR)[0]       
-    path_deck_decomp = handle_webhook_file(payload, PATH_CONFIG['decomp_ons'])
-    deck_decomp      = 'DC' + data_rv.date.strftime('%Y%m') + '-' + rev
-    output_path      = path_deck_decomp[:-4] + '/' + deck_decomp 
+    rev              = 'RV{}'.format(int(1))
+    deck_decomp      = 'DC' + data_rv.date.strftime('%Y%m') + '-' + rev    
     arqdec           = 'DEC_ONS_' + data_rv.date.strftime('%m%Y') + '_' + rev + '_VE.zip'
+    path_deck_decomp = get_latest_deck(arqdec)
+    output_path      = path_deck_decomp[:-4] + '/' + deck_decomp 
+    path_in          = get_deck_interno(data.year, data.month, int(data_rv.current_revision))    
     PATH_CONFIG['decomp_ons'] = convert_deck_ons_to_ccee( path_deck_decomp, output_path, arqdec, rev, data)
     
     # Find dadger file
