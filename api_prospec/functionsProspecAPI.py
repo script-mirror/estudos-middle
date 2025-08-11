@@ -1153,8 +1153,7 @@ def send_all_dadger_update(id_estudos,path_dadger, logger, logger_send, tag_upda
         logger.info(f"IDs dos estudos encontrados: {id_estudos}")
         for idStudy in id_estudos:
             prospecStudy = getInfoFromStudy(idStudy)
-            update_tags(prospecStudy, tag_update, logger)
-            
+                        
             listOfDecks = prospecStudy['Decks']
             
             logger.info(f"{len(listOfDecks)} decks encontrados para o estudo {idStudy}")
@@ -1169,7 +1168,7 @@ def send_all_dadger_update(id_estudos,path_dadger, logger, logger_send, tag_upda
                             logger.info(f"Arquivo enviado com sucesso: {file} para o estudo {idStudy}, deck {deck['FileName'].split('.')[0]} ")
                         else:
                             logger.debug(f"Arquivo ignorado (não corresponde ao padrão): {file}")
-        
+            update_tags(prospecStudy, tag_update, logger)
         logger.info("Envio de todas as atualizações concluído")
     
     except Exception as e:
