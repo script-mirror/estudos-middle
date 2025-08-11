@@ -187,7 +187,7 @@ def run_with_params():
             argumento = sys.argv[i].lower()
 
             if   argumento ==   "produto": params[argumento] = sys.argv[i+1].upper()            
-            elif argumento == "id_estudo": params[argumento] = sys.argv[i+1]        
+            elif argumento == "id_estudo": params[argumento] = eval(sys.argv[i+1])
     else:
         logger.info(f"Parâmetros recebidos: {params}")
         print("É obrigatorio informar o parametro: produto")
