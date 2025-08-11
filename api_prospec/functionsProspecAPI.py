@@ -1164,7 +1164,7 @@ def send_all_dadger_update(id_estudos,path_dadger, logger, logger_send, tag_upda
                     
                     for file in os.listdir(pathToFile):
                         if file.lower() == (f"dadger.rv{deck['Revision']}") or file.lower() == (f"{logger_send}{deck['Revision']}.log"):
-                            prospecStudy = sendFileToDeck(idStudy, str(deck['Id']), (pathToFile + file), file)
+                            sendFileToDeck(idStudy, str(deck['Id']), (pathToFile + file), file)
                             logger.info(f"Arquivo enviado com sucesso: {file} para o estudo {idStudy}, deck {deck['FileName'].split('.')[0]} ")
                         else:
                             logger.debug(f"Arquivo ignorado (não corresponde ao padrão): {file}")

@@ -176,7 +176,7 @@ def run_with_params():
         
     params =  {
         "produto": 'CARGA-DECOMP',
-        'id_estudo': [27045],
+        'id_estudo': None,
         'path_download': create_directory(consts.PATH_RESULTS_PROSPEC,'update_carga') +'/',
         'path_out': create_directory(consts.PATH_RESULTS_PROSPEC,'update_carga')        
     }
