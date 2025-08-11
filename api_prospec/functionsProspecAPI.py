@@ -1,11 +1,14 @@
 import os
 import csv
 import re
+import glob
 from datetime import datetime, date, timedelta 
 from dateutil.relativedelta import relativedelta
 import calendar
 import zipfile
 from requestsProspecAPI import * 
+from middle.utils.file_manipulation import extract_zip
+
 
 # -----------------------------------------------------------------------------
 # Global variables | Variáveis globais
@@ -490,18 +493,9 @@ def duplicateStudy(idStudy, title, description, tags, vazoesDat, vazoesRvx, prev
 # Adding tags to a study | Adicionar tags em um estudos
 # -----------------------------------------------------------------------------
 
-def addTags(idStudy, tags):
-
-    listOfTags = []
-
-    for tag in tags:
-        tagsConfiguration = {}
-        tagsConfiguration['Text'] = tag
-        listOfTags.append(tagsConfiguration)
+def addTags(idStudy, data):
 
     parameter = ''
-
-    data = listOfTags
 
     print("Adicionando tags ao estudo: ", str(idStudy))
     print(data)
@@ -1099,3 +1093,105 @@ def week_of_month(a_date_value):
         else:
             return (a_date_value.isocalendar()[1] - a_date_value.replace(day=1).isocalendar()[1] + 1)
 
+
+def download_dadger_update(prospecStudyId, logger, pathToDownload):
+    logger.info(f"Iniciando download do estudo para o caminho: {pathToDownload}")
+    try:
+        if prospecStudyId is None:
+            logger.info("Nenhum ID de estudo fornecido, buscando o estudo BASE-8-RV")
+            # Busca o estudo BASE-8-RV
+            prospecStudyId = getStudiesByTag({'page': 1, 'pageSize': 1, 'tags': f"BASE-{8}-RV"})['ProspectiveStudies'][0]['Id']
+        logger.debug(f"ID do estudo encontrado: {prospecStudyId}")
+        
+        os.makedirs(pathToDownload, exist_ok=True)
+        logger.info(f"Diretório criado ou já existente: {pathToDownload}")
+        
+        prospecStudy = getInfoFromStudy(prospecStudyId)
+        logger.debug(f"Informações do estudo obtidas: {prospecStudy}")
+        
+        listOfDecks = prospecStudy['Decks']
+        logger.info(f"{len(listOfDecks)} decks encontrados no estudo")
+        
+        list_paths = []
+        for deck in listOfDecks:
+            if deck['Model'] == 'DECOMP':
+                logger.info(f"Processando deck DECOMP: {deck['FileName']} (ID: {deck['Id']})")
+                path = pathToDownload + deck['FileName']
+                logger.debug(f"Baixando arquivo para: {path}")
+                
+                getFileFromAPI(token, f"/api/prospectiveStudies/{prospecStudyId}/DeckDownload?deckId={deck['Id']}", deck['FileName'], pathToDownload)
+                logger.info(f"Arquivo baixado: {deck['FileName']}")
+                
+                path_unzip = extract_zip(path)
+                logger.debug(f"Arquivo descompactado em: {path_unzip}")
+                
+                dadger_file = glob.glob(os.path.join(path_unzip, f"dadger.rv{deck['Revision']}"))
+                if dadger_file:
+                    list_paths.append(dadger_file[0])
+                    logger.info(f"Arquivo dadger encontrado e adicionado à lista: {dadger_file[0]}")
+                else:
+                    logger.warning(f"Nenhum arquivo dadger.rv{deck['Revision']} encontrado em {path_unzip}")
+        
+        logger.info(f"Download concluído. Total de arquivos dadger encontrados: {len(list_paths)}")
+        return list_paths
+    
+    except Exception as e:
+        logger.error(f"Erro durante o download do estudo: {str(e)}", exc_info=True)
+        raise
+
+def send_all_dadger_update(id_estudos,path_dadger, logger, logger_send, tag_update):
+    logger.info(f"Iniciando envio de atualizações para o caminho: {path_dadger}")
+    try:
+        if id_estudos is None:
+            id_estudos = []
+            for rvs in range(1, 9):
+                logger.info(" ")
+                logger.info("----------------------------------------------------------")
+                logger.info(f"Processando estudo de {rvs} rvs")
+                id_estudos.append(getStudiesByTag({'page': 1, 'pageSize': 1, 'tags': f"BASE-{rvs}-RV"})['ProspectiveStudies'][0]['Id'])
+                logger.debug(f"ID do estudo encontrado para RV{rvs}: {idStudy}")
+        logger.info(f"IDs dos estudos encontrados: {id_estudos}")
+        for idStudy in id_estudos:
+            prospecStudy = getInfoFromStudy(idStudy)
+            update_tags(prospecStudy, tag_update, logger)
+            
+            listOfDecks = prospecStudy['Decks']
+            
+            logger.info(f"{len(listOfDecks)} decks encontrados para o estudo {idStudy}")
+            
+            for deck in listOfDecks:
+                if (deck['Model'] == 'DECOMP') and (deck['SensibilityInfo'] == 'Original'):
+                    pathToFile = path_dadger + '/' + deck['FileName'].split('.')[0] + '/'
+                    
+                    for file in os.listdir(pathToFile):
+                        if file.lower() == (f"dadger.rv{deck['Revision']}") or file.lower() == (f"{logger_send}{deck['Revision']}.log"):
+                            prospecStudy = sendFileToDeck(idStudy, str(deck['Id']), (pathToFile + file), file)
+                            logger.info(f"Arquivo enviado com sucesso: {file} para o estudo {idStudy}, deck {deck['FileName'].split('.')[0]} ")
+                        else:
+                            logger.debug(f"Arquivo ignorado (não corresponde ao padrão): {file}")
+        
+        logger.info("Envio de todas as atualizações concluído")
+    
+    except Exception as e:
+        logger.error(f"Erro durante o envio de atualizações: {str(e)}", exc_info=True)
+        raise
+
+
+
+def update_tags(prospecStudy, tag_update, logger):
+    logger.info(f"Iniciando update_tags para prospecStudy ID {prospecStudy['Id']} com tag_update: {tag_update}")
+    
+    tags_list = []
+    for tag in prospecStudy['Tags']:
+        if tag_update.split('(')[0] not in tag['Text']:
+            tags_list.append({'Text': tag['Text'], 'TextColor': tag['TextColor'],'BackgroundColor': tag['BackgroundColor']})
+            logger.info(f"Tag mantida: {tag['Text']}")
+    
+    tags_list.append({'Text':f"{tag_update}-{datetime.now().strftime('%d/%m %H:%M')}" ,  'TextColor': '#FFF',  'BackgroundColor': '#44F'})    
+    logger.info(f"Tag adicionada: {tag_update}")
+    
+    logger.info(f"Removendo tags antigas para prospecStudy ID {prospecStudy['Id']}")
+    patchInAPI(token, '/api/prospectiveStudies/' + str(prospecStudy['Id']) + '/RemoveTags',  '', prospecStudy['Tags'])
+    
+    logger.info(f"Adicionando novas tags para prospecStudy ID {prospecStudy['Id']}: {tags_list}")
+    patchInAPI(token, '/api/prospectiveStudies/' + str(prospecStudy['Id']) + '/AddTags',  '', tags_list)
