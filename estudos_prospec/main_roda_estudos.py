@@ -75,12 +75,12 @@ def rodar(parametros):
 def send_email(parametros):
     print ("#-Iniciando processo de envio de e-mail------------------------------------#")  
     
-    parametros['apenas_email'] = True  
-    
-    pathName = []
+    pathName     = []
     nomesEstudos = []
-    idEstudos = []
-    #print(parametros['tag'])
+    idEstudos    = []
+    id_estudos   = []
+    n_rvs        = []
+    parametros['apenas_email'] = True  
     if parametros['tag'] is not None and parametros['id_estudo'] is None:
         parametros['id_estudo'] = get_id_email(parametros)   
     
@@ -90,8 +90,7 @@ def send_email(parametros):
         except:
             idEstudos = parametros['id_estudo']
             
-        id_estudos = []
-        n_rvs = []
+
         for id in idEstudos: 
             try:
                 parametros['id_estudo'] = int(id)  
@@ -102,9 +101,9 @@ def send_email(parametros):
                 id_estudos.append(id)
             except:
                 print("Não foi possivel baixar o compilado do estudo id: ", id, ", será enviado e-mail sem este estudo!")
-        idEstudos = id_estudos
+
         parametros['path_name'] = pathName
-        parametros['n_rvs'] = str(max(n_rvs))
+        parametros['n_rvs']     = str(max(n_rvs))
 
         if parametros['prevs_name'] == None:
             parametros['prevs_name'] = [nome.split('__')[len(nome.split('__'))-1].split('-hr-')[0] for nome in nomesEstudos]
@@ -115,17 +114,18 @@ def send_email(parametros):
             parametros['list_email']    = EMAIL_CONFIG[parametros['tag']]['emails']
             parametros['list_whats']    = EMAIL_CONFIG[parametros['tag']]['whats']
         else:
-            parametros['assunto_email'] = 'Estudos: '+ str(idEstudos)
+            parametros['assunto_email'] = 'Estudos: '+ str(id_estudos)
             parametros['corpo_email'] = 'Estudos: '
             
-        for i in range(len(idEstudos)):
-            parametros['corpo_email']    += 'Id ' + str(idEstudos[i]) + ' com titulo   ->   ' + str(nomesEstudos[i]+ '<br> ')        
+        for i in range(len(id_estudos)):
+            parametros['corpo_email']    += 'Id ' + str(id_estudos[i]) + ' com titulo   ->   ' + str(nomesEstudos[i]+ '<br> ')        
         
         parametros['assunto_email'] = parametros['assunto_email'] + ' ' +parametros['n_rvs']+'_Rvs'
         parametros['corpo_email'] = parametros['corpo_email'] +  "<br/>"
             
         print("#Enviando os resultados por email-------------------------------------------#")
         gerar_resultados(parametros)
+        
     else:
         print('Não foi possivel enviar o e-mail, pois não foi informado o id do estudo!')
         print('Favor informar o id do estudo no parametro "id_estudo"')
@@ -166,37 +166,12 @@ def run_consistido(parametros):
     path_deck_decomp = handle_webhook_file(payload, parametros['path_out_prevs'])
     deck_encontrado  = extract_zip(path_deck_decomp)
     rv = glob.glob(os.path.join(deck_encontrado, os.listdir(deck_encontrado)[0], '*_REV*'))[0].split('REV')[1][0]
+    mes = glob.glob(os.path.join(deck_encontrado, os.listdir(deck_encontrado)[0], '*_REV*'))[0].split('de_')[-1].split('_')[0]
     prevs = glob.glob(os.path.join(deck_encontrado, os.listdir(deck_encontrado)[0], 'Prev*.prv'))[0]
-    shutil.copy(prevs, parametros['path_out_prevs'] + '/prevs.rv'+ rv)    
+    shutil.copy(prevs, parametros['path_out_prevs'] + '/' + str(datetime.strptime(mes, '%B').month) + '/prevs.rv'+ rv)    
     parametros['rvs'] = 1
     parametros['tag'] = 'CONSISTIDO'
     return parametros
-
-
-def run_prevs_interno(parametros ):
-    print('Copiando prevs interno para o a pasta do prospec') 
-    parametros['aguardar_fim'] = False 
-    idEstudos = []
-  
-    for file in os.listdir(parametros['path_prevs_encad']):
-        parametros['path_prevs']    = file 
-        try:      
-            prevName = copy_all_internal_prevs(parametros, True )
-            #print(prevName)
-            if len(prevName) > 0:            
-                prevName = prevName[0].split('.')[0][6:len(prevName[0].split('.')[0])-7]                
-                parametros['sensibilidade'] = prevName
-                parametros['nomeEstudo'] = 'DC_Encad__' + prevName + '_Dia'
-                idEstudos.append(run_prospec.main(parametros))
-        except:
-            print('Erro ao executar o estudo: ', prevName)
-
-    parametros['id_estudo']     = idEstudos
-    parametros['apenas_email']  = True    
-    parametros['subir_banco']   = True
-
-    time.sleep(1200)
-    send_email(parametros)
 
 
 def run_ec_ext(parametros):
@@ -307,7 +282,6 @@ BLOCK_FUNCTIONS = {
     'ONS-GRUPOS': run_grupos,
     'EC-EXT':     run_ec_ext,
     'SENS':       run_1rv_pluvia,
-    'RZ':         run_prevs_interno,
     'AMPERE':     run_prevs_ampere
 } 
 
@@ -341,5 +315,5 @@ if __name__ == '__main__':
     #parametros['tag'] = '2025-Q4_03/08'
     #parametros['aguardar_fim'] = False
     rodar(PARAMETROS)
-    #rodar(PARAMETROS)"""   
+    #rodar(PARAMETROS)"""
     run_with_params()
