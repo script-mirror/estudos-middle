@@ -1175,8 +1175,6 @@ def send_all_dadger_update(id_estudos,path_dadger, logger, logger_send, tag_upda
         logger.error(f"Erro durante o envio de atualizações: {str(e)}", exc_info=True)
         raise
 
-
-
 def update_tags(prospecStudy, tag_update, logger):
     logger.info(f"Iniciando update_tags para prospecStudy ID {prospecStudy['Id']} com tag_update: {tag_update}")
     
@@ -1186,7 +1184,7 @@ def update_tags(prospecStudy, tag_update, logger):
             tags_list.append({'Text': tag['Text'], 'TextColor': tag['TextColor'],'BackgroundColor': tag['BackgroundColor']})
             logger.info(f"Tag mantida: {tag['Text']}")
     
-    tags_list.append({'Text':f"{tag_update}-{datetime.now().strftime('%d/%m %H:%M')}" ,  'TextColor': '#FFF',  'BackgroundColor': '#44F'})    
+    tags_list.append({'Text':f"{tag_update} {datetime.now().strftime('%d/%m %H:%M')}" ,  'TextColor': '#FFF',  'BackgroundColor': '#44F'})    
     logger.info(f"Tag adicionada: {tag_update}")
     
     logger.info(f"Removendo tags antigas para prospecStudy ID {prospecStudy['Id']}")
