@@ -192,7 +192,7 @@ def run_with_params():
         logger.info(f"Parâmetros recebidos: {params}")
         print("É obrigatorio informar o parametro: produto")
         sys.exit(1)
-    
+    print(params)
     BLOCK_FUNCTIONS[params['produto']](params)
           
  
