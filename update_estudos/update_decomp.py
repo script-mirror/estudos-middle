@@ -89,8 +89,7 @@ def update_carga_and_mmgd(params):
    
     send_all_dadger_update(params['id_estudo'],params['path_download'],logger, 'logging_carga_rv', tag_update)
     
-    return params
-
+    
 def update_eolica(params):     
     
     df_data = get_dados_banco('weol')
@@ -145,8 +144,6 @@ def update_eolica(params):
    
     send_all_dadger_update(params['id_estudo'],params['path_download'],logger, 'logging_weol_rv', tag_update)
     
-    return params
-
 
 
 def update_re(params):
