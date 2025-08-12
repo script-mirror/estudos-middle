@@ -52,21 +52,6 @@ jobs:
             git pull origin main || exit 1
             
             git config --local --unset credential.helper
-            
-            echo "Building and starting containers..."
-            sudo docker pull python:3.12-alpine
-            sudo docker-compose build --no-cache
-            sudo docker-compose up -d
-            
-            echo "Verifying deployment..."
-            sleep 5
-            if sudo docker-compose ps | grep -q "Up"; then
-              echo "Deployment successful!"
-            else
-              echo "Deployment may have failed - check container status"
-              sudo docker-compose logs --tail=20
-              exit 1
-            fi
           EOF
 
       - name: Cleanup SSH keys
