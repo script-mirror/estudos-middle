@@ -43,7 +43,7 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 10,
         'path_prevs': 'cenarios',
         'aguardar_fim': True,
-        'rodada':{'Preliminar':['Usuario_MEDIA-CFS-3-DIAS-Preliminar']}
+        'rodada':{'Preliminar':['Usuario_MEDIA_CFS_3_DIAS-Preliminar-SMAP']}
     }),
     'P.ZERO': frozendict({
         'description': 'Rodadas Chuva Zero',

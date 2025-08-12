@@ -287,7 +287,7 @@ BLOCK_FUNCTIONS = {
 
 if __name__ == '__main__':
     """PARAMETROS =  {
-        "rodada": 'Definitiva',
+        "rodada": 'Preliminar',
         "data": datetime.now() -timedelta(days=1),
         "apenas_email": False,
         "assunto_email": None,
@@ -303,9 +303,9 @@ if __name__ == '__main__':
         "percentis_ec": [],
         "nome_estudo": None,
         "sensibilidade": None,
-        "tag": 'CONSISTIDO',
+        "tag": 'CENARIOS',
         "id_estudo": None,
-        "prevs":'CONSISTIDO',
+        "prevs":'CENARIOS',
         "cenario":10,
         "prevs_name": None,
         "n_tentativas": 10
