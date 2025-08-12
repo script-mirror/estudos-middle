@@ -1097,10 +1097,13 @@ def week_of_month(a_date_value):
 def download_dadger_update(prospecStudyId, logger, pathToDownload):
     logger.info(f"Iniciando download do estudo para o caminho: {pathToDownload}")
     try:
+        
         if prospecStudyId is None:
             logger.info("Nenhum ID de estudo fornecido, buscando o estudo BASE-8-RV")
             # Busca o estudo BASE-8-RV
             prospecStudyId = getStudiesByTag({'page': 1, 'pageSize': 1, 'tags': f"BASE-{8}-RV"})['ProspectiveStudies'][0]['Id']
+        else:
+            prospecStudyId = prospecStudyId[0]
         logger.debug(f"ID do estudo encontrado: {prospecStudyId}")
         
         os.makedirs(pathToDownload, exist_ok=True)

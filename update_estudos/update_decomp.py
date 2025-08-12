@@ -86,7 +86,8 @@ def update_carga_and_mmgd(params):
                             dict_carga['pq']['valor_p3'][f'{INDEX_PQ[submercado]}_{mmgd}'][str(stage)] = round(filtered_data.loc[(filtered_data['patamar'] == 'leve'), MAP_MMGD[mmgd]].values[0])
 
             process_decomp(deepcopy( DecompParams(**params_decomp)), dict_carga) 
-   
+        else:
+            logger.warning(f"Data do deck {meta_data['deck_date'].strftime('%d/%m/%Y')} não encontrada na base de dados de carga, ignorando atualização para este deck.")
     send_all_dadger_update(params['id_estudo'],params['path_download'],logger, 'logging_carga_rv', tag_update)
     
     
@@ -94,9 +95,65 @@ def update_eolica(params):
     
     df_data = get_dados_banco('weol')
     df_data['semana_operativa'] = pd.to_datetime(df_data['inicioSemana'])
-    path_dadger = download_dadger_update(params['id_estudo'][0], logger, params['path_download'])
+    path_dadger = download_dadger_update(params['id_estudo'], logger, params['path_download'])
     
     tag_update = f"WEOL-DC{datetime.strptime(df_data['dataProduto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"    
+    
+    fist_dc = path_dadger[0]
+    params_decomp = {
+    'arquivo': os.path.basename(fist_dc),   
+    'dadger_path': fist_dc,
+    'case':'ATUALIZAÇÃO WEOL',
+    'logger':criar_logger('logging_weol_rv' + fist_dc[-1:]+'.log', os.path.dirname(fist_dc)+'/logging_weol_rv' + fist_dc[-1:]+'.log')}
+    
+    data_firt_deck = retrieve_dadger_metadata(**params_decomp)['deck_date']
+    data_produto = min(pd.to_datetime(df_data['semana_operativa'].unique().tolist()))
+           
+    if data_firt_deck == data_produto :
+        logger.info('Data do produto coincide com a data do deck, prosseguindo com a atualização')
+    else:
+        logger.error(f"Data do produto: {data_produto}, Data do deck: {data_firt_deck}")
+        raise ValueError('Data do produto não coincide com a data do deck, verifique os dados')
+    
+    for path in path_dadger:
+        print(f'Path do dadger: {path}')
+        params_decomp= {
+        'arquivo': os.path.basename(path),
+        'dadger_path': path,
+        'output_path': path,
+        'id_estudo': None,
+        'case': 'ATUALIZAÇÂO WEOL',
+        'logger':criar_logger('logging_weol_rv.log', os.path.dirname(path) + '/logging_weol_rv' + path[-1:]+'.log') }
+        
+        meta_data = retrieve_dadger_metadata(**params_decomp)        
+        params_decomp['output_path'] = os.path.dirname(path)
+        dict_carga={'pq':criar_dict_weol()}
+        
+        if meta_data['deck_date'] in df_data['semana_operativa'].unique():
+            df_month = df_data.loc[df_data['mesEletrico'] == (meta_data['deck_date'] + timedelta(days=6)).month]        
+            for stage in meta_data['stages']:
+                data = meta_data['deck_date'] + relativedelta(weeks=+stage-1)
+                if data in df_month['semana_operativa'].unique():
+                    for submercado in SUBMERCADOS.keys():
+                        if submercado in df_month['submercado'].unique():
+                            filtered_data = df_month.loc[(df_data['semana_operativa'] == data) & (df_month['submercado'] == submercado)]                                              
+                            dict_carga['pq']['valor_p1'][f'{INDEX_PQ[submercado]}_EOL'][str(stage)] = round(filtered_data.loc[(filtered_data['patamar'] == 'pesado'), 'valor'].values[0])
+                            dict_carga['pq']['valor_p2'][f'{INDEX_PQ[submercado]}_EOL'][str(stage)] = round(filtered_data.loc[(filtered_data['patamar'] == 'medio'), 'valor'].values[0])
+                            dict_carga['pq']['valor_p3'][f'{INDEX_PQ[submercado]}_EOL'][str(stage)] = round(filtered_data.loc[(filtered_data['patamar'] == 'leve'), 'valor'].values[0])
+
+            process_decomp(deepcopy( DecompParams(**params_decomp)), dict_carga) 
+        else:
+            logger.warning(f"Data do deck {meta_data['deck_date'].strftime('%d/%m/%Y')} não encontrada na base de dados WEOL, ignorando atualização para este deck.")
+    send_all_dadger_update(params['id_estudo'],params['path_download'],logger, 'logging_weol_rv', tag_update)
+  
+    
+def update_cvu(params):     
+    
+    df_data = get_dados_banco('historico-cvu')
+    df_data['semana_operativa'] = pd.to_datetime(df_data['inicioSemana'])
+    path_dadger = download_dadger_update(params['id_estudo'], logger, params['path_download'])
+    
+    tag_update = f"CVU-DC{datetime.strptime(df_data['dataProduto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"    
     
     fist_dc = path_dadger[0]
     params_decomp = {
@@ -145,7 +202,6 @@ def update_eolica(params):
     send_all_dadger_update(params['id_estudo'],params['path_download'],logger, 'logging_weol_rv', tag_update)
     
 
-
 def update_re(params):
 
     return params
@@ -161,6 +217,7 @@ def criar_dict_dp():
             data['dp'][period][key] = {}
     return data['dp']
 
+
 def criar_dict_mmgd():
     periods = [f'valor_p{i}' for i in range(1, 4)]
     data = {'pq': {}}
@@ -172,6 +229,7 @@ def criar_dict_mmgd():
                 data['pq'][period][key] = {}
     return data ['pq']
 
+
 def criar_dict_weol():
     periods = [f'valor_p{i}' for i in range(1, 4)]
     data = {'pq': {}}
@@ -182,6 +240,7 @@ def criar_dict_weol():
                 key = f'{region}_{type_}'
                 data['pq'][period][key] = {}
     return data ['pq']
+
 
 def get_dados_banco(produto: str, date ='') -> dict:
     res = requests.get(BASE_URL_API + produto,
@@ -230,6 +289,8 @@ def criar_logger(nome_logger, caminho_arquivo):
 BLOCK_FUNCTIONS = {
     'CARGA-DECOMP':  update_carga_and_mmgd,
     'EOLICA-DECOMP': update_eolica,
+    'CVU-DECOMP': update_cvu,
+    'RE-DECOMP': update_re,   
     None: lambda params: logger.error("Produto não informado ou inválido. Por favor, informe um produto válido.")
 } 
 
@@ -237,7 +298,7 @@ BLOCK_FUNCTIONS = {
 def run_with_params():
         
     params =  {
-        "produto": None,
+        "produto": None, # CARGA-DECOMP, EOLICA-DECOMP, CVU-DECOMP, RE-DECOMP
         'id_estudo': None,
         'path_download': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',
         'path_out': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',       
