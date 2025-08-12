@@ -260,7 +260,6 @@ def create_directory(base_path: str, sub_path: str) -> Path:
             os.remove(full_path)
         except: 
             pass    
-    full_path = Path(base_path) / sub_path
     full_path.mkdir(parents=True, exist_ok=True)
     return full_path.as_posix()
 

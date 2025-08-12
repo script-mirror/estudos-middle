@@ -2,6 +2,7 @@ import sys
 import glob
 from requestsPluviaAPI import *
 from datetime import datetime, timedelta
+from pathlib import Path
 import pathlib
 import shutil
 import zipfile
@@ -114,12 +115,12 @@ def unzip_file(zip_path, path_unzip:str=None):
     logger.info(f'Arquivo descompactado em: {path_unzip}')
     return path_unzip
 
-def mover_prevs(folders:str, path_dst:str=None):
+def mover_prevs(folders:str, path_dst:str):
     logger.info(f'Movendo previsões para: {path_dst}')
-    shutil.rmtree(path_dst, ignore_errors=True)
+    shutil.rmtree(Path(path_dst), ignore_errors=True)
     if os.path.exists: 
         try: 
-            os.remove(path_dst)
+            os.remove(Path(path_dst))
             logger.info(f'Arquivo removido: {path_dst}')
         except: 
             logger.warning(f'Falha ao remover arquivo: {path_dst}')

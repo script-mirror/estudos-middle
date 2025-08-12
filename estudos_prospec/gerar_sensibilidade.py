@@ -145,8 +145,8 @@ def gerar_estudo_prospec(params: Dict[str, Any]) -> Dict[str, Any]:
 def run_with_parms() -> None:
     
     params: Dict[str, Any] = {}
-    #argumentos: str = sys.argv[1]
-    argumentos = "{'BASE': {'dp': {'carga': {'1': {'1': 0}, 'absoluto': 0}}}, 'CARGA-SE(-100)': {'dp': {'carga': {'1': {'1': -100}, 'absoluto': 0}}}, 'mapa': 'ONS'}"
+    argumentos: str = sys.argv[1]
+    #argumentos = "{'BASE': {'dp': {'carga': {'1': {'1': 0}, 'absoluto': 0}}}, 'CARGA-SE(-100)': {'dp': {'carga': {'1': {'1': -100}, 'absoluto': 0}}}, 'mapa': 'ONS'}"
     params['sensibilidades']: Dict[str, Any] = eval(argumentos)
     print (argumentos)
     print(eval(argumentos))
