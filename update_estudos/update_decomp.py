@@ -334,12 +334,12 @@ def run_with_params():
         'path_download': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',
         'path_out': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',       
     }
-    #BLOCK_FUNCTIONS[params['produto']](params)   
-    if len(sys.argv) > 3:	
+    #BLOCK_FUNCTIONS[params['produto']](params) 
+    if len(sys.argv) >= 3:
         for i in range(1, len(sys.argv)):
             argumento = sys.argv[i].lower()
-            if   argumento ==   "produto": params[argumento] = sys.argv[i+1].upper()            
-            elif argumento == "id_estudo": params[argumento] = eval(sys.argv[i+1])
+            if   argumento ==   "produto": params[argumento]  = sys.argv[i+1].upper()            
+            elif argumento == "id_estudo": params[argumento]  = eval(sys.argv[i+1])
             elif argumento == "tipo_cvu":  params[argumento]  = sys.argv[i+1]
             elif argumento == "dt_produto": params[argumento] =  datetime.strptime(sys.argv[i+1], '%d/%m/%Y')
     else:
@@ -348,7 +348,7 @@ def run_with_params():
         sys.exit(1)
     print(params)
     BLOCK_FUNCTIONS[params['produto']](params)
-          
+        
  
 if __name__ == '__main__':
     logger = criar_logger('logger.log', os.path.join(consts.PATH_ARQUIVOS, 'logger.log'))
