@@ -113,6 +113,7 @@ def send_email(parametros):
             parametros['corpo_email']   = EMAIL_CONFIG[parametros['tag']]['description']
             parametros['list_email']    = EMAIL_CONFIG[parametros['tag']]['emails']
             parametros['list_whats']    = EMAIL_CONFIG[parametros['tag']]['whats']
+            parametros['considerar_rv'] = EMAIL_CONFIG[parametros['tag']]['considerar_rv']
         else:
             parametros['assunto_email'] = 'Estudos: '+ str(id_estudos)
             parametros['corpo_email'] = 'Estudos: '
