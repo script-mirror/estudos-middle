@@ -290,7 +290,7 @@ if __name__ == '__main__':
     """PARAMETROS =  {
         "rodada": 'Preliminar',
         "data": datetime.now() -timedelta(days=1),
-        "apenas_email": False,
+        "apenas_email": True,
         "assunto_email": None,
         "corpo_email": None,
         "considerar_rv": 'sem',

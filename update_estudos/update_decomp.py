@@ -97,25 +97,8 @@ def update_eolica(params):
     
     df_data = get_dados_banco('weol')
     df_data['semana_operativa'] = pd.to_datetime(df_data['inicioSemana'])
-    path_dadger = download_dadger_update(params['id_estudo'], logger, params['path_download'])
-    
-    tag_update = f"WEOL-DC{datetime.strptime(df_data['dataProduto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"    
-    
-    fist_dc = path_dadger[0]
-    params_decomp = {
-    'arquivo': os.path.basename(fist_dc),   
-    'dadger_path': fist_dc,
-    'case':'ATUALIZAÇÃO WEOL',
-    'logger': None}
-    
-    data_firt_deck = retrieve_dadger_metadata(**params_decomp)['deck_date']
-    data_produto = min(pd.to_datetime(df_data['semana_operativa'].unique().tolist()))
-           
-    if data_firt_deck == data_produto :
-        logger.info('Data do produto coincide com a data do deck, prosseguindo com a atualização')
-    else:
-        logger.error(f"Data do produto: {data_produto}, Data do deck: {data_firt_deck}")
-        raise ValueError('Data do produto não coincide com a data do deck, verifique os dados')
+    path_dadger = download_dadger_update(params['id_estudo'], logger, params['path_download'])    
+    tag_update  = f"WEOL-DC{datetime.strptime(df_data['dataProduto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"    
     
     for path in path_dadger:
         print(f'Path do dadger: {path}')
@@ -146,7 +129,7 @@ def update_eolica(params):
             process_decomp(deepcopy( DecompParams(**params_decomp)), dict_carga) 
         else:
             logger.warning(f"Data do deck {meta_data['deck_date'].strftime('%d/%m/%Y')} não encontrada na base de dados WEOL, ignorando atualização para este deck.")
-    #send_all_dadger_update(params['id_estudo'],params['path_download'],logger, 'logging_weol_rv', tag_update)
+    send_all_dadger_update(params['id_estudo'],params['path_download'],logger, 'logging_weol_rv', tag_update)
   
     
 def update_cvu(params):     
@@ -174,6 +157,7 @@ def update_cvu(params):
             send_whatsapp_message(consts.WHATSAPP_GILSEU,f"Erro na atualização CVU \nTipo: CVU {params['tipo_cvu']} \nData do produto: {params['dt_produto'].strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",'')
             logger.info(f"Data do produto {params['dt_produto'].strftime('%d/%m/%Y')} não está entre o 16º e o 21º dia do mês.")
             raise ValueError(f"Data do produto {params['dt_produto'].strftime('%d/%m/%Y')} não está entre o 16º e o 21º dia do mês.")
+        
     elif params['tipo_cvu'] == 'merchant':
         df_data = get_cvu_banco('cvu', 'merchant')
         df_data = df_data.sort_values('mes_referencia', ascending=False)
@@ -185,18 +169,9 @@ def update_cvu(params):
         logger.info(f"Produto {params['produto']} inválido. Use 'conjuntural', 'conjuntural_revisado' ou 'merchant'.")
         raise ValueError(f"Produto {params['produto']} inválido. Use 'conjuntural', 'conjuntural_revisado' ou 'merchant'.")
              
-    logging_name = f'logging_cvu_{params["tipo_cvu"]}_rv'
-    path_dadger = download_dadger_update(params['id_estudo'], logger, params['path_download'])
-    
-    tag_update = f"CVU-DC{datetime.strptime(df_data['dt_atualizacao'][0], '%Y-%m-%d').strftime('(%d/%m)')}"    
-    
-    fist_dc = path_dadger[0]
-    params_decomp = {
-    'arquivo': os.path.basename(fist_dc),   
-    'dadger_path': fist_dc,
-    'case':'ATUALIZAÇÃO CVU '+ params['tipo_cvu'].upper(),
-    'logger':criar_logger(logging_name +'.log', os.path.dirname(fist_dc)+'/'+logging_name + fist_dc[-1:]+'.log')}
-    
+    logging_name  = f'logging_cvu_{params["tipo_cvu"]}_rv'
+    path_dadger   = download_dadger_update(params['id_estudo'], logger, params['path_download'])    
+    tag_update    = f"CVU-DC{datetime.strptime(df_data['dt_atualizacao'][0], '%Y-%m-%d').strftime('(%d/%m)')}"       
     
     for path in path_dadger:
         print(f'Path do dadger: {path}')
