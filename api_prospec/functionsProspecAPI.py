@@ -1148,13 +1148,13 @@ def send_all_dadger_update(id_estudos,path_dadger, logger, logger_send, tag_upda
         if id_estudos is None:
             id_estudos = []
             for rvs in range(1, 9):
-                logger.info(" ")
-                logger.info("----------------------------------------------------------")
-                logger.info(f"Processando estudo de {rvs} rvs")
                 id_estudos.append(getStudiesByTag({'page': 1, 'pageSize': 1, 'tags': f"BASE-{rvs}-RV"})['ProspectiveStudies'][0]['Id'])
-                logger.debug(f"ID do estudo encontrado para RV{rvs}: {idStudy}")
+                logger.debug(f"ID do estudo encontrado para RV{rvs}: {id_estudos[rvs-1]}")
         logger.info(f"IDs dos estudos encontrados: {id_estudos}")
         for idStudy in id_estudos:
+            logger.info(" ")
+            logger.info("===============================================================================================================")
+            logger.info(f"Processando estudo id {idStudy}")
             prospecStudy = getInfoFromStudy(idStudy)
                         
             listOfDecks = prospecStudy['Decks']

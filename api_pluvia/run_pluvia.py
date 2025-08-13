@@ -69,7 +69,7 @@ def get_prevs(parametros, aguardar_prevs, PATH_FORECAST_DAY):
     df_mapas = mapas.loc[mapas['nome'].isin(parametros["mapas"])]
     logger.info(f'Mapas encontrados: {df_mapas["nome"].to_list()}')
     
-    if any('ONS_ETAd_1_Pluvia' in x for x in df_mapas['nome']) and any('ONS_Pluvia' in x for x in df_mapas['nome']):
+    if any('ONS_Pluvia' in x for x in df_mapas['nome']):
         logger.info('Removendo mapas ONS_ETAd_1_Pluvia da lista')
         df_mapas = df_mapas[~df_mapas['nome'].str.contains('ONS_ETAd_1_Pluvia', na=False)]
         parametros["mapas"] = [item for item in parametros["mapas"] if "ONS_ETAd_1_Pluvia" not in item]

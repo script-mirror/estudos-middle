@@ -13,7 +13,7 @@ from copy import deepcopy
 from typing import List, Dict, Any, Optional, Tuple
 from middle.utils import SemanaOperativa
 from middle.decomp import ons_to_ccee
-from middle.message import send_whatsapp_message, send_email_message
+from middle.message import send_whatsapp_message
 import main_roda_estudos
 from middle.utils.constants import Constants
 from middle.utils.file_manipulation import extract_zip
