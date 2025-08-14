@@ -169,6 +169,7 @@ def run_consistido(parametros):
     rv = glob.glob(os.path.join(deck_encontrado, os.listdir(deck_encontrado)[0], '*_REV*'))[0].split('REV')[1][0]
     mes = glob.glob(os.path.join(deck_encontrado, os.listdir(deck_encontrado)[0], '*_REV*'))[0].split('de_')[-1].split('_')[0]
     prevs = glob.glob(os.path.join(deck_encontrado, os.listdir(deck_encontrado)[0], 'Prev*.prv'))[0]
+    create_directory(parametros['path_out_prevs'], str(datetime.strptime(mes, '%B').month))
     shutil.copy(prevs, parametros['path_out_prevs'] + '/' + str(datetime.strptime(mes, '%B').month) + '/prevs.rv'+ rv)    
     parametros['rvs'] = 1
     parametros['tag'] = 'CONSISTIDO'
@@ -288,9 +289,9 @@ BLOCK_FUNCTIONS = {
 
 if __name__ == '__main__':
     """PARAMETROS =  {
-        "rodada": 'Preliminar',
+        "rodada": 'Definitiva',
         "data": datetime.now() -timedelta(days=1),
-        "apenas_email": True,
+        "apenas_email": False,
         "assunto_email": None,
         "corpo_email": None,
         "considerar_rv": 'sem',
@@ -306,7 +307,7 @@ if __name__ == '__main__':
         "sensibilidade": None,
         "tag": 'CENARIOS',
         "id_estudo": None,
-        "prevs":'CENARIOS',
+        "prevs":'CONSISTIDO',
         "cenario":10,
         "prevs_name": None,
         "n_tentativas": 10

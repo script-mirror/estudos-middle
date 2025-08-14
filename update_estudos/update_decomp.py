@@ -37,7 +37,7 @@ TYPES_MMGD   = ['PCHgd', 'PCTgd', 'EOLgd', 'UFVgd']
 def update_carga_and_mmgd(params): 
         
     df_data = get_dados_banco('carga-decomp')
-    df_data['semana_operativa'] = pd.to_datetime(df_data['semana_operativa']) - timedelta(days=6)
+    df_data['semana_operativa'] = pd.to_datetime(df_data['semana_operativa'])
     path_dadger = download_dadger_update(params['id_estudo'], logger, params['path_download'])
     
     tag_update = f"DP-DC{datetime.strptime(df_data['data_produto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"    
@@ -55,7 +55,8 @@ def update_carga_and_mmgd(params):
     if data_firt_deck == data_produto :
         logger.info('Data do produto coincide com a data do deck, prosseguindo com a atualização')
     else:
-        logger.error(f"Data do produto: {data_produto}, Data do deck: {data_firt_deck}")
+        send_whatsapp_message(consts.WHATSAPP_DECKS,f"Erro na atualização de Carga \nData do produto: {data_produto} não confere com a data do deck: {data_firt_deck}",'')
+        logger.error(f"Data do produto: {data_produto} não confere com a data do deck: {data_firt_deck}")
         raise ValueError('Data do produto não coincide com a data do deck, verifique os dados')
     
     for path in path_dadger:
@@ -144,7 +145,7 @@ def update_cvu(params):
             df_data = df_data.reset_index(drop=True)
             df_data = df_data.sort_values('cd_usina').reset_index(drop=True)
         else:
-            send_whatsapp_message(consts.WHATSAPP_GILSEU,f"Erro na atualização CVU \nTipo: CVU {params['tipo_cvu']} \nData do produto: {params['dt_produto'].strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",'')
+            send_whatsapp_message(consts.WHATSAPP_DECKS,f"Erro na atualização CVU \nTipo: CVU {params['tipo_cvu']} \nData do produto: {params['dt_produto'].strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",'')
             logger.info(f"Data do produto {params['dt_produto'].strftime('%d/%m/%Y')} não está entre o 2º e o 6º dia útil do mês.")
             raise ValueError(f"Data do produto {params['dt_produto'].strftime('%d/%m/%Y')} não está entre o 2º e o 6º dia útil do mês.")
         
@@ -156,7 +157,7 @@ def update_cvu(params):
             df_data = df_data.reset_index(drop=True)
             df_data = df_data.sort_values('cd_usina').reset_index(drop=True)  
         else:
-            send_whatsapp_message(consts.WHATSAPP_GILSEU,f"Erro na atualização CVU \nTipo: CVU {params['tipo_cvu']} \nData do produto: {params['dt_produto'].strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",'')
+            send_whatsapp_message(consts.WHATSAPP_DECKS,f"Erro na atualização CVU \nTipo: CVU {params['tipo_cvu']} \nData do produto: {params['dt_produto'].strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",'')
             logger.info(f"Data do produto {params['dt_produto'].strftime('%d/%m/%Y')} não está entre o 16º e o 21º dia do mês.")
             raise ValueError(f"Data do produto {params['dt_produto'].strftime('%d/%m/%Y')} não está entre o 16º e o 21º dia do mês.")
         
