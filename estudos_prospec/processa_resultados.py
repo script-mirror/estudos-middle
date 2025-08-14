@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 import shutil
 from middle.utils import SemanaOperativa
-from middle.utils import gerar_tabela
+from middle.utils import HtmlBuilder
 from middle.message import send_whatsapp_message, send_email_message
 from middle.utils import html_to_image
 from middle.utils.constants import Constants 
@@ -339,7 +339,14 @@ def gerar_resultados(params):
 		else:
 			header_tabela_sub.append(h)
 	corpo_tabela = resumo_tabela1.reset_index().values.tolist()
-	html += gerar_tabela(body=corpo_tabela, header=header_tabela_sub, width_colunas=[200, 100] + [120] * (resumo_tabela1.shape[1] - 1))
+ 
+	dados = {
+		'body': corpo_tabela,
+		'header': header_tabela_sub,
+		'width_colunas': [200, 100] + [120] * (resumo_tabela1.shape[1] - 1),
+	}
+ 
+	html += HtmlBuilder.gerar_html('resultados_prospec', dados)
 	html += "<br/>"
 	html += "<br/>"
 	html += "<br/>"
