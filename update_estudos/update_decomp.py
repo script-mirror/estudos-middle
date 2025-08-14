@@ -391,7 +391,7 @@ def run_with_params():
         'path_download': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',
         'path_out': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',       
     }
-    BLOCK_FUNCTIONS[params['produto']](params) 
+    #BLOCK_FUNCTIONS[params['produto']](params) 
     if len(sys.argv) >= 3:
         for i in range(1, len(sys.argv)):
             argumento = sys.argv[i].lower()
@@ -403,12 +403,9 @@ def run_with_params():
         logger.info(f"Parâmetros recebidos: {params}")
         print("É obrigatorio informar o parametro: produto")
         sys.exit(1)
-    if params['id_estudo'] is None:
-        params['id_estudo'] = get_ids_estudos()
     print(params)
     BLOCK_FUNCTIONS[params['produto']](params)
         
- 
 if __name__ == '__main__':
     logger = criar_logger('logger.log', os.path.join(consts.PATH_ARQUIVOS, 'logger.log'))
     run_with_params()
