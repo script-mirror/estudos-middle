@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from dateutil.relativedelta import relativedelta 
 import pandas as pd
+import pdb
 from middle.utils.constants import Constants
 from middle.prospec import *
 from middle.decomp.atualiza_decomp import process_decomp, retrieve_dadger_metadata, days_per_month
@@ -36,7 +37,7 @@ def update_carga_and_mmgd(params):
     days_per_month(datetime(2025,8,23),datetime(2025,8,30) )
     df_data = get_dados_banco('carga-decomp')
     df_data['semana_operativa'] = pd.to_datetime(df_data['semana_operativa']) - timedelta(days=6)
-    path_dadger = download_dadger_update(params['id_estudo'][0], logger, params['path_download'])
+    path_dadger = download_dadger_update([params['id_estudo'][0]], logger, params['path_download'])
     
     tag_update = f"DP-DC{datetime.strptime(df_data['data_produto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"    
     
@@ -324,6 +325,15 @@ BLOCK_FUNCTIONS = {
 } 
 
 
+def get_ids_estudos() -> list:
+    consts.BASE_URL + '/estudos-middle/api/prospec/base-studies'
+    res = requests.get(consts.BASE_URL + '/estudos-middle/api/prospec/base-studies',
+        headers=HEADER
+    )
+    res.raise_for_status()
+    return res.json()
+
+
 def run_with_params():
         
     params =  {
@@ -346,6 +356,8 @@ def run_with_params():
         logger.info(f"Parâmetros recebidos: {params}")
         print("É obrigatorio informar o parametro: produto")
         sys.exit(1)
+    if params['id_estudo'] is None:
+        params['id_estudo'] = get_ids_estudos()
     print(params)
     BLOCK_FUNCTIONS[params['produto']](params)
         
