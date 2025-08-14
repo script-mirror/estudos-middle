@@ -15,7 +15,7 @@ from middle.utils import SemanaOperativa
 from middle.decomp import ons_to_ccee
 from middle.message import send_whatsapp_message
 import main_roda_estudos
-from middle.utils.constants import Constants
+from middle.utils import Constants
 from middle.utils.file_manipulation import extract_zip
 from middle.s3 import (
     handle_webhook_file,

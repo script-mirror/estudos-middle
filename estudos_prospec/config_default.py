@@ -1,6 +1,6 @@
 from datetime import datetime
 from frozendict import frozendict
-from middle.utils.constants import Constants 
+from middle.utils import Constants 
 
 const = Constants() 
 # frozendict Não permite alterar
@@ -32,7 +32,7 @@ EMAIL_CONFIG = frozendict({
         'description': 'Rodadas P. Conjunto',
         'emails': [const.EMAIL_MIDDLE, const.EMAIL_FRONT],
         'whats': const.WHATSAPP_PRECO,
-        'n_estudos': 10,
+        'n_estudos': 7,
         'path_prevs': 'p_conj',
         'aguardar_fim': True,
         "considerar_rv": 'sem',
@@ -43,7 +43,7 @@ EMAIL_CONFIG = frozendict({
         'description': 'Rodadas Cenarios Raizen',
         'emails': [const.EMAIL_MIDDLE, const.EMAIL_FRONT],
         'whats': const.WHATSAPP_PRECO,
-        'n_estudos': 10,
+        'n_estudos': 7,
         'path_prevs': 'cenarios',
         'aguardar_fim': True,
         "considerar_rv": '_s1',

@@ -5,7 +5,7 @@ from pathlib import Path
 import warnings
 import numpy as np
 from typing import Union, List
-from middle.utils.constants import Constants 
+from middle.utils import Constants 
 consts = Constants()
 import requests
 from middle.utils.auth import get_auth_header
