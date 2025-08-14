@@ -13,7 +13,7 @@ from pathlib import Path
 from dateutil.relativedelta import relativedelta 
 import pandas as pd
 import pdb
-from middle.utils._constants import Constants
+from middle.utils import Constants
 from middle.prospec import *
 from middle.decomp.atualiza_decomp import process_decomp, retrieve_dadger_metadata, days_per_month
 from middle.decomp import DecompParams

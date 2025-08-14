@@ -3,7 +3,7 @@ from datetime import datetime
 import sys
 import os
 from functionsProspecAPI import *
-from middle.utils._constants import Constants 
+from middle.utils import Constants 
 constants = Constants()
 
 PATH_VOLUME = constants.PATH_PROJETOS + '/estudos-middle/api_prospec/calculo_volume'

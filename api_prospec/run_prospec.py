@@ -3,7 +3,7 @@ from createStudyProspecAPI import *
 from datetime import datetime
 from atualiza_ear import gera_ear
 from datetime import datetime
-from middle.utils._constants import Constants 
+from middle.utils import Constants 
 consts = Constants()
      
 def main(parametros):

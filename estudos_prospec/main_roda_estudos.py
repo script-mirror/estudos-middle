@@ -10,7 +10,7 @@ from dateutil.relativedelta import relativedelta
 from processa_resultados import gerar_resultados
 from config_default import PARAMETROS, EMAIL_CONFIG
 import pandas as pd
-from middle.utils._constants import Constants
+from middle.utils import Constants
 from middle.utils.file_manipulation import extract_zip
 
 from middle.s3 import (

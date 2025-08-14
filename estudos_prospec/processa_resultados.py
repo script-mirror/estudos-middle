@@ -14,7 +14,7 @@ from middle.utils import SemanaOperativa
 from middle.utils import HtmlBuilder
 from middle.message import send_whatsapp_message, send_email_message
 from middle.utils import html_to_image
-from middle.utils._constants import Constants 
+from middle.utils import Constants 
 consts = Constants()
 locale.setlocale(locale.LC_ALL, 'pt_BR.utf8')
 os.makedirs(consts.PATH_ARQUIVOS, exist_ok=True)

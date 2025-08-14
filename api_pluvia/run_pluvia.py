@@ -9,7 +9,7 @@ import zipfile
 import time
 import os
 import pandas as pd
-from middle.utils._constants import Constants 
+from middle.utils import Constants 
 import logging
 
 # Configuração do logging

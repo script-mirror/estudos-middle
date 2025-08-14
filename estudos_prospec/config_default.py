@@ -1,6 +1,6 @@
 from datetime import datetime
 from frozendict import frozendict
-from middle.utils._constants import Constants 
+from middle.utils import Constants 
 
 const = Constants() 
 # frozendict Não permite alterar
