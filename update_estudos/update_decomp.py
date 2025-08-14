@@ -13,7 +13,7 @@ from pathlib import Path
 from dateutil.relativedelta import relativedelta 
 import pandas as pd
 import pdb
-from middle.utils.constants import Constants
+from middle.utils._constants import Constants
 from middle.prospec import *
 from middle.decomp.atualiza_decomp import process_decomp, retrieve_dadger_metadata, days_per_month
 from middle.decomp import DecompParams
@@ -391,7 +391,7 @@ def run_with_params():
         'path_download': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',
         'path_out': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',       
     }
-    #BLOCK_FUNCTIONS[params['produto']](params) 
+    BLOCK_FUNCTIONS[params['produto']](params) 
     if len(sys.argv) >= 3:
         for i in range(1, len(sys.argv)):
             argumento = sys.argv[i].lower()

@@ -8,7 +8,7 @@ from datetime import datetime
 import zipfile
 import openpyxl
 from pathlib import Path
-from middle.utils.constants import Constants 
+from middle.utils._constants import Constants 
 from tqdm import tqdm
 from middle.message import send_whatsapp_message
 from middle.s3 import (
