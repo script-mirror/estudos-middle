@@ -155,7 +155,7 @@ def run_1rv_pluvia(parametros):
 
 
 def run_consistido(parametros):
-    
+    create_directory(parametros['path_out_prevs'],'')    
     parametros['sensibilidade'] = 'NAO-CONSISTIDO'
     payload     = get_latest_webhook_product(consts.WEBHOOK_NAO_CONSISTIDO)[0] 
     payload_def = get_latest_webhook_product(consts.WEBHOOK_CONSISTIDO)[0] 
@@ -163,7 +163,7 @@ def run_consistido(parametros):
     if datetime.fromisoformat(payload_def['createdAt'].replace('Z', '+00:00')) > datetime.fromisoformat(payload['createdAt'].replace('Z', '+00:00')):
         parametros['sensibilidade'] = 'CONSISTIDO'
         payload = payload_def 
-  
+    
     path_deck_decomp = handle_webhook_file(payload, parametros['path_out_prevs'])
     deck_encontrado  = extract_zip(path_deck_decomp)
     rv = glob.glob(os.path.join(deck_encontrado, os.listdir(deck_encontrado)[0], '*_REV*'))[0].split('REV')[1][0]
@@ -209,10 +209,15 @@ def getPesosGrupos(grupo, parametros):
 
 
 def create_directory(base_path: str, sub_path: str) -> Path:
-        full_path = Path(base_path) / sub_path
-        full_path.mkdir(parents=True, exist_ok=True)
-        return full_path.as_posix()
-
+    full_path = Path(base_path) / sub_path
+    shutil.rmtree(full_path, ignore_errors=True)
+    if os.path.exists: 
+        try: 
+            os.remove(full_path)
+        except: 
+            pass    
+    full_path.mkdir(parents=True, exist_ok=True)
+    return full_path.as_posix()
 
 def get_id_email(parametros):
     authenticateProspec(consts.API_PROSPEC_USERNAME, consts.API_PROSPEC_PASSWORD)
