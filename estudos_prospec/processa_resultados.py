@@ -62,7 +62,7 @@ def remove_dir(compilado_zipados):
 
 def gerar_resultados(params):    
 
-
+	html_builder = HtmlBuilder()
 	if params['prevs_name'] == None:
 		params['prevs_name'] = [''] * len(params['path_name'])
 
@@ -346,7 +346,7 @@ def gerar_resultados(params):
 		'width_colunas': [200, 100] + [120] * (resumo_tabela1.shape[1] - 1),
 	}
  
-	html += HtmlBuilder.gerar_html('resultados_prospec', dados)
+	html += html_builder.gerar_html('resultados_prospec', dados)
 	html += "<br/>"
 	html += "<br/>"
 	html += "<br/>"
