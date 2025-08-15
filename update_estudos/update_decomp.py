@@ -39,10 +39,8 @@ def update_carga_and_mmgd(params):
     df_data = get_dados_banco('carga-decomp')
     df_data['semana_operativa'] = pd.to_datetime(df_data['semana_operativa'])
     path_dadger = download_dadger_update(params['id_estudo'], logger, params['path_download'])
-    
-    tag_update = f"DP-DC{datetime.strptime(df_data['data_produto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"    
-    
-    fist_dc = path_dadger[0]
+    tag_update  = f"DP-DC{datetime.strptime(df_data['data_produto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"    
+    fist_dc     = path_dadger[0]
     params_decomp = {
     'arquivo': os.path.basename(fist_dc),   
     'dadger_path': fist_dc,
@@ -235,7 +233,7 @@ def update_re(params):
         params_decomp['output_path'] = os.path.dirname(path)
         dict_data = {'re': {'vmax_p1': {},'vmax_p2': {},'vmax_p3': {}}} 
         for re in meta_data['re']:
-            if re in df_data['re'].unique() and re != 461:
+            if re in df_data['re'].unique():
                 dict_data['re']['vmax_p1'][f'{re}'] = {}
                 dict_data['re']['vmax_p2'][f'{re}'] = {}
                 dict_data['re']['vmax_p3'][f'{re}'] = {}
@@ -246,18 +244,20 @@ def update_re(params):
             data = data.replace(day=1)
             for re in meta_data['re']:
                 if re in df_data['re'].unique():
-                    if re != 461:
-                        if stage == min(meta_data['stages']):
-                            data = data_fim
-                        if  data.strftime('%Y-%m-%d') in df_data['mes_ano'].unique():
-                            df_filtred = df_data[(df_data['re'] == re)&(df_data['mes_ano'] == data.strftime('%Y-%m-%d'))]
-                            dict_data['re']['vmax_p1'][f'{re}'][f'{stage}'] = int(df_filtred.loc[(df_filtred['patamar'] == 'pesada'), 'valor'].values[0])
-                            dict_data['re']['vmax_p2'][f'{re}'][f'{stage}'] = int(df_filtred.loc[(df_filtred['patamar'] == 'media'), 'valor'].values[0])
-                            dict_data['re']['vmax_p3'][f'{re}'][f'{stage}'] = int(df_filtred.loc[(df_filtred['patamar'] == 'leve'), 'valor'].values[0])
-                    
-        process_decomp(deepcopy( DecompParams(**params_decomp)), dict_data) 
+                    if stage == min(meta_data['stages']):
+                        data = data_fim
+                    if  data.strftime('%Y-%m-%d') in df_data['mes_ano'].unique():
+                        df_filtred = df_data[(df_data['re'] == re)&(df_data['mes_ano'] == data.strftime('%Y-%m-%d'))]
+                        dict_data['re']['vmax_p1'][f'{re}'][f'{stage}'] = int(df_filtred.loc[(df_filtred['patamar'] == 'pesada'), 'valor'].values[0])
+                        dict_data['re']['vmax_p2'][f'{re}'][f'{stage}'] = int(df_filtred.loc[(df_filtred['patamar'] == 'media'), 'valor'].values[0])
+                        dict_data['re']['vmax_p3'][f'{re}'][f'{stage}'] = int(df_filtred.loc[(df_filtred['patamar'] == 'leve'), 'valor'].values[0])
+        
+        if len(dict_data['re']['vmax_p1'][list(dict_data['re']['vmax_p1'].keys())[0]]) >0:             
+            process_decomp(deepcopy( DecompParams(**params_decomp)), dict_data)
+        else:
+            logger.warning(f"Data do deck {meta_data['deck_date'].strftime('%d/%m/%Y')} não encontrada na base de dados de REs, ignorando atualização para este deck.")   
 
-    #send_all_dadger_update(params['id_estudo'],params['path_download'],logger, logging_name, tag_update)
+    send_all_dadger_update(params['id_estudo'],params['path_download'],logger, logging_name, tag_update)
 
     return params
 
@@ -296,9 +296,8 @@ def criar_dict_weol():
                 data['pq'][period][key] = {}
     return data ['pq']
 
-def get_dados_banco(produto: str, date: str = "") -> dict:
+def get_dados_banco(produto: str) -> dict:
     res = requests.get(BASE_URL_API + produto,
-        params={ 'data_produto': date},
         headers=HEADER
     )
     if res.status_code != 200:
@@ -385,10 +384,10 @@ def get_ids_estudos() -> list:
 def run_with_params():
  
     params =  {
-        "produto": None, # CARGA-DECOMP, EOLICA-DECOMP, CVU-DECOMP, RE-DECOMP
+        "produto":   None, # CARGA-DECOMP, EOLICA-DECOMP, CVU-DECOMP, RE-DECOMP
         'id_estudo': None, #[27067]
         'dt_produto':None, #datetime(2025,9,9),
-        'tipo_cvu': None,
+        'tipo_cvu':  None,
         'path_download': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',
         'path_out': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',       
     }
