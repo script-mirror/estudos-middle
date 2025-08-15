@@ -385,14 +385,14 @@ def get_ids_estudos() -> list:
 def run_with_params():
  
     params =  {
-        "produto": 'CARGA-DECOMP', # CARGA-DECOMP, EOLICA-DECOMP, CVU-DECOMP, RE-DECOMP
+        "produto": None, # CARGA-DECOMP, EOLICA-DECOMP, CVU-DECOMP, RE-DECOMP
         'id_estudo': None, #[27067]
         'dt_produto':None, #datetime(2025,9,9),
         'tipo_cvu': None,
         'path_download': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',
         'path_out': create_directory(consts.PATH_RESULTS_PROSPEC,'update_decks') +'/',       
     }
-    BLOCK_FUNCTIONS[params['produto']](params) 
+    #BLOCK_FUNCTIONS[params['produto']](params) 
     if len(sys.argv) >= 3:
         for i in range(1, len(sys.argv)):
             argumento = sys.argv[i].lower()
