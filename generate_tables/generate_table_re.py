@@ -159,7 +159,7 @@ class IntercambioAnalyzer:
             logger.error(f"Erro ao calcular diferenças: {str(e)}")
             raise
 
-    def run(self):
+    def run_workflow(self):
         """Método principal para executar a análise."""
         logger.info("Executando análise principal")
         try:

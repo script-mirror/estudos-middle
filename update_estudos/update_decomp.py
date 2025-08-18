@@ -3,7 +3,6 @@ import sys
 import shutil
 import glob
 import logging
-import calendar
 import requests
 from copy import deepcopy
 from typing import List, Dict, Any, Tuple
@@ -15,9 +14,8 @@ import pandas as pd
 import pdb
 from middle.utils import Constants
 from middle.prospec import *
-from middle.decomp.atualiza_decomp import process_decomp, retrieve_dadger_metadata, days_per_month
+from middle.decomp.atualiza_decomp import process_decomp, retrieve_dadger_metadata
 from middle.decomp import DecompParams
-from middle.utils import SemanaOperativa
 from middle.utils import ( Constants, get_auth_header)
 consts = Constants()
 
