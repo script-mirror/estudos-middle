@@ -1094,6 +1094,96 @@ def week_of_month(a_date_value):
         else:
             return (a_date_value.isocalendar()[1] - a_date_value.replace(day=1).isocalendar()[1] + 1)
 
+def download_newave_update(prospecStudyId, logger, pathToDownload, file_name):
+    logger.info(f"Iniciando download do estudo para o caminho: {pathToDownload}")
+    try:
+        
+        if prospecStudyId is None:
+            logger.info("Nenhum ID de estudo fornecido, buscando o estudo BASE-8-RV")
+            # Busca o estudo BASE-8-RV
+            prospecStudyId = getStudiesByTag({'page': 1, 'pageSize': 1, 'tags': f"BASE-{8}-RV"})['ProspectiveStudies'][0]['Id']
+        else:
+            prospecStudyId = prospecStudyId[0]
+        logger.debug(f"ID do estudo encontrado: {prospecStudyId}")
+        
+        os.makedirs(pathToDownload, exist_ok=True)
+        logger.info(f"Diretório criado ou já existente: {pathToDownload}")
+        
+        prospecStudy = getInfoFromStudy(prospecStudyId)
+        logger.debug(f"Informações do estudo obtidas: {prospecStudy}")
+        
+        listOfDecks = prospecStudy['Decks']
+        logger.info(f"{len(listOfDecks)} decks encontrados no estudo")
+        
+        list_paths = []
+        for deck in listOfDecks:
+            if deck['Model'] == 'NEWAVE':
+                logger.info(f"Processando deck NEWAVE: {deck['FileName']} (ID: {deck['Id']})")
+                path = pathToDownload + deck['FileName']
+                logger.debug(f"Baixando arquivo para: {path}")
+                
+                getFileFromAPI(token, f"/api/prospectiveStudies/{prospecStudyId}/DeckDownload?deckId={deck['Id']}", deck['FileName'], pathToDownload)
+                logger.info(f"Arquivo baixado: {deck['FileName']}")
+                
+                path_unzip = extract_zip(path)
+                logger.debug(f"Arquivo descompactado em: {path_unzip}")
+                
+                file_path = glob.glob(os.path.join(path_unzip, file_name))
+                if file_path:
+                    list_paths.append(file_path[0])
+                    logger.info(f"Arquivo {file_name} encontrado e adicionado à lista: {file_path[0]}")
+                else:
+                    logger.warning(f"Nenhum arquivo {file_name} encontrado em {path_unzip}")
+        
+        logger.info(f"Download concluído. Total de arquivos {file_name} encontrados: {len(list_paths)}")
+        return list_paths
+    
+    except Exception as e:
+        logger.error(f"Erro durante o download do estudo: {str(e)}", exc_info=True)
+        raise
+
+
+
+def send_all_newave_update(id_estudos,path_file, file_name, logger, logger_send, tag_update):
+    logger.info(f"Iniciando envio de atualizações para o caminho: {path_file}")
+    try:
+        if id_estudos is None:
+            id_estudos = []
+            for rvs in range(1, 9):
+                id_estudos.append(getStudiesByTag({'page': 1, 'pageSize': 1, 'tags': f"BASE-{rvs}-RV"})['ProspectiveStudies'][0]['Id'])
+                logger.debug(f"ID do estudo encontrado para RV{rvs}: {id_estudos[rvs-1]}")
+        logger.info(f"IDs dos estudos encontrados: {id_estudos}")
+        for idStudy in id_estudos:
+            logger.info(" ")
+            logger.info("===============================================================================================================")
+            logger.info(f"Processando estudo id {idStudy}")
+            prospecStudy = getInfoFromStudy(idStudy)
+                        
+            listOfDecks = prospecStudy['Decks']
+            
+            logger.info(f"{len(listOfDecks)} decks encontrados para o estudo {idStudy}")
+            
+            for deck in listOfDecks:
+                if (deck['Model'] == 'NEWAVE') and (deck['SensibilityInfo'] == 'Original'):
+                    pathToFile = path_file + '/' + deck['FileName'].split('.')[0] + '/'
+                    
+                    for file in os.listdir(pathToFile):
+                        if file.lower() == file_name or file.lower() == (logger_send):
+                            sendFileToDeck(idStudy, str(deck['Id']), (pathToFile + file), file)
+                            logger.info(f"Arquivo enviado com sucesso: {file} para o estudo {idStudy}, deck {deck['FileName'].split('.')[0]} ")
+                        else:
+                            logger.debug(f"Arquivo ignorado (não corresponde ao padrão): {file}")
+            update_tags(prospecStudy, tag_update, logger)
+        logger.info("Envio de todas as atualizações concluído")
+    
+    except Exception as e:
+        logger.error(f"Erro durante o envio de atualizações: {str(e)}", exc_info=True)
+        raise
+
+
+
+
+
 
 def download_dadger_update(prospecStudyId, logger, pathToDownload):
     logger.info(f"Iniciando download do estudo para o caminho: {pathToDownload}")
@@ -1142,6 +1232,8 @@ def download_dadger_update(prospecStudyId, logger, pathToDownload):
     except Exception as e:
         logger.error(f"Erro durante o download do estudo: {str(e)}", exc_info=True)
         raise
+
+
 
 def send_all_dadger_update(id_estudos,path_dadger, logger, logger_send, tag_update):
     logger.info(f"Iniciando envio de atualizações para o caminho: {path_dadger}")
