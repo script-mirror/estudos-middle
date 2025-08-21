@@ -1,6 +1,5 @@
 import datetime
 import os
-from typing import List, Optional
 import sys
 import numpy as np
 from copy import deepcopy
@@ -63,7 +62,7 @@ class NewaveUpdater:
                                 logger.debug(f"Updated data_inicio for usina {ute} to {data_fim}")
 
                             new_cvu = round(float(df_data.loc[df_data['cd_usina'] == ute, 'vl_cvu'].values[0]), 2)
-                            old_cvu = ''
+                            old_cvu = 0
                             if ute in df_cvu_old['codigo_usina'].unique():
                                 old_cvu = round(float(df_cvu_old.loc[df_cvu_old['codigo_usina'] == ute, 'custo'].values[0]), 2)
                                 logger.debug(f"Old CVU for usina {ute}: {old_cvu}")
@@ -74,7 +73,7 @@ class NewaveUpdater:
                                 'data_inicio': data_deck,
                                 'data_fim': data_delete,
                                 'custo': new_cvu,
-                                'comentario_dif': f"{str(old_cvu).rjust(7)} -> {str(new_cvu).rjust(7)}",
+                                'comentario_dif': f"DIF: {str(round(new_cvu - old_cvu,1)).rjust(7)}",
                                 'comentario_fonte': f"FONTE: {params['tipo_cvu'].upper()}",
                                 'comentario_dt': f"DATA: {datetime.now().strftime('%d-%m %H:%M')}"
                             }])
@@ -82,7 +81,7 @@ class NewaveUpdater:
                             logger.info(f"Created new row for usina {ute} with CVU: current value={old_cvu}, new value={new_cvu}")
 
                     logger.debug("Sorting and formatting final usinas dataframe")
-                    df_usinas['comentario_dif'] = df_usinas['comentario_dif'].str.rjust(20)
+                    #df_usinas['comentario_dif'] = df_usinas['comentario_dif'].str.ljust(17)
                     clast.modificacoes = df_usinas.sort_values(by=['codigo_usina', 'data_inicio'], na_position='first')
                     
                     logger.info(f"Writing updated clast to {path}")
@@ -137,7 +136,7 @@ class NewaveUpdater:
                             logger.debug(f"Processing usina: {ute}")
                             
                             new_cvu = round(float(df_data.loc[df_data['cd_usina'] == ute, 'vl_cvu'].values[0]), 2)
-                            old_cvu = ''
+                            old_cvu = 0
                             if ute in df_cvu_old['codigo_usina'].unique():
                                 old_cvu = round(float(df_cvu_old.loc[df_cvu_old['codigo_usina'] == ute, 'custo'].values[0]), 2)
                                 logger.debug(f"Old CVU for usina {ute}: {old_cvu}")
@@ -153,7 +152,7 @@ class NewaveUpdater:
                                 'data_inicio': data_inicio_row,
                                 'data_fim': df_data.loc[df_data['cd_usina'] == ute, 'data_fim'].values[0],
                                 'custo': new_cvu,
-                                'comentario_dif': f"{str(old_cvu).rjust(7)} -> {str(new_cvu).rjust(7)}",
+                                'comentario_dif': f"DIF: {str(round(new_cvu - old_cvu,1)).rjust(7)}",
                                 'comentario_fonte': f"FONTE: {params['tipo_cvu'].upper()}",
                                 'comentario_dt': f"DATA: {datetime.now().strftime('%d-%m %H:%M')}"
                             }])
@@ -161,7 +160,7 @@ class NewaveUpdater:
                             logger.info(f"Creating new row for usina {ute} with CVU: current value={old_cvu}, new value={new_cvu}")
 
                     logger.debug("Sorting and formatting final usinas dataframe")
-                    df_usinas['comentario_dif'] = df_usinas['comentario_dif'].str.rjust(20)
+                    #df_usinas['comentario_dif'] = df_usinas['comentario_dif'].str.ljust(17)
                     clast.modificacoes = df_usinas.sort_values(by=['codigo_usina', 'data_inicio'], na_position='first')
                     
                     logger.info(f"Writing updated clast to {path}")

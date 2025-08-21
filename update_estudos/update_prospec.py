@@ -1,6 +1,5 @@
 import datetime
 import os
-from typing import List, Optional
 import sys
 import requests
 import pandas as pd
@@ -102,8 +101,9 @@ class DeckUpdater:
             df_data = df_data.sort_values('cd_usina').reset_index(drop=True)
             df_data['data_inicio'] = pd.to_datetime(df_data['data_inicio'])
             df_data['data_fim'] = pd.to_datetime(df_data['data_fim'])
-            self.newave.update_cvu_merchant(params, df_data)
             self.decomp.update_cvu(params, df_data)
+            self.newave.update_cvu_merchant(params, df_data)
+            
 
             df = self.get_cvu_historico()
             df = df[df['tipo_cvu'].str.contains("conjuntural", case=False, na=False)]
@@ -171,6 +171,13 @@ class DeckUpdater:
             'RE-DECOMP': self.update_re,
             None: lambda params: self.logger.error("Produto não informado ou inválido. Por favor, informe um produto válido.")
         }
+        
+       # params['produto'] = 'CVU'
+        #params['id_estudo'] = [27227]
+       # params['tipo_cvu'] = 'merchant'
+        #params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+       # params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+        #BLOCK_FUNCTIONS[params['produto']](params)
        
         if len(sys.argv) >= 3:
             for i in range(1, len(sys.argv), 2):
@@ -190,7 +197,7 @@ class DeckUpdater:
                 sys.exit(1)
 
         params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-        params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+        params['path_out']      = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
 
         print(params)
         BLOCK_FUNCTIONS[params['produto']](params)
