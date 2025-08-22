@@ -3,12 +3,14 @@ import logging
 import os
 import shutil
 import sys
+import time
+import pandas as pd
 from collections import defaultdict
 from datetime import datetime
 import zipfile
 import openpyxl
 from pathlib import Path
-from middle.utils import Constants 
+from middle.utils import Constants, create_directory, criar_logger
 from tqdm import tqdm
 from middle.message import send_whatsapp_message
 from middle.s3 import (
@@ -17,33 +19,12 @@ from middle.s3 import (
 )
 consts = Constants()
 sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
+sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/update_estudos"))
 import run_prospec
 from functionsProspecAPI import getStudiesByTag, authenticateProspec, getInfoFromStudy, downloadFileFromDeckV2
-
+from update_newave import NewaveUpdater
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
-def create_directory(base_path: str, sub_path: str) -> Path:
-    logging.info(f"Creating directory: {base_path}/{sub_path}")
-    full_path = Path(base_path) / sub_path
-    try:
-        if os.path.exists(full_path):
-            logging.debug(f"Removing existing directory: {full_path}")
-            os.remove(full_path)
-    except:
-        logging.warning(f"Failed to remove file {full_path}, proceeding")
-        pass
-    try:
-        if os.path.exists(full_path):
-            logging.debug(f"Removing directory tree: {full_path}")
-            shutil.rmtree(full_path)
-    except:
-        logging.warning(f"Failed to remove directory tree {full_path}, proceeding")
-        pass
-    logging.debug(f"Creating new directory: {full_path}")
-    full_path.mkdir(parents=True, exist_ok=True)
-    logging.info(f"Directory created: {full_path}")
-    return full_path.as_posix()
 
 def get_deck_interno():
     logging.info("Authenticating with Prospec API")
@@ -64,6 +45,7 @@ def get_deck_interno():
                     arrayOfFiles = ['dger.dat', 'vazpast.dat', 'vazoes.dat', 'arquivos.dat', 'confhd.dat']
                     logging.info(f"Downloading deck {deck['FileName']} to {path}")
                     downloadFileFromDeckV2(deck['Id'], consts.PATH_RESULTS_PROSPEC + '/newave/', deck['FileName'], deck['FileName'], arrayOfFiles)
+                    time.sleep(15)
                     logging.info(f"Extracting zip folder: {path}")
                     return extract_zip_folder(path, path)
 
@@ -104,8 +86,9 @@ def gtmin_ccee(src):
         raise
 
 def update_gtmin(arquivo, data, data_deck):
+    logger = criar_logger('logging_gtmin.log', os.path.join(os.path.dirname(arquivo), 'logging_gtmin.log'))
     """Update EXPT file with CCEE data and insert TEIFT lines."""
-    logging.info(f"Updating EXPT file: {arquivo}")
+    logger.info(f"Updating EXPT file: {arquivo}")
     with open(arquivo, 'r') as f1:
         expt = f1.readlines()
     rows = ''
@@ -117,14 +100,14 @@ def update_gtmin(arquivo, data, data_deck):
             first_date = dt.date(first_year, first_month, 1)
             if 'GTMIN' in ln:
                 inflex_ons = float(ln[12:19])
-                logging.debug(f"USID: {usid}, Date: {first_date}, Inflex_ONS: {inflex_ons}")
+                logger.debug(f"USID: {usid}, Date: {first_date}, Inflex_ONS: {inflex_ons}")
                 if first_date.year < 2030:
                     inflex_ccee = data.get(usid, {}).get(first_date, float('inf'))
                     if inflex_ccee < inflex_ons:
                         ln = ln.replace(ln[12:19], f"{inflex_ccee:.2f}".zfill(7).rjust(7))
-                        logging.debug(f"Updated GTMIN for USID {usid} from {inflex_ons} to {inflex_ccee}")
+                        logger.info(f"Updated GTMIN for USID: {str(usid).rjust(3)},  Old value: {str(inflex_ons).rjust(6)},  New value: {str(inflex_ccee).rjust(6)}")
         except (ValueError, IndexError) as e:
-            logging.error(f"Invalid line format at line {i+1}: {ln.strip()} - {e}")
+            logger.info(f"Invalid line format at line {i+1}: {ln.strip()} - {e}")
             continue
         rows += ln
         if i + 1 < len(expt):
@@ -134,17 +117,18 @@ def update_gtmin(arquivo, data, data_deck):
                 next_month = (data_deck.replace(day=28) + dt.timedelta(days=4)).replace(day=1)
                 extra_line = f"{str(usid).rjust(4)} TEIFT     0.00 {data_deck.month:>2} {data_deck.year} {next_month.month:>2} {next_month.year}\n"
                 rows += extra_line
-                logging.debug(f"Added TEIFT line for USID {usid}")
+                logger.debug(f"Added line: {str(usid).rjust(4)} TEIFT     0.00 {data_deck.month:>2} {data_deck.year} {next_month.month:>2} {next_month.year}")
                 
     new_expt = expt[0] + expt[1] + rows
-    logging.info(f"Writing updated EXPT file: {arquivo}")
+    logger.info(f"Writing updated EXPT file: {arquivo}")
     with open(arquivo, 'w') as f:
         for line in new_expt:
             f.write(line)
-    logging.info(f"EXPT file updated: {arquivo}")
+    logger.info(f"EXPT file updated: {arquivo}")
 
 def update_re(file_path):
-    logging.info(f"Updating RE file: {file_path}")
+    logger = criar_logger('logging_re.log', os.path.join(os.path.dirname(file_path), 'logging_re.log'))
+    logger.info(f"Updating RE file: {file_path}")
     with open(file_path, 'r', encoding='latin1') as f:
         lines = f.readlines()
 
@@ -153,9 +137,9 @@ def update_re(file_path):
             parts = line.strip().split(';')
             if len(parts) >= 2 and parts[1].strip() == '10':
                 line = '&' + line
-                logging.debug(f"Modified line with code '10': {line.strip()}")
+                logger.info(f"Commented line: {line.strip()}")
             f.write(line)
-    logging.info(f"RE file updated: {file_path}")
+    logger.info(f"RE file updated: {file_path}")
 
 def update_confhd(confhd_path, internal_path):
     logging.info(f"Updating confhd: {confhd_path} with internal: {internal_path}")
@@ -233,7 +217,10 @@ def filter_newave_in_dir(diretorio):
 def get_gtmin(path_in):
     logging.info(f"Fetching GTMIN data to path: {path_in}")
     payload = get_latest_webhook_product(consts.WEBHOOK_NOTAS_TECNICAS)
-    for arquivo in payload:
+    df_payload =  pd.DataFrame(payload)
+    df_payload =  df_payload.sort_values(by=['periodicidade', 'updatedAt'], ascending=[False, False]).reset_index(drop=True)
+    df_payload = df_payload.to_dict('records')
+    for arquivo in df_payload:
         path = handle_webhook_file(arquivo, path_in)
         logging.info(f"Extracting GTMIN zip: {path}")
         path = extract_zip_folder(path, path)
@@ -244,15 +231,17 @@ def get_gtmin(path_in):
     logging.warning("No GTMIN file found")
     return None, None
 
-def get_expt_name(path):
+def get_expt_sistema_name(path):
     logging.info(f"Searching for EXPT file in: {path}")
     for file in os.listdir(path):
         if file.lower().startswith('expt'):
             expt_path = path + '/' + file
             logging.info(f"Found EXPT file: {expt_path}")
-            return expt_path
-    logging.warning("No EXPT file found")
-    return None
+        if file.lower().startswith('sistema'):
+            sistema = path + '/' + file
+            logging.info(f"Found sistema file: {sistema}")
+    return expt_path, sistema
+
 
 def zip_files(deck_path: str, path_out: str) -> None:
     """Zip only the files in the DC folder, without including subdirectories."""
@@ -278,13 +267,13 @@ def delete_file(diretorio, lista_nomes):
                 try:
                     os.remove(caminho_completo)
                     logging.info(f"Deleted: {caminho_completo}")
-                    print(f"✅ Deletado: {caminho_completo}")
+                    print(f"Deletado: {caminho_completo}")
                 except Exception as e:
                     logging.error(f"Error deleting {caminho_completo}: {e}")
-                    print(f"⚠️ Erro ao deletar {caminho_completo}: {e}")
+                    print(f"Erro ao deletar {caminho_completo}: {e}")
             else:
                 logging.warning(f"Not a file: {caminho_completo}")
-                print(f"🚫 Não é um arquivo: {caminho_completo}")
+                print(f"Não é um arquivo: {caminho_completo}")
         else:
             logging.warning(f"File not found (case-insensitive): {nome}")
             print(f"🔍 Não encontrado (ignorando case): {nome}")
@@ -302,6 +291,16 @@ def execute_prospec(deck_path: str, deck_name: str):
     run_prospec.main(params)
     logging.info("Prospec execution completed")
 
+
+def update_wind(path):
+    updater = NewaveUpdater()
+    params = {}
+    params['produto'] = 'EOLICA'
+    params['id_estudo'] = None
+    params['path_download'] = create_directory(consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+    params['path_out'] = create_directory(consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+    updater.update_eolica(params,path)
+
 def main():
     logging.info("Starting main execution")
     PATH_BASE = create_directory(consts.PATH_ARQUIVOS, 'decks/newave/ons')
@@ -313,7 +312,7 @@ def main():
     path_gtmin, gtmin_file = get_gtmin(PATH_BASE)
     logging.info(f"GTMIN data retrieved: {path_gtmin}/{gtmin_file}")
     
-    path_expt = get_expt_name(path_deck_nw)
+    path_expt, path_sistema = get_expt_sistema_name(path_deck_nw)
     logging.info(f"EXPT file: {path_expt}")
     
     deck_name = 'NW' + data_deck.strftime('%Y%m') + '_ONS-TO-CCEE.zip'
@@ -332,12 +331,13 @@ def main():
         shutil.copy(PATH_NW_INTERNO + '/confhd.dat', path_deck_nw + '/confhd.dat')
     else:
         logging.info(f"Using definitive deck name: {deck_name}")
-        
+    
+    update_wind([path_sistema])    
     update_re(path_deck_nw + "/restricao-eletrica.csv")
     update_gtmin(path_expt, gtmin_ccee(path_gtmin + '/' + gtmin_file), data_deck)
     zip_files(path_deck_nw, PATH_BASE + '/' + deck_name)
     logging.info(f"Sending WhatsApp message with deck: {deck_name}")
-    send_whatsapp_message(consts.WHATSAPP_GILSEU, 'Deck Newave ONS to CCEE com GTMIN: ' + gtmin_file, PATH_BASE + '/' + deck_name)
+    send_whatsapp_message(consts.WHATSAPP_GILSEU, 'Deck Newave ONS to CCEE\nGTmin: ' + gtmin_file + "\nEolica: Atualizada", PATH_BASE + '/' + deck_name)
     execute_prospec(PATH_BASE, deck_name.split('.')[0])
     logging.info("Main execution completed")
 

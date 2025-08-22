@@ -95,12 +95,13 @@ class DeckUpdater:
 
         elif tipo_cvu == 'merchant':
             df_data = self.get_cvu_banco('cvu', tipo_cvu)
-            df_data = df_data.sort_values('mes_referencia', ascending=False)
-            df_data = df_data.drop_duplicates(subset=['cd_usina'], keep='first')
+            df_data = df_data[df_data['mes_referencia']== max(df_data['mes_referencia'].to_list())]
+            df_data = df_data.sort_values('data_fim').reset_index(drop=True)
             df_data = df_data.reset_index(drop=True)
             df_data = df_data.sort_values('cd_usina').reset_index(drop=True)
             df_data['data_inicio'] = pd.to_datetime(df_data['data_inicio'])
             df_data['data_fim'] = pd.to_datetime(df_data['data_fim'])
+            df_data = df_data.sort_values('data_fim').reset_index(drop=True)
             self.decomp.update_cvu(params, df_data)
             self.newave.update_cvu_merchant(params, df_data)
             
@@ -144,6 +145,7 @@ class DeckUpdater:
     def update_eolica(self, params: dict) -> None:
         df_data = self.get_dados_banco('weol')
         self.decomp.update_eolica(params, df_data)
+        self.newave.update_eolica(params)
 
     def update_carga_decomp(self, params: dict) -> None:
         df_data = self.get_dados_banco('carga-decomp')
@@ -172,11 +174,12 @@ class DeckUpdater:
             None: lambda params: self.logger.error("Produto não informado ou inválido. Por favor, informe um produto válido.")
         }
         
-       # params['produto'] = 'CVU'
+        # debug
+        #params['produto'] = 'CVU'
         #params['id_estudo'] = [27227]
-       # params['tipo_cvu'] = 'merchant'
+        #params['tipo_cvu'] = 'merchant'
         #params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-       # params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+        #params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         #BLOCK_FUNCTIONS[params['produto']](params)
        
         if len(sys.argv) >= 3:

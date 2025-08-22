@@ -5,16 +5,18 @@ import numpy as np
 from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
+import requests
 from dateutil.relativedelta import relativedelta
 import pandas as pd
-from inewave.newave import Clast, Dger
-from middle.utils import Constants, get_auth_header, setup_logger, criar_logger
+from inewave.newave import Clast, Dger, Sistema
+from middle.utils import Constants, get_auth_header, setup_logger, criar_logger, create_directory, SemanaOperativa
+import time
 
 sys.path.append(os.path.join(Constants().PATH_PROJETOS, "estudos-middle/api_prospec"))
 from functionsProspecAPI import authenticateProspec, download_newave_update, send_all_newave_update
 
 class NewaveUpdater:
-    """Class to handle NEWAVE CVU updates for different types (conjuntural, merchant, estrutural)."""
+    """Class to handle NEWAVE CVU and wind power updates."""
     
     def __init__(self):
         self.consts = Constants()
@@ -22,6 +24,39 @@ class NewaveUpdater:
         self.base_url_api = self.consts.BASE_URL + '/api/v2/decks/'
         authenticateProspec(self.consts.API_PROSPEC_USERNAME, self.consts.API_PROSPEC_PASSWORD)
         self.logger = setup_logger()
+
+    def get_dados_banco(self, produto: str) -> pd.DataFrame:
+        """Fetch data from API endpoint."""
+        res = requests.get(self.base_url_api + produto, headers=self.header)
+        if res.status_code != 200:
+            res.raise_for_status()
+        return pd.DataFrame(res.json())
+
+    def calculate_monthly_wind_average(self, df_data, df_pq, MAP_SUBMERCADO):
+        """Calculate monthly wind generation averages."""
+        dates = pd.date_range(start=pd.to_datetime(min(df_data['inicioSemana'])).replace(day=1),
+                            end=pd.to_datetime(max(df_data['inicioSemana'])) + pd.offsets.MonthEnd(0), freq='D')
+
+        df_diaria = pd.DataFrame()
+        df_data['inicioSemana'] = pd.to_datetime(df_data['inicioSemana'])
+        for date in dates:
+            for ss in df_data['submercado'].unique():                                
+                data_rv = SemanaOperativa(date)
+                data_week = pd.to_datetime(data_rv.week_start)
+                filter = ((df_pq['data'] == date.replace(day=1)) & (df_pq['indice_bloco'] == 3) & 
+                         (df_pq['codigo_submercado'] == MAP_SUBMERCADO[ss]))
+                valor = df_pq[filter]['valor'].values[0]
+                
+                if data_week in df_data['inicioSemana'].unique():
+                    filter = (df_data['submercado'] == ss) & (df_data['inicioSemana'] == data_week)
+                    valor = df_data.loc[filter, 'mediaPonderada'].values[0]
+                df_diaria = pd.concat([df_diaria, pd.DataFrame([{"data": date, "submercado": ss, "valor": valor}])], 
+                                    ignore_index=True)   
+                                
+        df_diaria['valor'] = df_diaria['valor'].fillna(0)
+        df_diaria['mes_ano'] = df_diaria['data'].dt.to_period('M')
+        df_diaria = df_diaria.groupby(['mes_ano', 'submercado'])['valor'].mean().round(2).unstack()                        
+        return df_diaria
 
     def update_cvu_conjuntural(self, params: dict, df_data: pd.DataFrame) -> bool:
         """Update CVU for conjuntural type."""
@@ -32,7 +67,7 @@ class NewaveUpdater:
         try:
             file_name = 'clast.dat'
             path_clast = download_newave_update(params['id_estudo'], logger, params['path_download'], file_name)
-            tag_update = f"CVU-NW{datetime.strptime(df_data['dt_atualizacao'][0], '%Y-%m-%d').strftime('(%d/%m)')}"
+            tag_update = f"CVU-NW(C){datetime.strptime(df_data['dt_atualizacao'][0], '%Y-%m-%d').strftime('(%d/%m)')}"
 
             for path in path_clast:
                 logger = criar_logger(logging_name, os.path.join(os.path.dirname(path), logging_name))
@@ -81,7 +116,6 @@ class NewaveUpdater:
                             logger.info(f"Created new row for usina {ute} with CVU: current value={old_cvu}, new value={new_cvu}")
 
                     logger.debug("Sorting and formatting final usinas dataframe")
-                    #df_usinas['comentario_dif'] = df_usinas['comentario_dif'].str.ljust(17)
                     clast.modificacoes = df_usinas.sort_values(by=['codigo_usina', 'data_inicio'], na_position='first')
                     
                     logger.info(f"Writing updated clast to {path}")
@@ -110,7 +144,7 @@ class NewaveUpdater:
         try:
             file_name = 'clast.dat'
             path_clast = download_newave_update(params['id_estudo'], logger, params['path_download'], file_name)
-            tag_update = f"CVU-NW{datetime.strptime(df_data['dt_atualizacao'][0], '%Y-%m-%d').strftime('(%d/%m)')}"
+            tag_update = f"CVU-NW(M){datetime.strptime(df_data['dt_atualizacao'][0], '%Y-%m-%d').strftime('(%d/%m)')}"
 
             for path in path_clast:
                 logger = criar_logger(logging_name, os.path.join(os.path.dirname(path), logging_name))
@@ -160,7 +194,6 @@ class NewaveUpdater:
                             logger.info(f"Creating new row for usina {ute} with CVU: current value={old_cvu}, new value={new_cvu}")
 
                     logger.debug("Sorting and formatting final usinas dataframe")
-                    #df_usinas['comentario_dif'] = df_usinas['comentario_dif'].str.ljust(17)
                     clast.modificacoes = df_usinas.sort_values(by=['codigo_usina', 'data_inicio'], na_position='first')
                     
                     logger.info(f"Writing updated clast to {path}")
@@ -188,7 +221,7 @@ class NewaveUpdater:
 
         try:
             df_data = df_data.sort_values('mes_referencia', ascending=False).reset_index(drop=True)
-            tag_update = f"CVU-NW{datetime.strptime(df_data['dt_atualizacao'][0], '%Y-%m-%d').strftime('(%d/%m)')}"
+            tag_update = f"CVU-NW(E){datetime.strptime(df_data['dt_atualizacao'][0], '%Y-%m-%d').strftime('(%d/%m)')}"
             df_data = df_data[df_data['mes_referencia'] == df_data['mes_referencia'][0]].reset_index(drop=True)
             df_data = df_data.sort_values('cd_usina').reset_index(drop=True)
             df_data = df_data.pivot_table(index='cd_usina', columns='ano_horizonte', values='vl_cvu')
@@ -244,5 +277,94 @@ class NewaveUpdater:
             logger.error(f"Fatal error in update_cvu_estrutural: {str(e)}")
             raise
 
+    def update_eolica(self, params: dict, path_sistema=None) -> bool:
+        """Update wind power generation data in sistema.dat with enhanced logging."""
+        start_time = time.time()
+        send_sistema = False
+        MAP_SUBMERCADO = {'SE': 1, 'S': 2, 'NE': 3, 'N': 4}
+        logging_name = f'logging_eolica.log'
+        logger = criar_logger(logging_name, os.path.join(params['path_download'], logging_name))
+        logger.info(f"Starting wind power update for study ID: {params['id_estudo']}")
+
+        try:
+            logger.debug("Fetching wind generation data from API")
+            df_data = self.get_dados_banco('weol/weighted-average')
+            logger.info(f"Retrieved {len(df_data)} wind generation records from API. "
+                       f"Submarkets: {df_data['submercado'].unique().tolist()}, "
+                       f"Date range: {df_data['inicioSemana'].min()} to {df_data['inicioSemana'].max()}")
+
+            file_name = 'sistema.dat'
+            if path_sistema is None:
+                logger.debug(f"Downloading {file_name} for study ID: {params['id_estudo']}")
+                path_sistema = download_newave_update(params['id_estudo'], logger, params['path_download'], file_name)
+                send_sistema = True
+                logger.info(f"Downloaded {file_name} to {path_sistema}")
+                
+            tag_update = f"WEOL-NW{datetime.strptime(df_data['dataProduto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"
+
+            update_count = 0
+            for path in path_sistema:
+                logger = criar_logger(logging_name, os.path.join(os.path.dirname(path), logging_name))
+                logger.info(f"Processing file: {path}")
+                try:
+                    dger = Dger.read(os.path.join(os.path.dirname(path), 'dger.dat'))
+                    sistema = Sistema.read(path)
+                    data_deck = datetime(dger.ano_inicio_estudo, dger.mes_inicio_estudo, 1)
+                    logger.debug(f"Study start date from dger.dat: {data_deck}")
+                    
+                    df_pq = sistema.geracao_usinas_nao_simuladas
+                    logger.debug(f"Loaded {len(df_pq)} non-simulated generation records from {file_name}")
+                    
+                    logger.debug("Calculating monthly wind generation averages")
+                    df_diaria = self.calculate_monthly_wind_average(df_data, df_pq, MAP_SUBMERCADO)
+                    logger.info(f"Generated monthly averages for {len(df_diaria)} months across "
+                               f"{len(df_diaria.columns)} submarkets: {list(df_diaria.columns)}")
+
+                    for mes_ano in df_diaria.index:
+                        if data_deck.strftime('%Y-%m') == str(mes_ano):
+                            logger.info(f"Updating wind generation for deck date: {data_deck.strftime('%Y-%m')}")
+                            for ss in df_diaria.keys():
+                                filter = ((df_pq['data'] == mes_ano.start_time) & 
+                                         (df_pq['indice_bloco'] == 3) & 
+                                         (df_pq['codigo_submercado'] == MAP_SUBMERCADO[ss]))
+                                if not df_pq[filter].empty:
+                                    old_value = df_pq.loc[filter, 'valor'].values[0]
+                                    new_value = df_diaria.loc[mes_ano][ss]
+                                    df_pq.loc[filter, 'valor'] = new_value
+                                    update_count += 1
+                                    logger.info(f"Updated submarket: {ss.rjust(2)}, month: {mes_ano}, "
+                                                f"old_value:{str(old_value).rjust(8)}, new_value:{str(new_value).rjust(8)}")
+                            
+                    sistema.geracao_usinas_nao_simuladas = df_pq
+                    logger.info(f"Writing updated {file_name} to {path} with {update_count} value updates")
+                    sistema.write(path)
+
+                except Exception as e:
+                    logger.error(f"Error processing file {path}: {str(e)}. Context: "
+                                f"study_id={params['id_estudo']}")
+                    raise
+
+            logger.info(f"Sending NEWAVE update for study ID: {params['id_estudo']} with tag: {tag_update}")
+            if send_sistema:
+                send_all_newave_update(params['id_estudo'], params['path_download'], file_name, logger, logging_name, tag_update)
+            
+            execution_time = time.time() - start_time
+            logger.info(f"Wind power update completed successfully. Total updates: {update_count}, "
+                       f"Execution time: {execution_time:.2f} seconds")
+            return True
+
+        except Exception as e:
+            logger.error(f"Fatal error in wind power update: {str(e)}. "
+                        f"Study ID: {params['id_estudo']}, File: {file_name}")
+            raise
+
 if __name__ == '__main__':
     pass
+    """ consts = Constants()
+    updater = NewaveUpdater()
+    params = {}
+    params['produto'] = 'CVU'
+    params['id_estudo'] = [27227]
+    params['path_download'] = create_directory(consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+    params['path_out'] = create_directory(consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+    updater.update_eolica(params)"""
