@@ -58,7 +58,7 @@ class DecompUpdater:
                 'output_path': path,
                 'id_estudo': None,
                 'case': 'ATUALIZAÇÃO DE CARGA',
-                'logger': criar_logger('logger.log', os.path.dirname(path) + '/logger_rv' + path[-1:] + '.log')
+                'logger': criar_logger('logging_carga_rv' + path[-1:] + '.log', os.path.dirname(path) + '/logging_carga_rv' + path[-1:] + '.log')
             }
 
             meta_data = retrieve_dadger_metadata(**params_decomp)

@@ -16,7 +16,6 @@ sys.path.append(os.path.join(Constants().PATH_PROJETOS, "estudos-middle/api_pros
 from functionsProspecAPI import authenticateProspec, download_newave_update, send_all_newave_update
 
 class NewaveUpdater:
-    """Class to handle NEWAVE CVU and wind power updates."""
     
     def __init__(self):
         self.consts = Constants()
