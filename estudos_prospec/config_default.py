@@ -35,7 +35,7 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 7,
         'path_prevs': 'p_conj',
         'aguardar_fim': True,
-        "considerar_rv": 'sem',
+        "considerar_rv": '_s1',
         'rodada':{'Preliminar': ['ONS_Pluvia-Preliminar-SMAP'],
                   'Definitiva':['ONS_Pluvia-SMAP']}
     }),
@@ -67,7 +67,7 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 1,
         'path_prevs': 'p_agrupada',
         'aguardar_fim': True,
-        "considerar_rv": 'sem',
+        "considerar_rv": '_s1',
         'rodada':{'Preliminar':['ONS_Pluvia-AgrupadoPrecipitacao-Preliminar-SMAP'],
                   'Definitiva':['ONS_Pluvia-AgrupadoPrecipitacao-SMAP']}
     }),
@@ -77,7 +77,7 @@ EMAIL_CONFIG = frozendict({
         'whats': const.WHATSAPP_PRECO,
         'n_estudos': 1,
         'aguardar_fim': True,
-        "considerar_rv": 'sem',
+        "considerar_rv": '_s1',
         'path_prevs': 'nao_consistido',
         'rodada':{'Preliminar':['CONSISTIDO'],
                   'Definitiva':['CONSISTIDO']}
@@ -89,7 +89,7 @@ EMAIL_CONFIG = frozendict({
         'n_estudos': 5,
         'path_prevs': 'ec_ext',
         'aguardar_fim': True,
-        "considerar_rv": 'sem',
+        "considerar_rv": '_s1',
         'rodada':{'Definitiva':['ECMWF_ENS_ext-SMAP']}
     }),
     'ONS-GRUPOS': frozendict({
