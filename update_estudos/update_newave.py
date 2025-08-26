@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 from dateutil.relativedelta import relativedelta
 import pandas as pd
-from inewave.newave import Clast, Dger, Sistema
+from inewave.newave import Clast, Dger, Sistema, Cadic
 from middle.utils import Constants, get_auth_header, setup_logger, criar_logger, create_directory, SemanaOperativa
 import time
 
@@ -358,13 +358,134 @@ class NewaveUpdater:
                         f"Study ID: {params['id_estudo']}, File: {file_name}")
             raise
 
+    def update_carga(self, params: dict, path_sistema=None) -> bool:
+        """Update load data in sistema.dat with enhanced logging."""
+        
+        start_time = time.time()
+        send_sistema = False
+        MAP_SUBMERCADO = {'SE': 1, 'S': 2, 'NE': 3, 'N': 4}
+        MAP_TIPO = {5: 'PCH-MMGD', 6: 'PCT-MMGD', 7: 'EOL-MMGD', 8: 'UFV-MMGD'}
+        MAP_MMGD_TOT = {5: 'vl_exp_pch_mmgd', 6: 'vl_exp_pct_mmgd', 7: 'vl_exp_eol_mmgd', 8: 'vl_exp_ufv_mmgd'}
+        
+        # Initialize logger once at the start
+        logging_name = f'logging_carga.log'
+        log_path = os.path.join(params['path_download'], logging_name)
+        logger = criar_logger(logging_name, log_path)
+        logger.info(f"Starting load data update ")
+
+        try:
+            df_data = self.get_dados_banco('newave/previsoes-cargas')
+            df_data = df_data[df_data['patamar'] == 'media'].reset_index(drop=True)
+            df_data['data_referente'] = pd.to_datetime(df_data['data_referente'])
+            df_data['data_referente'] = df_data['data_referente'].dt.to_period('M')
+
+            file_name = 'sistema.dat'
+            if path_sistema is None:
+                logger.debug(f"Downloading {file_name}")
+                path_sistema = download_newave_update(params['id_estudo'], logger, params['path_download'], file_name)
+                send_sistema = True
+                logger.info(f"Downloaded {file_name} to {path_sistema}")
+            
+            tag_update = f"CARGA-NW{datetime.strptime(df_data['data_produto'][0], '%Y-%m-%d').strftime('(%d/%m)')}"
+            logger.debug(f"Generated update tag: {tag_update}")
+
+            for path in path_sistema:
+                logger = criar_logger(logging_name, os.path.join(os.path.dirname(path), logging_name))
+                logger.info(f"Processing file: {path}")
+                try:
+                    dger = Dger.read(os.path.join(os.path.dirname(path), 'dger.dat'))
+                    sistema = Sistema.read(path)
+                    c_adic = Cadic.read(os.path.join(os.path.dirname(path), 'c_adic.dat'))
+                    data_deck = datetime(dger.ano_inicio_estudo, dger.mes_inicio_estudo, 1)
+                    logger.debug(f"Study start date from dger.dat: {data_deck},  File: {path}")
+
+                    df_pq = sistema.geracao_usinas_nao_simuladas
+                    df_carga = sistema.mercado_energia 
+                    df_cadic = c_adic.cargas
+                    logger.debug(f"Loaded {len(df_pq)} non-simulated generation records, {len(df_carga)} market energy records, "
+                                f"{len(df_cadic)} additional load records,  File: {path}")
+
+                    for mes_ano in df_data['data_referente'].unique():
+                        for ss in df_data['submercado'].unique():
+                            filter_base = ((df_pq['data'] == mes_ano.start_time) & 
+                                        (df_pq['codigo_submercado'] == MAP_SUBMERCADO[ss]))
+                            filter_data = (df_data['data_referente'] == mes_ano) & (df_data['submercado'] == ss)
+                            filter_carga = ((df_carga['data'] == mes_ano.start_time) & 
+                                        (df_carga['codigo_submercado'] == MAP_SUBMERCADO[ss]))
+
+                            # Update non-simulated generation (MMGD)
+                            for chave, valor in MAP_MMGD_TOT.items():
+                                try:
+                                    old_value = df_pq.loc[(df_pq['indice_bloco'] == chave) & filter_base, 'valor'].values[0]
+                                    new_value = round(df_data.loc[filter_data, valor].values[0], 0)
+                                    df_pq.loc[(df_pq['indice_bloco'] == chave) & filter_base, 'valor'] = new_value
+                                    logger.info(f"Updated MMGD ,  Submarket: {ss.rjust(2)},  "
+                                            f"Source: {MAP_TIPO[chave].rjust(8)},  Month: {mes_ano},  "
+                                            f"Old value: {str(old_value).rjust(8)},  New value: {str(new_value).rjust(8)}")
+                                except IndexError as e:
+                                    logger.error(f"Failed to update MMGD,  Submarket: {ss},  "
+                                                f"Source: {MAP_TIPO[chave]},  Month: {mes_ano},  Error: {str(e)}")
+                                    raise
+
+                            # Update market energy (LOAD)
+                            try:
+                                old_value = df_carga.loc[filter_carga, 'valor'].values[0]
+                                new_value = round(df_data.loc[filter_data, 'vl_carga'].values[0], 0)
+                                df_carga.loc[filter_carga, 'valor'] = new_value
+                                logger.info(f"Updated LOAD ,  Submarket: {ss.rjust(2)},  Source: {("CARGA").rjust(8)},  "
+                                        f"Month: {mes_ano},  Old value: {str(old_value).rjust(8)},  "
+                                        f"New value: {str(new_value).rjust(8)}")
+                            except IndexError as e:
+                                logger.error(f"Failed to update Load| Submarket: {ss},  Month: {mes_ano},  "
+                                            f"Error: {str(e)}")
+                                raise
+
+                            # Update additional loads (MMGD)
+                            map_mmgd = 'MMGD ' + ss
+                            try:
+                                filter_cadic = ((df_cadic['data'] == mes_ano.start_time) & 
+                                        (df_cadic['codigo_submercado'] == MAP_SUBMERCADO[ss])&
+                                        (df_cadic['razao'] == map_mmgd))
+                                old_value = df_cadic.loc[filter_cadic, 'valor'].values[0]
+                                new_value = round(df_data.loc[filter_data, 'vl_base_total_mmgd'].values[0], 0)
+                                df_cadic.loc[filter_cadic, 'valor'] = new_value
+                                logger.info(f"Updated CADIC,  Submarket: {ss.rjust(2)},  Source: {map_mmgd.rjust(8)},  "
+                                        f"Month: {mes_ano},  Old value: {str(old_value).rjust(8)},  "
+                                        f"New value: {str(new_value).rjust(8)}")
+                            except IndexError as e:
+                                logger.error(f"Failed to update CADIC,  Submarket: {ss},  Source: {map_mmgd},  "
+                                            f"Month: {mes_ano},  Error: {str(e)},  File: {path}")
+                                raise
+                        
+                    sistema.geracao_usinas_nao_simuladas = df_pq
+                    sistema.mercado_energia = df_carga
+                    c_adic.cargas = df_cadic 
+                    logger.info(f"Writing updated files,  sistema.dat: {path}")
+                    logger.info(f"Writing updated files,  c_adic.dat:  {os.path.join(os.path.dirname(path), 'c_adic.dat')}")
+
+                    sistema.write(path)
+                    c_adic.write(os.path.join(os.path.dirname(path), 'c_adic.dat'))
+                    logger.info(f"Successfully updated and wrote files,  sistema.dat: {path}")
+                    logger.info(f"Successfully updated and wrote files,  c_adic.dat:  {os.path.join(os.path.dirname(path), 'c_adic.dat')}")
+
+                except Exception as e:
+                    logger.error(f"Error processing file,  Path: {path},  Error: {str(e)}")
+                    raise
+
+            logger.info(f"Sending NEWAVE update,  Tag: {tag_update}")
+            if send_sistema:
+                send_all_newave_update(params['id_estudo'], params['path_download'], file_name, logger, logging_name, tag_update)
+                send_all_newave_update(params['id_estudo'], params['path_download'], 'c_adic.dat', logger, logging_name, tag_update)
+                logger.info(f"Sent NEWAVE update,  Files: {file_name}, c_adic.dat ")
+
+            execution_time = time.time() - start_time
+            logger.info(f"Load data update completed,  Execution time: {execution_time:.2f} seconds")
+            return True
+
+        except Exception as e:
+            logger.error(f"Fatal error in load data update,  File: {file_name},  Error: {str(e)}")
+            raise
+
 if __name__ == '__main__':
     pass
-    """ consts = Constants()
-    updater = NewaveUpdater()
-    params = {}
-    params['produto'] = 'CVU'
-    params['id_estudo'] = [27227]
-    params['path_download'] = create_directory(consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-    params['path_out'] = create_directory(consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-    updater.update_eolica(params)"""
+ 

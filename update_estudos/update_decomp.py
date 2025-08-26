@@ -5,11 +5,12 @@ from middle.message import send_whatsapp_message
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import pandas as pd
-from middle.utils import Constants, get_auth_header, criar_logger
-from middle.decomp.atualiza_decomp import process_decomp, retrieve_dadger_metadata
+from middle.utils import Constants, get_auth_header, criar_logger, SemanaOperativa
+from middle.decomp.atualiza_decomp import process_decomp, retrieve_dadger_metadata, days_per_month
 from middle.decomp import DecompParams
 
 class DecompUpdater:
+    
     def __init__(self):
         self.consts = Constants()
         sys.path.append(os.path.join(self.consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
@@ -213,6 +214,77 @@ class DecompUpdater:
         self.send_all_dadger_update(params['id_estudo'], params['path_download'], logger, logging_name, tag_update)
         return params
 
+    def carga_nw_to_decomp(self, params, df_data):
+        logging_name = 'logging_carga_nw_to_decomp.log'
+        logger = criar_logger(logging_name, os.path.join(params['path_download'], logging_name))
+        logger.info("Starting carga_nw_to_decomp function")
+        
+        MAP_COLUMNS = {
+            'carga_mmgd': 'vl_carga_global',
+            'exp_cgh': 'vl_exp_pch_mmgd',
+            'exp_ute': 'vl_exp_pct_mmgd',
+            'exp_eol': 'vl_exp_eol_mmgd',
+            'exp_ufv': 'vl_exp_ufv_mmgd'
+        }
+        MAP_PAT = {'leve': 'leve', 'medio': 'media', 'pesada': 'pesada'}
+        
+        date_start = SemanaOperativa.get_next_saturday(datetime.now())
+        logger.debug(f"Starting date for operative weeks: {date_start}")
+        
+        df_decomp = pd.DataFrame()
+        data_produto = df_data['data_produto'].unique()[0] if len(df_data['data_produto'].unique()) > 0 else None
+        if data_produto is None:
+            logger.error("No unique data_produto found in df_data")
+            return df_decomp
+        logger.debug(f"Data produto: {data_produto}")
+        
+        for semana in range(50):
+            date = date_start + relativedelta(weeks=semana)
+            logger.debug(f"Processing operative week {semana + 1} for date {date.strftime('%Y-%m-%d')}")
+            
+            date_m1 = date.replace(day=1).strftime("%Y-%m-%d")
+            date_m2 = (date + relativedelta(months=1)).replace(day=1).strftime("%Y-%m-%d")
+            logger.debug(f"Dates for interpolation: month1={date_m1}, month2={date_m2}")
+            
+            for ss in df_data['submercado'].unique():
+                logger.debug(f"Processing submercado: {ss}")
+                
+                for pat, valor in MAP_PAT.items():
+                    logger.debug(f"Processing patamar: {pat} (mapped to {valor})")
+                    dict_carga = {
+                        'semana_operativa': date.strftime("%Y-%m-%d"),
+                        'data_produto': data_produto,
+                        'submercado': ss,
+                        'patamar': valor
+                    }
+                    
+                    for colum, coluna in MAP_COLUMNS.items():
+                        valor_m1 = df_data.loc[
+                            (df_data['data_referente'] == date_m1) &
+                            (df_data['submercado'] == ss) &
+                            (df_data['patamar'] == pat), coluna
+                        ].values[0]
+                        valor_m2 = df_data.loc[
+                            (df_data['data_referente'] == date_m2) &
+                            (df_data['submercado'] == ss) &
+                            (df_data['patamar'] == pat), coluna
+                        ].values[0]
+                        
+                        logger.debug(f"Values for {colum}: month1={valor_m1}, month2={valor_m2}")
+                        
+                        days = days_per_month(date, date + timedelta(days=7))
+                        logger.debug(f"Days per month for {colum}: {days}")
+                        
+                        dict_carga[colum] = round((valor_m1 * days[1] + valor_m2 * days[2]) / 7,0)
+                        logger.info(f"Values for {colum.rjust(10)} in submercado: {ss.rjust(2)}, patamar: {pat.rjust(6)}, value: {str(dict_carga[colum]).rjust(7)}")
+                    
+                    df_decomp = pd.concat([df_decomp, pd.DataFrame([dict_carga])], axis=0, ignore_index=True)
+        
+        df_decomp['submercado'] = df_decomp['submercado'].replace('SE', 'SECO')
+        logger.info(f"Completed processing. Output DataFrame shape: {df_decomp.shape}")
+        
+        return df_decomp
+            
     def criar_dict_dp(self):
         periods = [f'valor_p{i}' for i in range(1, 4)]
         inner_keys = [str(i) for i in range(1, 5)]
@@ -243,7 +315,7 @@ class DecompUpdater:
                 for type_ in ['EOL']:
                     key = f'{region}_{type_}'
                     data['pq'][period][key] = {}
-        return data['pq']
-
+        return data['pq']  
+    
 if __name__ == '__main__':
     updater = DecompUpdater()

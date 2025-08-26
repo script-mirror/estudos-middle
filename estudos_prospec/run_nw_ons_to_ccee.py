@@ -324,11 +324,11 @@ def main():
         update_confhd(path_deck_nw + "/confhd.dat", PATH_NW_INTERNO + "/confhd.dat")
         delete_file(path_deck_nw, ['DGER.DAT', 'VAZOES.DAT', 'VAZPAST.DAT', 'ARQUIVOS.DAT', 'CONFHD.DAT'])
         logging.info("Copying internal files to deck path")
-        shutil.copy(PATH_NW_INTERNO + '/dger.dat', path_deck_nw + '/dger.dat')
-        shutil.copy(PATH_NW_INTERNO + '/vazoes.dat', path_deck_nw + '/vazoes.dat')
-        shutil.copy(PATH_NW_INTERNO + '/vazpast.dat', path_deck_nw + '/vazpast.dat')
+        shutil.copy(PATH_NW_INTERNO + '/dger.dat',     path_deck_nw + '/dger.dat')
+        shutil.copy(PATH_NW_INTERNO + '/vazoes.dat',   path_deck_nw + '/vazoes.dat')
+        shutil.copy(PATH_NW_INTERNO + '/vazpast.dat',  path_deck_nw + '/vazpast.dat')
         shutil.copy(PATH_NW_INTERNO + '/arquivos.dat', path_deck_nw + '/arquivos.dat')
-        shutil.copy(PATH_NW_INTERNO + '/confhd.dat', path_deck_nw + '/confhd.dat')
+        shutil.copy(PATH_NW_INTERNO + '/confhd.dat',   path_deck_nw + '/confhd.dat')
     else:
         logging.info(f"Using definitive deck name: {deck_name}")
     

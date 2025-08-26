@@ -69,9 +69,7 @@ class DeckUpdater:
             else:
                 send_whatsapp_message(
                     self.consts.WHATSAPP_DECKS,
-                    f"Erro na atualização CVU \nTipo: CVU {tipo_cvu} \nData do produto: {dt_produto.strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",
-                    ''
-                )
+                    f"Erro na atualização CVU \nTipo: CVU {tipo_cvu} \nData do produto: {dt_produto.strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",'')
                 self.logger.info(f"Data do produto {dt_produto.strftime('%d/%m/%Y')} não está entre o 2º e o 6º dia útil do mês.")
                 raise ValueError(f"Data do produto {dt_produto.strftime('%d/%m/%Y')} não está entre o 2º e o 6º dia útil do mês.")
 
@@ -87,9 +85,7 @@ class DeckUpdater:
             else:
                 send_whatsapp_message(
                     self.consts.WHATSAPP_DECKS,
-                    f"Erro na atualização CVU \nTipo: CVU {tipo_cvu} \nData do produto: {dt_produto.strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",
-                    ''
-                )
+                    f"Erro na atualização CVU \nTipo: CVU {tipo_cvu} \nData do produto: {dt_produto.strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",'')
                 self.logger.info(f"Data do produto {dt_produto.strftime('%d/%m/%Y')} não está entre o 16º e o 21º dia do mês.")
                 raise ValueError(f"Data do produto {dt_produto.strftime('%d/%m/%Y')} não está entre o 16º e o 21º dia do mês.")
 
@@ -128,17 +124,13 @@ class DeckUpdater:
             else:
                 send_whatsapp_message(
                     self.consts.WHATSAPP_DECKS,
-                    f"Erro na atualização CVU \nTipo: CVU {tipo_cvu} \nData do produto: {dt_produto.strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",
-                    ''
-                )
+                    f"Erro na atualização CVU \nTipo: CVU {tipo_cvu} \nData do produto: {dt_produto.strftime('%d/%m/%Y')} \nNão confere com a data padrão de atualização.",'')
                 self.logger.info(f"Data do produto {dt_produto.strftime('%d/%m/%Y')} não está entre o 16º e o 21º dia do mês.")
                 raise ValueError(f"Data do produto {dt_produto.strftime('%d/%m/%Y')} não está entre o 16º e o 21º dia do mês.")
         else:
             send_whatsapp_message(
                 self.consts.WHATSAPP_GILSEU,
-                f"Erro na atualização CVU \nTipo: CVU {tipo_cvu} \nData do produto: {dt_produto.strftime('%d/%m/%Y')} \nNão confere com nenhum padrão de cvu.",
-                ''
-            )
+                f"Erro na atualização CVU \nTipo: CVU {tipo_cvu} \nData do produto: {dt_produto.strftime('%d/%m/%Y')} \nNão confere com nenhum padrão de cvu.",'')
             self.logger.info(f"Produto {params['produto']} inválido. Use 'conjuntural', 'conjuntural_revisado' ou 'merchant'.")
             raise ValueError(f"Produto {params['produto']} inválido. Use 'conjuntural', 'conjuntural_revisado' ou 'merchant'.")
 
@@ -150,6 +142,13 @@ class DeckUpdater:
     def update_carga_decomp(self, params: dict) -> None:
         df_data = self.get_dados_banco('carga-decomp')
         self.decomp.update_carga_and_mmgd(params, df_data)
+        
+    def update_carga_newave(self, params: dict) -> None:
+        df_data = self.get_dados_banco('newave/previsoes-cargas')
+        df_decomp = self.decomp.carga_nw_to_decomp(params, df_data)
+        self.decomp.update_carga_and_mmgd(params, df_decomp)
+        self.newave.update_carga(params)        
+
 
     def update_re(self, params: dict) -> None:
         df_data = self.get_dados_banco('restricoes-eletricas')
@@ -170,13 +169,14 @@ class DeckUpdater:
             'CVU': self.update_cvu,
             'EOLICA': self.update_eolica,
             'CARGA-DECOMP': self.update_carga_decomp,
+            'CARGA-NEWAVE': self.update_carga_newave,
             'RE-DECOMP': self.update_re,
             None: lambda params: self.logger.error("Produto não informado ou inválido. Por favor, informe um produto válido.")
         }
         
         # debug
-        #params['produto'] = 'CVU'
-        #params['id_estudo'] = [27227]
+        #params['produto'] = 'CARGA-NEWAVE'
+        #params['id_estudo'] = [27320]
         #params['tipo_cvu'] = 'merchant'
         #params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         #params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
