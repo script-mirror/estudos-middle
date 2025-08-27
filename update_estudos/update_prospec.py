@@ -145,10 +145,9 @@ class DeckUpdater:
         
     def update_carga_newave(self, params: dict) -> None:
         df_data = self.get_dados_banco('newave/previsoes-cargas')
+        self.newave.update_carga(params)     
         df_decomp = self.decomp.carga_nw_to_decomp(params, df_data)
         self.decomp.update_carga_and_mmgd(params, df_decomp)
-        self.newave.update_carga(params)        
-
 
     def update_re(self, params: dict) -> None:
         df_data = self.get_dados_banco('restricoes-eletricas')
