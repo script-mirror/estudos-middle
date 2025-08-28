@@ -174,12 +174,18 @@ class DeckUpdater:
         }
         
         # debug
-        #params['produto'] = 'CARGA-NEWAVE'
-        #params['id_estudo'] = [27320]
-        #params['tipo_cvu'] = 'merchant'
-        #params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-        #params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-        #BLOCK_FUNCTIONS[params['produto']](params)
+        """params['produto'] = 'CVU'
+        params['id_estudo'] = [27351]
+        params['tipo_cvu'] = 'merchant'
+        params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+        params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+        BLOCK_FUNCTIONS[params['produto']](params)
+        
+        params['produto'] = 'EOLICA'
+        params['id_estudo'] = [27351]
+        params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+        params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+        BLOCK_FUNCTIONS[params['produto']](params)"""
        
         if len(sys.argv) >= 3:
             for i in range(1, len(sys.argv), 2):

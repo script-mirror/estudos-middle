@@ -332,7 +332,7 @@ def main():
     else:
         logging.info(f"Using definitive deck name: {deck_name}")
     
-    update_wind([path_sistema])    
+    #update_wind([path_sistema])    
     update_re(path_deck_nw + "/restricao-eletrica.csv")
     update_gtmin(path_expt, gtmin_ccee(path_gtmin + '/' + gtmin_file), data_deck)
     zip_files(path_deck_nw, PATH_BASE + '/' + deck_name)

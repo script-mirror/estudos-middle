@@ -148,9 +148,10 @@ class DecompUpdater:
                 if ute in df_data['cd_usina'].unique():
                     dict_data['ct']['cvu'][f'{ute}'] = {}
 
-            for stage in meta_data['stages']:
-                data = meta_data['deck_date'] + relativedelta(weeks=+stage-1) + timedelta(days=6)
-                for ute in meta_data['power_plants']:
+            
+            for ute in meta_data['power_plants']:
+                for stage in meta_data['stages']:
+                    data = meta_data['deck_date'] + relativedelta(weeks=+stage-1) + timedelta(days=6)
                     if ute in df_data['cd_usina'].unique():
                         if params['tipo_cvu'] == 'merchant':
                             data_inicio = df_data[df_data['cd_usina'] == ute]['data_inicio'].values[0]
@@ -161,7 +162,11 @@ class DecompUpdater:
                                 dict_data['ct']['cvu'][f'{ute}'][f'{stage}'] = float(df_data.loc[(df_data['cd_usina'] == ute), 'vl_cvu'].values[0])
                         else:
                             dict_data['ct']['cvu'][f'{ute}'][f'{stage}'] = float(df_data.loc[(df_data['cd_usina'] == ute), 'vl_cvu'].values[0])
-
+                               
+                if ute in df_data['cd_usina'].unique():
+                    if len(dict_data['ct']['cvu'][f'{ute}']) ==0:
+                        dict_data['ct']['cvu'].pop(f'{ute}')
+                    
             process_decomp(deepcopy(DecompParams(**params_decomp)), dict_data)
         self.send_all_dadger_update(params['id_estudo'], params['path_download'], logger, logging_name, tag_update)
 
