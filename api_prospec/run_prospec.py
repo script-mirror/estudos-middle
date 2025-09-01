@@ -1,7 +1,7 @@
 from functionsProspecAPI import  *
 from createStudyProspecAPI import *
 from datetime import datetime
-from atualiza_ear import gera_ear
+from api_prospec.atualiza_ear_rdh import gera_ear
 from datetime import datetime
 from middle.utils import Constants 
 consts = Constants()
