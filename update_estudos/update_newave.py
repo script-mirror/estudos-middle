@@ -115,6 +115,7 @@ class NewaveUpdater:
                             logger.info(f"Created new row for usina {ute} with CVU: current value={old_cvu}, new value={new_cvu}")
 
                     logger.debug("Sorting and formatting final usinas dataframe")
+                    df_usinas = df_usinas[(df_usinas['data_inicio'] <= df_usinas['data_fim']) | (df_usinas['data_fim'].isna())]
                     clast.modificacoes = df_usinas.sort_values(by=['codigo_usina', 'data_inicio'], na_position='first')
                     
                     logger.info(f"Writing updated clast to {path}")
@@ -193,6 +194,7 @@ class NewaveUpdater:
                             logger.info(f"Creating new row for usina {ute} with CVU: current value={old_cvu}, new value={new_cvu}")
 
                     logger.debug("Sorting and formatting final usinas dataframe")
+                    df_usinas = df_usinas[(df_usinas['data_inicio'] <= df_usinas['data_fim']) | (df_usinas['data_fim'].isna())]
                     clast.modificacoes = df_usinas.sort_values(by=['codigo_usina', 'data_inicio'], na_position='first')
                     
                     logger.info(f"Writing updated clast to {path}")

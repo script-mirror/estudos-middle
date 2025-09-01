@@ -175,14 +175,13 @@ class DeckUpdater:
         
         # debug
         """params['produto'] = 'CVU'
-        params['id_estudo'] = [27351]
+        params['id_estudo'] = [27411]
         params['tipo_cvu'] = 'merchant'
         params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         BLOCK_FUNCTIONS[params['produto']](params)
         
         params['produto'] = 'EOLICA'
-        params['id_estudo'] = [27351]
         params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         BLOCK_FUNCTIONS[params['produto']](params)"""
