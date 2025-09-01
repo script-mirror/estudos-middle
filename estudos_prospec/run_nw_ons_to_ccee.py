@@ -317,8 +317,8 @@ def main():
     
     deck_name = 'NW' + data_deck.strftime('%Y%m') + '_ONS-TO-CCEE.zip'
     att_eolica  = 'Não Atualizada'
-    att_vazpast = 'Não Atualizada'
-    att_confhd  = 'Não Atualizada'
+    att_vazpast = 'Não Atualizado'
+    att_confhd  = 'Não Atualizado'
     if preliminar:
         deck_name = 'NW' + data_deck.strftime('%Y%m') + '_ONS-TO-CCEE_PRELIMINAR.zip'
         logging.info(f"Using preliminary deck name: {deck_name}")
@@ -334,8 +334,8 @@ def main():
         shutil.copy(PATH_NW_INTERNO + '/confhd.dat',   path_deck_nw + '/confhd.dat')
         update_wind([path_sistema])
         att_eolica  = 'Atualizada'
-        att_vazpast = 'Atualizada'
-        att_confhd  = 'Atualizada'
+        att_vazpast = 'Atualizado'
+        att_confhd  = 'Atualizado'
     else:
         logging.info(f"Using definitive deck name: {deck_name}")
     
