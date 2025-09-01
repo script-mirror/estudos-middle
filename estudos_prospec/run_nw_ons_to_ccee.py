@@ -316,6 +316,9 @@ def main():
     logging.info(f"EXPT file: {path_expt}")
     
     deck_name = 'NW' + data_deck.strftime('%Y%m') + '_ONS-TO-CCEE.zip'
+    att_eolica  = 'Não Atualizada'
+    att_vazpast = 'Não Atualizada'
+    att_confhd  = 'Não Atualizada'
     if preliminar:
         deck_name = 'NW' + data_deck.strftime('%Y%m') + '_ONS-TO-CCEE_PRELIMINAR.zip'
         logging.info(f"Using preliminary deck name: {deck_name}")
@@ -329,15 +332,20 @@ def main():
         shutil.copy(PATH_NW_INTERNO + '/vazpast.dat',  path_deck_nw + '/vazpast.dat')
         shutil.copy(PATH_NW_INTERNO + '/arquivos.dat', path_deck_nw + '/arquivos.dat')
         shutil.copy(PATH_NW_INTERNO + '/confhd.dat',   path_deck_nw + '/confhd.dat')
+        update_wind([path_sistema])
+        att_eolica  = 'Atualizada'
+        att_vazpast = 'Atualizada'
+        att_confhd  = 'Atualizada'
     else:
         logging.info(f"Using definitive deck name: {deck_name}")
     
-    #update_wind([path_sistema])    
     update_re(path_deck_nw + "/restricao-eletrica.csv")
     update_gtmin(path_expt, gtmin_ccee(path_gtmin + '/' + gtmin_file), data_deck)
     zip_files(path_deck_nw, PATH_BASE + '/' + deck_name)
     logging.info(f"Sending WhatsApp message with deck: {deck_name}")
-    send_whatsapp_message(consts.WHATSAPP_GILSEU, 'Deck Newave ONS to CCEE\nGTmin: ' + gtmin_file + "\nEolica: Atualizada", PATH_BASE + '/' + deck_name)
+    send_whatsapp_message(consts.WHATSAPP_GILSEU, 'Deck Newave ONS to CCEE\nGTmin: ' + gtmin_file +\
+        f"\nEolica: {att_eolica}" +f"\nvazpast.dat: {att_vazpast}"+f"\nconfhd.dat: {att_confhd}" ,
+                          PATH_BASE + '/' + deck_name)
     execute_prospec(PATH_BASE, deck_name.split('.')[0])
     logging.info("Main execution completed")
 
