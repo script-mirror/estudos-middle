@@ -13,8 +13,8 @@ EMAIL_CONFIG = frozendict({
         'path_prevs': 'next_rv',
         'aguardar_fim': True,
         "considerar_rv": 'sem',
-        'rodada':{'Preliminar':['ECMWF_ENS-Preliminar-SMAP', 'GEFS-Preliminar-SMAP', 'ECMWF_ENS-00-Preliminar-SMAP', 'GEFS-00-Preliminar-SMAP', 'ONS_Pluvia-Preliminar-SMAP', 'ONS_ETAd_1_Pluvia-Preliminar-SMAP'],
-                  'Definitiva':['ECMWF_ENS-SMAP', 'GEFS-SMAP', 'ECMWF_ENS-00-SMAP', 'GEFS-00-SMAP', 'ONS_Pluvia-SMAP', 'ONS_ETAd_1_Pluvia-SMAP']}
+        'rodada':{'Preliminar':['ONS_Pluvia-Preliminar-SMAP', 'ONS_ETAd_1_Pluvia-Preliminar-SMAP','ECMWF_ENS-Preliminar-SMAP', 'GEFS-Preliminar-SMAP', 'ECMWF_ENS-00-Preliminar-SMAP', 'GEFS-00-Preliminar-SMAP'],
+                  'Definitiva':['ONS_Pluvia-SMAP', 'ONS_ETAd_1_Pluvia-SMAP','ECMWF_ENS-SMAP', 'GEFS-SMAP', 'ECMWF_ENS-00-SMAP', 'GEFS-00-SMAP']}
     }),
     'UPDATE': frozendict({
         'description': 'Rodadas proxima RV',
