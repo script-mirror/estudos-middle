@@ -3,6 +3,7 @@
 **/input/**
 .dat
 **/Resultados/**
+**/volume_uhe.csv
 .pluvia
 # Byte-compiled / optimized / DLL files
 __pycache__/
