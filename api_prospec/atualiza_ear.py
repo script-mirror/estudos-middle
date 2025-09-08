@@ -128,6 +128,7 @@ class VolumeUHEProcessor:
         df_data   = df_data[['cd_usina', 'data_referente', 'volume']]
         df_data   = df_data.dropna(subset=['cd_usina'])
         df_data   = df_data.dropna(subset=['volume'])
+        df_data   = df_data[df_data['cd_usina'].isin(cadastro['usina'])].reset_index(drop=True)
         df_data   = df_data.pivot(index='cd_usina', columns='data_referente', values='volume')
         max_data  = pd.to_datetime(max(df_data.keys()))
         dias_proj =  (SemanaOperativa.get_next_saturday(max_data) -max_data).days-1

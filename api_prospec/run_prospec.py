@@ -15,7 +15,7 @@ def main(parametros):
 
     config.downloadDadger = False
     config.maxRestarts    = 2      
-    config.sendVolume = False
+    #config.sendVolume = False
     
     if parametros['apenas_email']:
         print('Iniciando download dos resultados do estudo com id:',int(parametros['id_estudo']))
