@@ -125,7 +125,6 @@ class VolumeUHEProcessor:
         """Gera o arquivo volume_uhe.csv."""
         logger.info("Generating volume_uhe.csv for %d projection days", dias_proj)
         try:
-            print('Gerando volume_uhe.csv...')        
             projecao = [self.regress_post(x, df_data, cadastro, dias_proj) for x in cadastro.index]
             logger.debug("Completed regression calculations for all postos")
             projecao = pd.concat([pd.DataFrame(cadastro.iloc[:,1]).reset_index().drop(["posto"], axis=1),
