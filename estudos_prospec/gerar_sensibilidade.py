@@ -9,7 +9,7 @@ import sys
 import zipfile
 import logging  # Already present, kept for clarity
 from copy import deepcopy
-from estudos_prospec.config_default import PARAMETROS
+from config_default import PARAMETROS
 from middle.utils import Constants 
 from middle.decomp.atualiza_decomp import process_decomp 
 from middle.decomp import DecompParams
