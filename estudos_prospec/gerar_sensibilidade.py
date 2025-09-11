@@ -136,8 +136,8 @@ def gerar_estudo_prospec(params: Dict[str, Any]) -> Dict[str, Any]:
     params['dadger_path']     = caminhos[0]
     params['output_path']     = os.path.abspath(output_dir)
     params['id_estudo']       = id_estudo
-    params['pq_load_level']   =  read_patamar_pq( ABS_PATH +  '/input/patamar/patamar.dat')
-    params['load_level_data'] =  read_patamar_carga( ABS_PATH +  '/input/patamar/patamar.dat')
+    params['pq_load_level']   =  read_patamar_pq(os.path.join(consts.PATH_PROJETOS, 'estudos-middle/estudos_prospec/input/patamar/patamar.dat'))
+    params['load_level_data'] =  read_patamar_carga(os.path.join(consts.PATH_PROJETOS, 'estudos-middle/estudos_prospec/input/patamar/patamar.dat'))
 
     return params
 
@@ -145,8 +145,8 @@ def gerar_estudo_prospec(params: Dict[str, Any]) -> Dict[str, Any]:
 def run_with_parms() -> None:
     
     params: Dict[str, Any] = {}
-    argumentos: str = sys.argv[1]
-    #argumentos = "{'BASE': {'dp': {'carga': {'1': {'1': 0}, 'absoluto': 0}}}, 'CARGA-SE(-100)': {'dp': {'carga': {'1': {'1': -100}, 'absoluto': 0}}}, 'mapa': 'ONS'}"
+    #argumentos: str = sys.argv[1]
+    argumentos = "{'BASE': {'dp': {'carga': {'1': {'1': 0}, 'absoluto': 0}}}, 'CARGA-SE(-100)': {'dp': {'carga': {'1': {'1': -100}, 'absoluto': 0}}}, 'mapa': 'ONS'}"
     params['sensibilidades']: Dict[str, Any] = eval(argumentos)
     print (argumentos)
     print(eval(argumentos))
@@ -191,7 +191,7 @@ def run_with_parms() -> None:
         start_study(params)
 
     logger.info("Waiting 10 minutes before sending email")
-    #time.sleep(600)
+    time.sleep(600)
 
     parametros['apenas_email'] = True
     parametros['aguardar_fim'] = True
