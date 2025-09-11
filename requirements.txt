@@ -10,10 +10,10 @@ dotenv
 fonttools
 frozendict
 idna
-inewave @ git+https://github.com/wx-middle/inewave.git@f3b4c94f69ed7baec2be28dd7a2b06aacf39ea8d
+inewave @ git+https://github.com/wx-middle/inewave.git
 kiwisolver
 matplotlib
-middle @ git+https://github.com/wx-middle/libs-middle.git@1e4604fbab3c9eec61e645757d25adda80f3bfb9
+middle @ git+https://github.com/wx-middle/libs-middle.git
 numpy
 packaging
 pandas
@@ -31,3 +31,4 @@ tabulate
 typing_extensions
 tzdata
 urllib3
+lxml
