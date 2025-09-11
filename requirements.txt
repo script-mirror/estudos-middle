@@ -1,3 +1,33 @@
+beautifulsoup4
+bs4
+certifi
+cfinterface
+charset-normalizer
+contourpy
+cycler
+dateutils
+dotenv
+fonttools
+frozendict
+idna
+inewave @ git+https://github.com/wx-middle/inewave.git@f3b4c94f69ed7baec2be28dd7a2b06aacf39ea8d
+kiwisolver
+matplotlib
+middle @ git+https://github.com/wx-middle/libs-middle.git@1e4604fbab3c9eec61e645757d25adda80f3bfb9
+numpy
+packaging
 pandas
-requests
+pdf2image
+pillow
+pyparsing
+python-dateutil
 python-dotenv
+pytz
+requests
+requests-toolbelt
+six
+soupsieve
+tabulate
+typing_extensions
+tzdata
+urllib3
