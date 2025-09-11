@@ -29,7 +29,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 PATH_BASE: str = os.path.join(consts.PATH_ARQUIVOS,  'prospec/backtest_decomp')
 os.makedirs(consts.PATH_ARQUIVOS, exist_ok=True)
 os.makedirs(PATH_BASE, exist_ok=True)
-sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))
+sys.path.append(os.path.join(consts.PATH_PROJETOS, "estudos-middle/api_prospec"))   
 import run_prospec
 from functionsProspecAPI import getStudiesByTag, authenticateProspec, getInfoFromStudy, downloadFileFromDeckV2
 

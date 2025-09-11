@@ -136,8 +136,8 @@ def gerar_estudo_prospec(params: Dict[str, Any]) -> Dict[str, Any]:
     params['dadger_path']     = caminhos[0]
     params['output_path']     = os.path.abspath(output_dir)
     params['id_estudo']       = id_estudo
-    params['pq_load_level']   =  read_patamar_pq(os.path.join(consts.PATH_PROJETOS, 'estudos-middle/estudos_prospec/input/patamar/patamar.dat'))
-    params['load_level_data'] =  read_patamar_carga(os.path.join(consts.PATH_PROJETOS, 'estudos-middle/estudos_prospec/input/patamar/patamar.dat'))
+    params['pq_load_level']   =  read_patamar_pq(os.path.join(consts.PATH_PROJETOS, 'estudos-middle/estudos_prospec/patamar/patamar.dat'))
+    params['load_level_data'] =  read_patamar_carga(os.path.join(consts.PATH_PROJETOS, 'estudos-middle/estudos_prospec/patamar/patamar.dat'))
 
     return params
 
