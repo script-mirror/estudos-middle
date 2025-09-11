@@ -127,6 +127,7 @@ def mover_prevs(folders:str, path_dst:str):
     os.makedirs(path_dst, exist_ok=True)
     sens = ''
     list_prevs = []
+    sens = None
     for zip_path in folders:       
         n_prevs = 0 
         unzip_dir = unzip_file(zip_path,zip_path.replace('.zip',''))    
@@ -141,7 +142,7 @@ def mover_prevs(folders:str, path_dst:str):
             os.makedirs(pathOutput, exist_ok=True)
             if nome_arquivo in os.listdir(pathOutput):
                 nome_arquivo = f'prevs-{modelo.upper()}.rv{rv}'
-            else:
+            elif sens is None:
                 sens = modelo.replace('Preliminar','Prel').replace('_Pluvia','').replace('AgrupadoPrecipitacao','A.Precip')
                 sens = sens.replace('PrecZero_60','P.Zero').replace('PrecZero_120','P.Zero').replace('Usuario_','')
             n_prevs += 1
