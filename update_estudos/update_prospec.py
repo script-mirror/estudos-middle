@@ -1,6 +1,7 @@
 import datetime
 import os
 import sys
+import shutil
 import requests
 import pandas as pd
 from update_newave import NewaveUpdater
@@ -179,9 +180,9 @@ class DeckUpdater:
         params['tipo_cvu'] = 'merchant'
         params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-        BLOCK_FUNCTIONS[params['produto']](params)
+        BLOCK_FUNCTIONS[params['produto']](params)"""
         
-        params['produto'] = 'EOLICA'
+        """params['produto'] = 'RE-DECOMP'
         params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         BLOCK_FUNCTIONS[params['produto']](params)"""
@@ -208,7 +209,9 @@ class DeckUpdater:
 
         print(params)
         BLOCK_FUNCTIONS[params['produto']](params)
-
+        shutil.rmtree(params['path_download'], ignore_errors=True)
+        shutil.rmtree(params['path_out'], ignore_errors=True)
+        
 if __name__ == '__main__':
     logger = criar_logger('logger.log', os.path.join(Constants().PATH_ARQUIVOS, 'logger.log'))
     updater = DeckUpdater()
