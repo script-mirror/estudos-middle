@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 import shutil
 from middle.utils import SemanaOperativa
-from middle.utils import HtmlBuilder
 from middle.message import send_whatsapp_message, send_email_message
 from middle.utils import html_to_image
 from middle.utils import Constants 
@@ -60,9 +59,50 @@ def remove_dir(compilado_zipados):
 			pass
 
 
+def gerar_html(dados) -> str:
+	body = dados.get('body', [])
+	header = dados.get('header', [])
+	width_colunas = dados.get('width_colunas', [])
+	nth_color = 1
+	tamanho_default_colunas = 61 
+	if width_colunas == [] and header != []:
+		for i in range(len(header)+1):
+			width_colunas.append(tamanho_default_colunas)
+
+	tamanho_tabela = 0
+	for tam in width_colunas:
+		tamanho_tabela += tam
+
+	html = '<table style="width:{}pt;border-collapse:collapse" width="{}" cellspacing="0" cellpadding="0" border="0"><tbody>\n'.format(int(tamanho_tabela*1.12), int(tamanho_tabela*1.12*1.33))
+	if header != []:
+		html += '\t<tr style="height: 15pt;">\n'
+		for i, cell in enumerate(header):
+			html += '\t\t<td style="width: {}pt; border: 1pt solid windowtext; background: rgb(100,100,100) none repeat scroll 0% 0%; padding: 0cm 3.5pt; height: 15pt;" width="{}" valign="bottom" nowrap="nowrap">\n'.format(width_colunas[i], int(width_colunas[i]*1.33))
+			html += '\t\t<p class="MsoNormal" style="margin: 0cm 0cm 0.0001pt; text-align: center; line-height: normal; font-size: 11pt; font-family: &quot;Calibri&quot;, sans-serif;" align="center"><span style="color: white;">{}<span></span></span></p>\n'.format(cell)
+			html += '\t\t</td>\n'
+		html += '\t\t</tr>\n'
+
+	cor_verde = False
+	if body != []:
+		for index_linha, linha in enumerate(body):
+			if index_linha % nth_color == 0:
+				cor_verde = not cor_verde
+			html += '\t<tr style="height: 15pt;">\n'
+			for cell in linha:
+				if cor_verde:
+					html += '\t\t<td style="width:49pt;border-color:currentcolor windowtext windowtext;border-style:none solid solid;border-width:medium 1pt 1pt;background:white none repeat scroll 0% 0%;padding:0cm 3.5pt;height:15pt" width="65" valign="bottom" nowrap="">\n'
+					html += '\t\t<p class="MsoNormal" style="margin:0cm 0cm 0.0001pt;text-align:center;line-height:normal;font-size:11pt;font-family:&quot;Calibri&quot;,sans-serif" align="center"><span style="color:black"><span>&nbsp;</span>{}<span></span></span></p>\n'.format(cell)
+					html += '\t\t</td>\n'
+				else:
+					html += '\t\t<td style="width:49pt;border-color:currentcolor windowtext windowtext;border-style:none solid solid;border-width:medium 1pt 1pt;background:rgb(200,200,200) none repeat scroll 0% 0%;padding:0cm 3.5pt;height:15pt" width="65" valign="bottom" nowrap="">\n'
+					html += '\t\t<p class="MsoNormal" style="margin:0cm 0cm 0.0001pt;text-align:center;line-height:normal;font-size:11pt;font-family:&quot;Calibri&quot;,sans-serif" align="center"><span style="color:black"><span>&nbsp;</span>{}<span></span></span></p>\n'.format(cell)
+					html += '\t\t</td>\n'
+			html += '\t</tr>\n'
+	html += '</tbody></table>\n'
+	return html
+
 def gerar_resultados(params):    
 
-	html_builder = HtmlBuilder()
 	if params['prevs_name'] == None:
 		params['prevs_name'] = [''] * len(params['path_name'])
 
@@ -346,7 +386,7 @@ def gerar_resultados(params):
 		'width_colunas': [200, 100] + [120] * (resumo_tabela1.shape[1] - 1),
 	}
  
-	html += html_builder.gerar_html('resultados_prospec', dados)
+	html += gerar_html(dados)
 	html += "<br/>"
 	html += "<br/>"
 	html += "<br/>"
