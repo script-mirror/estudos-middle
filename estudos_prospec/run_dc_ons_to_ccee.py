@@ -63,7 +63,7 @@ PATH_CONFIG: Dict[str, str] = {
 
 FILES_TO_COPY: List[str] = ['caso.dat', 'hidr.dat', 'mlt.dat', 'perdas.dat', 'polinjus.csv', 'indices.csv']
 DADGNL_VAZOES: List[str] = ['dadgnl.rv{}', 'vazoes.rv{}']
-CHECKLIST_BLOCKS: List[str] = ['UH', 'CT', 'PQ', 'DP', 'MP', 'RE', 'HV', 'HQ', 'VE']
+CHECKLIST_BLOCKS: List[str] = ['UH', 'CT', 'DP', 'MP', 'RE', 'HV', 'HQ', 'VE']
 
 def get_deck_interno(year, month, rv):
     logger.info(f"Fetching internal deck for year={year}, month={month}, revision={rv}")
