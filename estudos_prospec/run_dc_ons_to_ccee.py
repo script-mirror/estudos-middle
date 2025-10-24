@@ -310,7 +310,8 @@ def main() -> None:
 
     # Setup output decks
     logger.info("Setting up output decks")
-    for folder in [deck_decomp + '__ONS-TO-CCEE', deck_decomp + '__RAIZEN', deck_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN']:
+    #for folder in [deck_decomp + '__ONS-TO-CCEE', deck_decomp + '__RAIZEN', deck_decomp + '__ONS-TO-CCEE_VAZOES-RAIZEN']:
+    for folder in [deck_decomp + '__ONS-TO-CCEE']:
         folder_path: str = os.path.join(PATH_CONFIG['output_decks'], folder)
         os.makedirs(folder_path, exist_ok=True)
         if folder == deck_decomp + '__RAIZEN':
