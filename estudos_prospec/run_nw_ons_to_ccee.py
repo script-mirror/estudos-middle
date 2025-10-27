@@ -26,7 +26,7 @@ from update_newave import NewaveUpdater
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def get_deck_interno():
+def get_deck_interno(data):
     logging.info("Authenticating with Prospec API")
     authenticateProspec(consts.API_PROSPEC_USERNAME, consts.API_PROSPEC_PASSWORD)
     logging.info("Fetching studies with tag 'FCF'")
@@ -40,7 +40,7 @@ def get_deck_interno():
             listOfDecks = prospecStudy['Decks']
             logging.debug(f"Found {len(listOfDecks)} decks for study {prospecId}")
             for deck in listOfDecks:
-                if deck['Model'] == 'NEWAVE':
+                if deck['Model'] == 'NEWAVE' and deck['Year'] == data.year and deck['Month'] == data.month:
                     path = consts.PATH_RESULTS_PROSPEC + '/newave/' + deck['FileName']
                     arrayOfFiles = ['dger.dat', 'vazpast.dat', 'vazoes.dat', 'arquivos.dat', 'confhd.dat']
                     logging.info(f"Downloading deck {deck['FileName']} to {path}")
@@ -322,7 +322,7 @@ def main():
     if preliminar:
         deck_name = 'NW' + data_deck.strftime('%Y%m') + '_ONS-TO-CCEE_PRELIMINAR.zip'
         logging.info(f"Using preliminary deck name: {deck_name}")
-        PATH_NW_INTERNO = get_deck_interno()
+        PATH_NW_INTERNO = get_deck_interno(data_deck)
         logging.info(f"Internal deck retrieved: {PATH_NW_INTERNO}")
         update_confhd(path_deck_nw + "/confhd.dat", PATH_NW_INTERNO + "/confhd.dat")
         delete_file(path_deck_nw, ['DGER.DAT', 'VAZOES.DAT', 'VAZPAST.DAT', 'ARQUIVOS.DAT', 'CONFHD.DAT'])

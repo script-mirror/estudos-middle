@@ -173,7 +173,26 @@ def adjust_barras(entdados: str, map_ccee: dict):
         else: 
             yield line
     return entdados
-   
+def read_load_pdo(path:str)-> pd.DataFrame:
+    pdo_file = find_file(path, 'pdo_sist.dat')
+    with open(pdo_file, 'r', encoding='utf-8') as f:
+        pdo_file = f.readlines()
+    data = []
+    load = False
+    for line in pdo_file:
+        parts = line.split(';')
+        if parts[0].lower() == 'iper':
+            load = True
+            continue
+        if load and line[0] != '-':
+            data.append({
+                'PERIODO': parts[0],
+                'SUB': parts[2],
+                'CARGA': parts[4]
+            })
+    df_pdo = pd.DataFrame(data)
+    return df_pdo
+
 def main() -> None:
     data = datetime.now()
     path_ccee = get_latest_deck_ccee(data)
