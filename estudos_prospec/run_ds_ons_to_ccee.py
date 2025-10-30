@@ -1,24 +1,13 @@
 # -*- coding: utf-8 -*-
-import sys
 import os
 import shutil
-import zipfile
-import codecs
-import logging
 import re
-import time
 import pandas as pd
-from pathlib import Path
-from datetime import datetime, date, timedelta
-from string import ascii_lowercase
-from copy import deepcopy
-from typing import List, Dict, Any, Optional, Tuple
+from datetime import datetime, timedelta
+from typing import List
 from middle.message import send_whatsapp_message
 from middle.utils import Constants, setup_logger, extract_zip, create_directory, SemanaOperativa, get_decks_ccee
-from middle.s3 import (
-    handle_webhook_file,
-    get_latest_webhook_product,
-)
+from middle.s3 import (handle_webhook_file, get_latest_webhook_product)
 consts = Constants()
 logger = setup_logger()
 
@@ -48,7 +37,7 @@ def get_latest_deck_ons(data):
 
 def create_deck_base(path_ons: str, path_ccee: str):
     rv= path_ccee.split('RV')[1][:1]
-    files_ccee_to_copy = [f'cortdeco.rv{rv}', 'rmpflx.dat','dessem.arq',f'mapcut.rv{rv}','restseg.dat','rstlpp.dat']
+    files_ccee_to_copy = [f'cortdeco.rv{rv}', 'rmpflx.dat',f'mapcut.rv{rv}','restseg.dat','rstlpp.dat']
     path_dest = path_ons.replace('ONS', 'ONS-TO-CCEE')
     create_directory(path_dest,'')
     
@@ -70,14 +59,15 @@ def find_file(directory: str, file_find: str) -> str:
         if file.lower().startswith(file_find.lower()):
             logger.info(f"File found: {file}")
             file_txt = open(os.path.join(directory, file),
-            'r', encoding='utf-8', errors='ignore').readlines()
+            'r', encoding='latin-1', errors='ignore').readlines()
             return file_txt
     logger.error(f"No {file_find} file found in {directory}")
     raise FileNotFoundError(f"No {file_find} file found in {directory}") 
 
+
 def write_file(directory: str, file_name: str, content: List[str]) -> None:
     """Write content to a file in the specified directory."""
-    with open(os.path.join(directory, file_name), 'w', encoding='utf-8') as f:
+    with open(os.path.join(directory, file_name), 'w', encoding='latin-1') as f:
         f.writelines(content)
     logger.info(f"File {file_name} written successfully in {directory}")
 
@@ -160,6 +150,7 @@ def coment_entdados(entdados: str, map_ccee: dict) -> str:
                 coment = '&'
         entdados_ccee.append(coment+line)
     return entdados_ccee
+ 
     
 def adjust_barras(entdados: str, map_ccee: dict):
     for line in entdados:
@@ -173,43 +164,86 @@ def adjust_barras(entdados: str, map_ccee: dict):
         else: 
             yield line
     return entdados
+
+
+def update_load(entdados: str, df_carga: pd.DataFrame ):
+    for line in entdados:
+        parts = line.split()
+        if parts[0] == 'DP' :
+            filter = (df_carga['DIA'] == int(parts[2])) & \
+                     (df_carga['HORA'] == int(parts[3])) & \
+                     (df_carga['MINUTO'] == int(parts[4])) & \
+                     (df_carga['SUB'] == int(parts[1]))
+            if filter.any():
+                parts[-1] = df_carga[filter]['CARGA'].values[0]
+            yield format_line(parts, line)
+        else: 
+            yield line
+    return entdados
+
+def comment_arq(dessem_arq: str):
+    for line in dessem_arq:
+        parts = line.split()
+        if parts[0].strip().upper() == 'INDELET':
+            yield '&'+ line
+        else: 
+            yield line
+    return dessem_arq 
+
 def read_load_pdo(path:str)-> pd.DataFrame:
     pdo_file = find_file(path, 'pdo_sist.dat')
-    with open(pdo_file, 'r', encoding='utf-8') as f:
-        pdo_file = f.readlines()
     data = []
     load = False
     for line in pdo_file:
         parts = line.split(';')
-        if parts[0].lower() == 'iper':
+        
+        if len(line.split()) > 0:
+            if line.split()[0].lower() == 'te':
+                date = datetime.strptime(line.split()[-1].strip(), "%d/%m/%Y")
+        
+        if parts[0].strip().lower() == 'iper':
             load = True
             continue
-        if load and line[0] != '-':
+        
+        if load and not '-' in parts[0]:
+            date_load = date + timedelta(minutes=(int(parts[0].strip())-1)*30)
             data.append({
-                'PERIODO': parts[0],
-                'SUB': parts[2],
-                'CARGA': parts[4]
+                'PERIODO': int(parts[0].strip()),
+                'DIA': int(date_load.day),
+                'HORA': int(date_load.hour),
+                'MINUTO': int(date_load.minute),
+                'SUB': parts[2].strip(),
+                'CARGA': parts[4].strip()
             })
-    df_pdo = pd.DataFrame(data)
-    return df_pdo
+    df_carga = pd.DataFrame(data)
+    df_carga['MINUTO'] = df_carga['MINUTO'].replace(30, 1)
+    df_carga = df_carga[df_carga['PERIODO'] < 49]
+    df_carga = df_carga[df_carga['SUB'] != 'FC']
+    df_carga['SUB'] = df_carga['SUB'].replace({'SE': 1,'S': 2,'NE': 3,'N': 4})
+    df_carga = df_carga.sort_values(by=['SUB', 'PERIODO', 'HORA', 'MINUTO']).reset_index(drop=True)
+    return df_carga
 
 def main() -> None:
-    data = datetime.now()
+    data      = datetime.now()
     path_ccee = get_latest_deck_ccee(data)
     path_ons  = get_latest_deck_ons(data)
-    path_ons_to_ccee = create_deck_base(path_ons, path_ccee)
+    path_deck = create_deck_base(path_ons, path_ccee)
+    df_carga  = read_load_pdo(path_ons)
+    map_ccee  = map_entdados_ccee(find_file(path_ccee, 'entdados.dat'))
+    entdados  = adjust_tm(find_file(path_deck, 'entdados.dat'))
+    entdados  = update_load(entdados, df_carga)
+    entdados  = adjust_di(entdados)    
+    entdados  = coment_entdados(entdados, map_ccee)
+    entdados  = adjust_barras(entdados, map_ccee['BARRA'])
+    write_file(path_deck, 'entdados.dat', entdados)
+     
+    dessem_arq = find_file(path_deck, 'dessem.arq')
+    dessem_arq = comment_arq(dessem_arq)
+    write_file(path_deck, 'dessem.arq', dessem_arq)
     
-    entdados = adjust_tm(find_file(path_ons_to_ccee, 'entdados.dat'))
-    entdados = adjust_di(entdados)
-    map_ccee = map_entdados_ccee(find_file(path_ccee, 'entdados.dat'))
-    entdados = coment_entdados(entdados, map_ccee)
-    entdados = adjust_barras(entdados, map_ccee['BARRA'])
-    write_file(path_ons_to_ccee, 'entdados.dat', entdados)
-
-            
+    #cleanup
     shutil.rmtree(os.path.dirname(path_ccee), ignore_errors=True)
     shutil.rmtree(path_ons, ignore_errors=True)
-    pass
 
 if __name__ == '__main__':
     logger.info("Script execution started")
