@@ -23,9 +23,9 @@ def run_VE(config):
 
     # Get Ids of interest | Buscar Ids de interesse
 
-    idNEWAVE = {2024: getIdOfNEWAVE('30.0.4'), 2025: getIdOfNEWAVE('30.0.4')}
-    idDECOMP = {2024: getIdOfDECOMP('32.0.1'), 2025: getIdOfDECOMP('32.0.1')}
-    idDESSEM = {2024: getIdOfDESSEM(''), 2025: getIdOfDESSEM('')}
+    idNEWAVE = {2026: getIdOfNEWAVE('30.0.4'), 2025: getIdOfNEWAVE('30.0.4')}
+    idDECOMP = {2026: getIdOfDECOMP('32.0.1'), 2025: getIdOfDECOMP('32.0.1')}
+    idDESSEM = {2026: getIdOfDESSEM(''), 2025: getIdOfDESSEM('')}
     idServer = getIdOfServer(constants.SERVER_DEFLATE_PROSPEC)
     idQueue  = getIdOfFirstQueueOfServer(constants.SERVER_DEFLATE_PROSPEC)
 
