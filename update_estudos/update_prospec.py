@@ -24,7 +24,7 @@ class DeckUpdater:
         data_inicio = datetime.datetime(ano, mes, 1)
         data_fim = datetime.datetime(ano, mes + 1, 1) - pd.Timedelta(days=1)
         dias_uteis = pd.bdate_range(start=data_inicio, end=data_fim)
-        if len(dias_uteis) >= 4:
+        if len(dias_uteis) >= 2:
             segundo_dia_util = dias_uteis[1]  # 2º dia útil
             sexto_dia_util = dias_uteis[5]   # 6º dia útil
             return segundo_dia_util.date() <= data_atual.date() <= sexto_dia_util.date()
