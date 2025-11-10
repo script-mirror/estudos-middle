@@ -182,7 +182,7 @@ class DeckUpdater:
         params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         BLOCK_FUNCTIONS[params['produto']](params)"""
         
-        """params['produto'] = 'RE-DECOMP'
+        """params['produto'] = 'EOLICA'
         params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         BLOCK_FUNCTIONS[params['produto']](params)"""

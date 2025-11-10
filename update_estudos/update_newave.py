@@ -44,7 +44,9 @@ class NewaveUpdater:
                 data_week = pd.to_datetime(data_rv.week_start)
                 filter = ((df_pq['data'] == date.replace(day=1)) & (df_pq['indice_bloco'] == 3) & 
                          (df_pq['codigo_submercado'] == MAP_SUBMERCADO[ss]))
-                valor = df_pq[filter]['valor'].values[0]
+                valor = 0
+                if not df_pq[filter].empty:
+                    valor = df_pq[filter]['valor'].values[0]
                 
                 if data_week in df_data['inicioSemana'].unique():
                     filter = (df_data['submercado'] == ss) & (df_data['inicioSemana'] == data_week)
