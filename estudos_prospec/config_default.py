@@ -37,7 +37,7 @@ EMAIL_CONFIG = frozendict({
         'aguardar_fim': True,
         "considerar_rv": '_s1',
         'rodada':{'Preliminar': ['ONS_Pluvia-Preliminar-SMAP'],
-                  'Definitiva':['ONS_Pluvia-SMAP']}
+                  'Definitiva':['ONS-SMAP']}
     }),
     'CENARIOS': frozendict({
         'description': 'Rodadas Cenarios Raizen',
