@@ -148,7 +148,7 @@ class DeckUpdater:
         df_data = self.get_dados_banco('newave/previsoes-cargas')
         self.newave.update_carga(params)     
         df_decomp = self.decomp.carga_nw_to_decomp(params, df_data)
-        self.decomp.update_carga_and_mmgd(params, df_decomp)
+        self.decomp.update_carga_and_mmgd(params, df_decomp, True)
 
     def update_re(self, params: dict) -> None:
         df_data = self.get_dados_banco('restricoes-eletricas')
@@ -173,20 +173,14 @@ class DeckUpdater:
             'RE-DECOMP': self.update_re,
             None: lambda params: self.logger.error("Produto não informado ou inválido. Por favor, informe um produto válido.")
         }
-        
+
         # debug
-        """params['produto'] = 'CVU'
-        params['id_estudo'] = [27411]
-        params['tipo_cvu'] = 'merchant'
+        """params['produto'] = 'CARGA-NEWAVE'
         params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         BLOCK_FUNCTIONS[params['produto']](params)"""
         
-        """params['produto'] = 'EOLICA'
-        params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-        params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-        BLOCK_FUNCTIONS[params['produto']](params)"""
-       
+               
         if len(sys.argv) >= 3:
             for i in range(1, len(sys.argv), 2):
                 argumento = sys.argv[i].lower()

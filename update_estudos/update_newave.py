@@ -381,7 +381,8 @@ class NewaveUpdater:
             df_data = df_data[df_data['patamar'] == 'media'].reset_index(drop=True)
             df_data['data_referente'] = pd.to_datetime(df_data['data_referente'])
             df_data['data_referente'] = df_data['data_referente'].dt.to_period('M')
-
+            data_produto = datetime.strptime(df_data['data_produto'][0], '%Y-%m-%d')
+            
             file_name = 'sistema.dat'
             if path_sistema is None:
                 logger.debug(f"Downloading {file_name}")
@@ -402,6 +403,10 @@ class NewaveUpdater:
                     data_deck = datetime(dger.ano_inicio_estudo, dger.mes_inicio_estudo, 1)
                     logger.debug(f"Study start date from dger.dat: {data_deck},  File: {path}")
 
+                    if data_produto > data_deck:
+                        logger.warning(f"Data produto {data_produto.strftime('%Y-%m-%d')} is not after deck date "
+                                       f"{data_deck.strftime('%Y-%m-%d')}. Skipping update for file: {path}")
+                        continue
                     df_pq = sistema.geracao_usinas_nao_simuladas
                     df_carga = sistema.mercado_energia 
                     df_cadic = c_adic.cargas
@@ -409,56 +414,58 @@ class NewaveUpdater:
                                 f"{len(df_cadic)} additional load records,  File: {path}")
 
                     for mes_ano in df_data['data_referente'].unique():
-                        for ss in df_data['submercado'].unique():
-                            filter_base = ((df_pq['data'] == mes_ano.start_time) & 
-                                        (df_pq['codigo_submercado'] == MAP_SUBMERCADO[ss]))
-                            filter_data = (df_data['data_referente'] == mes_ano) & (df_data['submercado'] == ss)
-                            filter_carga = ((df_carga['data'] == mes_ano.start_time) & 
-                                        (df_carga['codigo_submercado'] == MAP_SUBMERCADO[ss]))
+                        if mes_ano.start_time >= pd.Timestamp(data_deck):
+                            logger.info(f"Updating load data for deck date: {data_deck.strftime('%Y-%m')},  Month-Year: {mes_ano}")
+                            for ss in df_data['submercado'].unique():
+                                filter_base = ((df_pq['data'] == mes_ano.start_time) & 
+                                            (df_pq['codigo_submercado'] == MAP_SUBMERCADO[ss]))
+                                filter_data = (df_data['data_referente'] == mes_ano) & (df_data['submercado'] == ss)
+                                filter_carga = ((df_carga['data'] == mes_ano.start_time) & 
+                                            (df_carga['codigo_submercado'] == MAP_SUBMERCADO[ss]))
 
-                            # Update non-simulated generation (MMGD)
-                            for chave, valor in MAP_MMGD_TOT.items():
+                                # Update non-simulated generation (MMGD)
+                                for chave, valor in MAP_MMGD_TOT.items():
+                                    try:
+                                        old_value = df_pq.loc[(df_pq['indice_bloco'] == chave) & filter_base, 'valor'].values[0]
+                                        new_value = round(df_data.loc[filter_data, valor].values[0], 0)
+                                        df_pq.loc[(df_pq['indice_bloco'] == chave) & filter_base, 'valor'] = new_value
+                                        logger.info(f"Updated MMGD ,  Submarket: {ss.rjust(2)},  "
+                                                f"Source: {MAP_TIPO[chave].rjust(8)},  Month: {mes_ano},  "
+                                                f"Old value: {str(old_value).rjust(8)},  New value: {str(new_value).rjust(8)}")
+                                    except IndexError as e:
+                                        logger.error(f"Failed to update MMGD,  Submarket: {ss},  "
+                                                    f"Source: {MAP_TIPO[chave]},  Month: {mes_ano},  Error: {str(e)}")
+                                        raise
+
+                                # Update market energy (LOAD)
                                 try:
-                                    old_value = df_pq.loc[(df_pq['indice_bloco'] == chave) & filter_base, 'valor'].values[0]
-                                    new_value = round(df_data.loc[filter_data, valor].values[0], 0)
-                                    df_pq.loc[(df_pq['indice_bloco'] == chave) & filter_base, 'valor'] = new_value
-                                    logger.info(f"Updated MMGD ,  Submarket: {ss.rjust(2)},  "
-                                            f"Source: {MAP_TIPO[chave].rjust(8)},  Month: {mes_ano},  "
-                                            f"Old value: {str(old_value).rjust(8)},  New value: {str(new_value).rjust(8)}")
+                                    old_value = df_carga.loc[filter_carga, 'valor'].values[0]
+                                    new_value = round(df_data.loc[filter_data, 'vl_carga'].values[0], 0)
+                                    df_carga.loc[filter_carga, 'valor'] = new_value
+                                    logger.info(f"Updated LOAD ,  Submarket: {ss.rjust(2)},  Source: {("CARGA").rjust(8)},  "
+                                            f"Month: {mes_ano},  Old value: {str(old_value).rjust(8)},  "
+                                            f"New value: {str(new_value).rjust(8)}")
                                 except IndexError as e:
-                                    logger.error(f"Failed to update MMGD,  Submarket: {ss},  "
-                                                f"Source: {MAP_TIPO[chave]},  Month: {mes_ano},  Error: {str(e)}")
+                                    logger.error(f"Failed to update Load| Submarket: {ss},  Month: {mes_ano},  "
+                                                f"Error: {str(e)}")
                                     raise
 
-                            # Update market energy (LOAD)
-                            try:
-                                old_value = df_carga.loc[filter_carga, 'valor'].values[0]
-                                new_value = round(df_data.loc[filter_data, 'vl_carga'].values[0], 0)
-                                df_carga.loc[filter_carga, 'valor'] = new_value
-                                logger.info(f"Updated LOAD ,  Submarket: {ss.rjust(2)},  Source: {("CARGA").rjust(8)},  "
-                                        f"Month: {mes_ano},  Old value: {str(old_value).rjust(8)},  "
-                                        f"New value: {str(new_value).rjust(8)}")
-                            except IndexError as e:
-                                logger.error(f"Failed to update Load| Submarket: {ss},  Month: {mes_ano},  "
-                                            f"Error: {str(e)}")
-                                raise
-
-                            # Update additional loads (MMGD)
-                            map_mmgd = 'MMGD ' + ss
-                            try:
-                                filter_cadic = ((df_cadic['data'] == mes_ano.start_time) & 
-                                        (df_cadic['codigo_submercado'] == MAP_SUBMERCADO[ss])&
-                                        (df_cadic['razao'] == map_mmgd))
-                                old_value = df_cadic.loc[filter_cadic, 'valor'].values[0]
-                                new_value = round(df_data.loc[filter_data, 'vl_base_total_mmgd'].values[0], 0)
-                                df_cadic.loc[filter_cadic, 'valor'] = new_value
-                                logger.info(f"Updated CADIC,  Submarket: {ss.rjust(2)},  Source: {map_mmgd.rjust(8)},  "
-                                        f"Month: {mes_ano},  Old value: {str(old_value).rjust(8)},  "
-                                        f"New value: {str(new_value).rjust(8)}")
-                            except IndexError as e:
-                                logger.error(f"Failed to update CADIC,  Submarket: {ss},  Source: {map_mmgd},  "
-                                            f"Month: {mes_ano},  Error: {str(e)},  File: {path}")
-                                raise
+                                # Update additional loads (MMGD)
+                                map_mmgd = 'MMGD ' + ss
+                                try:
+                                    filter_cadic = ((df_cadic['data'] == mes_ano.start_time) & 
+                                            (df_cadic['codigo_submercado'] == MAP_SUBMERCADO[ss])&
+                                            (df_cadic['razao'] == map_mmgd))
+                                    old_value = df_cadic.loc[filter_cadic, 'valor'].values[0]
+                                    new_value = round(df_data.loc[filter_data, 'vl_base_total_mmgd'].values[0], 0)
+                                    df_cadic.loc[filter_cadic, 'valor'] = new_value
+                                    logger.info(f"Updated CADIC,  Submarket: {ss.rjust(2)},  Source: {map_mmgd.rjust(8)},  "
+                                            f"Month: {mes_ano},  Old value: {str(old_value).rjust(8)},  "
+                                            f"New value: {str(new_value).rjust(8)}")
+                                except IndexError as e:
+                                    logger.error(f"Failed to update CADIC,  Submarket: {ss},  Source: {map_mmgd},  "
+                                                f"Month: {mes_ano},  Error: {str(e)},  File: {path}")
+                                    raise
                         
                     sistema.geracao_usinas_nao_simuladas = df_pq
                     sistema.mercado_energia = df_carga

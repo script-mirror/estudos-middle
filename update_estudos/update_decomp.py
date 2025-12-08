@@ -26,7 +26,7 @@ class DecompUpdater:
         self.download_dadger_update = download_dadger_update
         self.send_all_dadger_update = send_all_dadger_update
 
-    def update_carga_and_mmgd(self, params, df_data):
+    def update_carga_and_mmgd(self, params, df_data, carga_nw = False):
         logging_name = f'logging_carga.log'
         logger = criar_logger(logging_name, os.path.join(params['path_download'], logging_name))
         df_data['semana_operativa'] = pd.to_datetime(df_data['semana_operativa'])
@@ -43,12 +43,13 @@ class DecompUpdater:
         data_first_deck = retrieve_dadger_metadata(**params_decomp)['deck_date']
         data_produto = min(pd.to_datetime(df_data['semana_operativa'].unique().tolist()))
 
-        if data_first_deck == data_produto:
-            logger.info('Data do produto coincide com a data do deck, prosseguindo com a atualização')
-        else:
-            send_whatsapp_message(self.consts.WHATSAPP_DECKS, f"Erro na atualização de Carga \nData do produto: {data_produto} não confere com a data do deck: {data_first_deck}", '')
-            logger.error(f"Data do produto: {data_produto} não confere com a data do deck: {data_first_deck}")
-            raise ValueError('Data do produto não coincide com a data do deck, verifique os dados')
+        if not carga_nw:
+            if data_first_deck == data_produto:
+                logger.info('Data do produto coincide com a data do deck, prosseguindo com a atualização')
+            else:
+                send_whatsapp_message(self.consts.WHATSAPP_DECKS, f"Erro na atualização de Carga \nData do produto: {data_produto} não confere com a data do deck: {data_first_deck}", '')
+                logger.error(f"Data do produto: {data_produto} não confere com a data do deck: {data_first_deck}")
+                raise ValueError('Data do produto não coincide com a data do deck, verifique os dados')
 
         for path in path_dadger:
             print(f'Path do dadger: {path}')
@@ -232,8 +233,8 @@ class DecompUpdater:
             'exp_ufv': 'vl_exp_ufv_mmgd'
         }
         MAP_PAT = {'leve': 'leve', 'medio': 'media', 'pesada': 'pesada'}
-        
-        date_start = SemanaOperativa.get_next_saturday(datetime.now())
+        data_produto = datetime.strptime(df_data['data_produto'][0], '%Y-%m-%d').date()
+        date_start = SemanaOperativa.get_last_saturday(data_produto)
         logger.debug(f"Starting date for operative weeks: {date_start}")
         
         df_decomp = pd.DataFrame()
@@ -247,7 +248,10 @@ class DecompUpdater:
             date = date_start + relativedelta(weeks=semana)
             logger.debug(f"Processing operative week {semana + 1} for date {date.strftime('%Y-%m-%d')}")
             
+            
             date_m1 = date.replace(day=1).strftime("%Y-%m-%d")
+            if semana == 0:
+                date_m1 = (date +timedelta(days =6)).replace(day=1).strftime("%Y-%m-%d")
             date_m2 = (date + relativedelta(months=1)).replace(day=1).strftime("%Y-%m-%d")
             logger.debug(f"Dates for interpolation: month1={date_m1}, month2={date_m2}")
             
