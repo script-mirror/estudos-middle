@@ -175,10 +175,19 @@ class DeckUpdater:
         }
 
         # debug
-        """params['produto'] = 'CARGA-NEWAVE'
+        params['produto'] = 'CARGA-NEWAVE'
         params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
         params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
-        BLOCK_FUNCTIONS[params['produto']](params)"""
+        params['id_estudo'] = [28632]
+        BLOCK_FUNCTIONS[params['produto']](params)
+        
+        
+        params['produto'] = 'CVU'
+        params['tipo_cvu'] = 'merchant'
+        params['path_download'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+        params['path_out'] = create_directory(self.consts.PATH_RESULTS_PROSPEC, 'update_decks/' + params['produto']) + '/'
+        params['id_estudo'] = [28632]
+        BLOCK_FUNCTIONS[params['produto']](params)
         
                
         if len(sys.argv) >= 3:
